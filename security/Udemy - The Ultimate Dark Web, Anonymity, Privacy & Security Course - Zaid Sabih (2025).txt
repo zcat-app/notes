@@ -1,0 +1,212 @@
+Dark Web, Anonymity, Privacy
+- video: https://www.udemy.com/course/the-ultimate-dark-web-anonymity-privacy-security-course
+
+Tor Browser
+- access to TOR network - daknet/clearnet
+- different levels of security
+- browser finger print - OS, size of window/laptop version, localization etc etc
+- bits of information ~ 32 bits to detect person
+   - highest around 6.8
+   - middle around 14?
+   - default 13?
+- some ISP can block TOR connection - TOR bridges ~ servers to connect into TOR
+- list on tor website or can receive via email from torproject email
+- OBFS4 - pluggable transport?
+
+
+Tails
+- live OS - wipe out all ram on unplug/ turn off
+- all traffic through TOR, except Unsafe Browser - only direct connection
+- can have persistent storage with passphrase
+- TOR browser has access only to one directory named Tor Browser (or 2 if has persistent equivalent)
+- to use VPN - either provider who support tails
+             - or need to configure a firewall and run openVPN client with provider config 
+
+- TOR network search - notEvil
+                     - Torch
+                     - ahmia
+- social media?                     
+      reddit like forum - Dread
+      quora like - Hidden Answers
+       
+- list of onion links         
+      hidden wiki - !!!! might have malicious links
+      dark.fail - pgp signed links should be more reliable
+      
+- fake identity - Forsaken
+
+emails
+- temporary email provider - deleting data after expiration date
+                           - quick and simple for quick verification
+                           - tempmailaddress.com, guerrillamail.com
+                           
+- private mail providers - proton - open source, end2end
+                                  - questionable with metadata
+                                  - available on both clearnet & darknet (can send between both) 
+                                  - needs javascript (if you believe open source, it might be OK)
+                                  - law compliant
+                                      
+- darknet email providers - some work only on darknet
+                          - no js, no tracking
+                          - Elude - allows send to clearnet   
+                            TorBox - only darknet                                 
+      
+messengers
+- xmpp - decentralized
+       - can join a server to get account
+       - can even run own server
+       - can run on onion service
+       - can be used with pidgin
+       - jabber/pidgin
+       - pidgin - advanced/server/insert onion service address
+                - traffic will not leave TOR network for the clearnet        
+                - OTR (off the record)
+                   - plugin allowing e2e encryption
+                   - tools/plugins/otr - configure - tick "automatic initiate private messaging"
+                                                   - tick "require private messaging" 
+                   - when set - start private conversation (might need to verify the contact - question/secret/digital fingerprint via another channel)
+      
+file sharing
+- remove meta data 
+   - on tails - right click/remove metadata -> creates cleaned copy
+
+- send.vis.ee - upload encrypted file,
+              - can set when delete the file (number of downloads/time period) 
+              - create link with decrypting key for the file       
+              - user (anyone) who has the link with decrypt key can download and decrypt
+              - uses javascript
+
+- onion share - p2p, e2ee, through TOR, files stored locally
+              - creates local onion service to be accessible from TOR to get the file               
+              - on tails - right click/share via onionshare
+                         - can add more files
+                         - start share - creates onion link
+                         - stop share - close connection
+                         - when file transfered - sharing stops
+                         
+- remove file - removing (i.e. Move To Trash) just mark area on disk as available
+              - data still available to read until rewritten
+              - right click/Wipe - override data on the area which was occupied by the file
+                                 - can set number of rounds of overriding
+                                 - works on HDD, but not on SSD/USB stick                        
+              - mass delete - Move To Trash, then right click/Wipe available disk space - override 'available area'
+                            - works on HDD, but not on SSD/USB stick
+                            
+erase disk - on Tails - Applications/Utilities/Disk    
+                          - select device - format volume - enable erase to clean the disk
+encrypt disk - on Tails - Applications/Utilities/Disk    
+                          - select device - format volume - for linux (ex4)
+                                                                - tick password protected volume LUKS - use passphrase
+
+encryption                                                                
+-verify downloaded file
+  - hash - GtkHash - select file and check hash  
+- pgp - prety good encryption
+- symetric encryption - same key for sender and receiver
+                          - needs to be shared  
+- asymetric encryption - private key
+                       - public key
+                       - alice uses bobs' public key to encrypt message, send, then bob decrypts the message with his private key 
+
+- generate key pairs - in Tails - application Kleopatra
+                                   - has pre-generated keys for packages verification - do not delete
+                                   - File/New Key Pair - open PGP  
+                                          Export - to export public key 
+- encrypting text - kleopatra - Notepad - write message
+                              - Recipient - Sign As - select my key
+                                          - Encrypt for me - select my key
+                                          - Encrypt for others - select public key
+                              - click encrypt - Notepad tap filled with encrypted message
+                                      decrypt - fill passphrase for private key - if correct shows decrypted message
+
+- encryption ensures secret message but not authentication -> signatures
+- encrypted message with public key of receiver is signed by private key of sender - encrypted and authenticated 
+     - signature can be verified against public key of the sender 
+     - in Kleopatra with Show Audit Log - show result of checked signature
+     
+- encrypting files - Kleopatra - Sign/Encrypt button - select file (maybe first remove metadata)  
+                               - same flow as with text - Sign As
+                                                          Encrypt for me                                            
+                                                          Encrypt for others
+- derypting files - Kleopatra  - Decrypt/Verify - select file (maybe first remove metadata)  
+                               - same flow as with text
+                               
+- signing without encryption - just uncheck encryption
+- verifying without encryption -file and signature should have the same name (file.txt, file.txt.sig) - check Show Audit Log
+
+- verifying file on Linux  see https://support.torproject.org/tbb/how-to-verify-signature/
+   - fetch and import developers key 
+        gpg --auto-key-locate nodefault,wkd --locate-keys torbrowser@torproject.org                               
+-  - save key to the file
+        gpg --output ./tor.keyring --export 0xEF6E286DDA85EA2A4BA7DE684E2C6E8793298290 //<-- key printed from previous command
+   (- refresh key if necessary
+        gpg --refresh-keys EF6E286DDA85EA2A4BA7DE684E2C6E8793298290 )     
+   - download binary file and related signature file (.asc) and execute command to verify the file
+        gpgv --keyring ./tor.keyring ~/Downloads/tor-browser-linux-x86_64-13.0.1.tar.xz.asc ~/Downloads/tor-browser-linux-x86_64-13.0.1.tar.xz     
+        
+        
+qubes OS
+- many virtual machines - separated
+- can be as main OS or live OS as Tails  (one 8GB+ flashed flash drive to install + one clean for installation 32GB+)
+- installed flashdrive should boot everywhere like Tails
+- on start configures TOR connection - can default, or bridge, or bridge with unpluggable transports
+- "start menu" - selection of virtual machines with own different OSes 
+               - all isolated   
+               - update VM - Qubes VM manager - right click/update      
+               - has: disposable machines - amnesic, for untrusted files, wiped out on VM shutdown
+                                          - one with clean internet connection (go through firewall)
+                                          - one with whonix - forced to go through TOR
+                                                            - debian based
+                                           
+                      domains: anon-whonix - uses sys-whonix service to redirect all traffic through TOR
+                                           - preselected applications - IRC chat
+                                                                      - TOR browser
+                                                                      - update for TOR
+                                                                      - update for WHONIX
+                                           - can clone to new VM for every fake identity - vie QubesManager - right click - clone VM
+                                                                      
+                               untrusted - untrusted websites
+                               personal - your every day browsing
+                               vault - not connected to the internet  
+                               work - work tasks         
+                      services - VM with OS related services - firewall
+                                                             - networking
+                                                             - whonix gateway - redirects all traffic to TOR network
+                                                                                
+                      templates - bases of other virtual machines - if updated all derived VMs get same update
+                                                                  - by default not connected to internet - change in Qube Settings
+                                                                  - update fedora-30 template with installing pidgin -> install pidgin on personal and work VMs
+                                                                  - fedora - installing app - GUI with program manager or command line
+                                                                  - whonix - installing app - install software only through terminal - apt
+- select app to run on VM - starting VM then running the app
+                          - VMs not running by default on startup
+                          
+- when finished in some domain - to free the memory from VM - manual shut down (main bar icon) 
+
+Files  
+- sharing files (copying) between VMs - right click/Copy To Other AppVM            
+                                     - in domain where to we copy - go to /home/UubesIncoming/[domain name]
+- open suspicious file - right click/Open in dispossable machine - will start a new VM
+                                     Edit in dispossable machine - open for editting - can save to original domain from which it was asked to open in disposable VM
+                                    /Convert to Trusted PDF - open new VM - should clean up file from malware
+                                                             - creates new directory /Home/QubesUntrusted PDFs - with original file                                                             
+- plugged flash drive - not automatically connected - need to set domain to load it
+
+Clipboard
+- copy text to global clipboard - ctrl + c and then ctrl + shift + c
+- insert from global clipboard from - ctrl + shift + v and the ctrl + v                           
+
+
+Applications
+- everything installed outside of the home  directory will get wiped out on shutdown/restart   
+- installing on template will install to every derived VM (visible after restart if running)
+    - attention!: everything outside of Home folder is wiped out                       
+- adding installed app into context menu - qubes manager-select VM - settings - application tab 
+- terminal: apt-catch search {searched term} - will list options to install   
+            synaptic - GUI alternative to command line for apt - buggy
+    
+    
+    
+    
+    
+                                                                                                                                                                                                                                                       

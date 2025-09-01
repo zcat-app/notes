@@ -1,0 +1,722 @@
+ES6 Javascript
+- video: https://www.udemy.com/course/es6-bootcamp-next-generation-javascript
+
+- ECMA Script - language, JS ~ dialect of the language
+
+Syntax
+- Block Scope and 'let' keyword 
+   - let variable_name = 1;  //defined only for blog
+   
+     if (true) {                         if (true) {
+        var val = 1;                        let val = 1;   //only for this block     
+     }                                   }
+     console.log(val); //OK             console.log(val); //reference error
+     
+   - 'var'-  keyword stayed with previous functionality or backward compatibility
+          - only global, local scope
+          - allows hoisting (usage of var/func before declaration)
+                 val = 1;
+                 var val; //OK
+               
+               
+   - 'let'- like 'var' (can change value), but adds block scope
+          - does not allow hoisting  (usage of var/func before declaration)
+                val = 1;  //reference error, not defined
+                let val; 
+                 
+   - 'const' - upper case names for consts by convention
+             - cannot assign new 'value
+             - but like with finally in Java, it can 'adapt' reference types (objects, arrays - add/remove element, set new property value from)
+      
+- (Fat) Arrow functions
+   ~ lambdas
+   - old approach:
+        function foo () {
+           //do smth
+        }
+    
+   - new approach:
+        var foo = () => {
+           //do smth                       //more commands
+        }           
+        var foo = () => console.log('hi')  //short form if on command, like lambda in java, no {} needed
+        var foo = () => 'hi'               //returns 'hi'
+        var foo1 = (a) => a+1              // one input arg, returns a+1
+        var foo1 =  a  => a+1              //1 arg does not need ()
+        var foo2 = (a, b) => a+b           //more than 1 input arg -> must have ()
+        //call like usual func
+        foo();
+        foo1(4);
+        foo2(1, 2);
+   - also useful as callback, e.g.: setTimeout( () => { //do smth }, 1000);      
+   
+   - 'this' context
+       - 'this' in arrow function keeps its context where defined
+             - e.g. listener on button defined in window -> context = window 
+       - 'this' in normal function - context from where it was called/referenced 
+             - e.g. listener on button defined in window -> context = button 
+   
+- Default function Parameters 
+   - C like shit  
+   - works for both 'traditional' function and arrow functions
+   - default value can be:
+        foo(p1, p2 = 0)       //value
+        foo(p1, p2 = 5/2 + 1) //expression
+        foo(p1, p2 = p1)      //even previous param
+        
+   - function(param1, param2 = 10) {...} or (param1=10) => {...} 
+   - default params MUST be after nondefault params:
+        foo (param1 = 10, param2) {} //=> can lead to unexpected behavior (for JS turds, C devs knows how to use, bitch)
+                                     //e.g. calling: foo(1) //param1=1, param2 = undefined
+   
+- Object literal extension   
+   - usual JS object:
+     // define props explicitly
+     let obj = {
+        prop: "value"
+     };
+     
+   - now can set props via prom - same outcome:  
+     let prop = "value"
+     let obj = {
+        prop
+     };
+     
+   - can add func/method into obj:              when prop as string (map-like access):
+         let obj = {                                let obj = {
+            prop = "val";                               "prop" = "val";
+            foo() {                                     "foo"() {
+              console.log(this.prop)                      console.log(this.prop)
+            }                                           }
+         };                                         };
+         prop.foo();                                prop["foo"]();
+   
+   - dynamic field
+         let prop = "propInt";
+         let obj = {
+            [prop] : 10          //set prop name as value of prop, need to have assigned the value for created prop
+         };                      //can be accessed both ways: obj.propInt or obj["propInt"] / obj[prop] <-variable with the name of prop
+      
+- Rest/Spread operator ...
+   - similar to Java dynamic params, but can be for mixed datatypes (number, object, strings,...)
+   
+   function foo(...params) {
+      for (let i=0; i< params.length; ++i) {
+          //do smth
+      }
+   }     
+   foo(1, 2, 3); //... converts values into array for the foo  
+      
+   - when used outside of function parameter -> works as spread operator
+       var a = ...myArray //split array into list
+       foo(...myArray)    //instead of calling with array obj, it will call foo with element1, element2, ..., elementN params 
+ 
+- For Of loop
+   - iterating arrays, for each like construct
+       for (let element of myArray) {
+          //do smth work with element variable
+       }
+   - can 'break;' the loop, forEach cannot (SyntaxError: Illegal break statement)
+    
+- Template Literal ``
+   - backward single quotation mark, on ~ key (left from 1)
+   - allows multiline string without concatenation ("" + "" + "")
+   - evaluating expressions in string
+       let x = "Hi!"
+       let y = `
+            I say: ${x + " I can do whatever JS shit here"}
+       `; 
+       console.log(y) //prints empty 1st line, 2nd line: I say: Hi! I can do whatever JS shit here, empty 3rd line  
+   - print expression without evaluation: use \
+       let y = `I say: \${x}`; //prints: I say: ${x} 
+
+- deStructuring
+   - destructuring complex objects into simpler one
+   - original array/object stays intact
+   - arrays
+       - accessed by position, uses [] 
+           var array = [1, 2, 3];
+           //to get some elements we used to call array[0], array[1], etc
+           let [a, b] = array;             //easier syntax to access first 2 elements - destructuring
+           let [a, b, c, d] = array;       //d 'overflow' value -> undefined
+           let [a, b, c, d = "d"] = array; //d assigned default value -> "d"
+           let [a = "d", b, c, d] = array; //default value used ONLY IF element is undefined, would not work for 'a', a = 1
+           let [a, ...b] = array;          //a = 1, b=[2, 3]
+       
+       - can be used for swaps
+           [a, b] = [b, a]
+
+       - skipping some value: ,, 
+           [a, ,c] = array;  //extracts 1st and 3rd, 2nd skipped
+    
+    - objects   
+       - similar to array, uses {} instead of []
+       - accessed by name
+           -> referenced by name, not position (as in array) 
+           -> extracted names HAS TO have the same name as property name
+           -> can use alias to interact with 'renamed' variable
+           
+           var obj = {
+              prop1: 10,
+              prop2: "my text",
+              prop3: () => "Hi"
+           };
+           
+           //destructuring
+           {prop1, prop2, prop3} = obj;
+           
+           //destructuring with alias
+           {prop1, prop3: sayHi} = obj;   //select only some props, set alias for prop3 - sayHi
+           sayHi();                       //access it with aliasName, not with original
+       
+Modules
+- always in strict mode, no need to explicitly define "use strict" 
+- no shared or global scope, module has its own scope
+- module - file with vars, functions, objects
+         - exports its logic/variables as references -> changes to ref - changes to originals
+         - imported to other files
+
+- export 
+    myModule.js
+    A)
+      export let myVar1 = 1;
+      export let myVar2 = 2;
+    B)
+      let myVar1 = 1;
+      let myVar2 = 2;
+      export {myVar1, myVar2};
+      
+    - default export - can be only one per module
+      export default a = 10;  
+        
+- import -> import references, not copies!
+    myJsFile.js
+      import { myVar1 } from 'myModule';  //{what} to import from 'where' 
+      console.log(myVar);                 //only myVar1 is accessible
+      
+      //import { myVar1, myVar2 } from 'myModule';  //both are accessible
+      
+    - alias - similar to destructuring  
+        import { myVar1 as counter } from 'myModule';
+        console.log(counter); 
+        
+    - import default prop
+        import value from 'myModule';        //default imported without { }, can have different name ('a' in myModule.js, here value)
+        console.log(value);     
+        
+    - import default with others exports   
+        import value, { myVar1 } from 'myModule';        
+        console.log(value);   
+        
+    - import everything what can be exported   
+        import * as Module from 'myModule';        
+        console.log(Module.myVar1);      
+        
+Classes        
+   - more strightfowrad for objects
+   - passing params - new method: constructor
+   - methods - no need of function keyword
+   - fields - no need to define if assigned in constructor
+   [ getting closer to normal languages, leaving prototypes behind, even it uses prototype on background]
+   
+     class Person {
+         
+        constructor(name) {
+           this.name = name;  //assigning this.prop => creates property, no need to declare
+        } 
+       
+     
+        hello() {
+           console.log('Hello, I am ' + this.name); 
+        }
+     }         
+     let person = new Person("A")     
+   
+   - getters & setters
+      class Person { 
+        #name;                 //private field must be declared! 
+         
+        constructor(name) {
+           this.#name = name;  //'#' to specify private field 
+        } 
+       
+        #privateMethod() {     //usage of '#' makes func private
+           //do smth
+        }
+     
+        get name() {           
+            return this.#name;
+        }
+        
+        set name(name) {           
+            this.#name = name;
+        }
+        
+      } 
+   
+      var p = new Person();
+      console.log(p.name);   //cannot access without get 
+      f.name = "Cenda";      //cannot access without set
+      console.log(f.name);
+      
+      - another workaround with '_' (use '_' instead of '#'): 
+        _name instead of #name, works for obj.name, but still we can access 
+        obj._name even if intended as private
+      
+   - inheritance - java like
+                 - access parent properties - super.propName
+                 - can override methods - use the same name and number of params
+                 
+     class Idiot extends Person {
+        constructor(name, idiot) {
+          super(name);
+          this.idiot = true;
+        }
+        
+        //overrides super.hello() 
+        hello() {
+           console.log('Hello, I am idiot'); 
+        }
+     }   
+   
+   - extending built-in objects - just like extending any class
+      - overview of extendable classes in ES6 - https://kangax.github.io/compat-table/es6/
+      class MyArray extends Array {
+         foo() { return "foo"; }
+      }
+      
+      var arr = MyArray();
+      arr.push(1);
+      console.log(arr.foo() + "x" + arr.length); 
+   
+   - static methods - has to use 'static' keyword
+       class Utils { 
+          static hello() {
+             console.log('Hello, I am idiot'); 
+          }
+       }
+   
+       Utils.hello(); 
+ 
+   - classes can be exported -> use a single file per class, Java in disbelief xD
+   
+Symbols
+   - new primitive type, provide unique ID, not iterable 
+   - no value, just symbol
+       
+        let symbol = new Symbol('debug');     //param good for debuging, no usage in prod
+        console.log(typeof symbol)            //prints "symbol"
+   - 'meta programming feature', if used as property in object - not visible until directly called
+        => can change behavior of built-in objects 
+           - symbols are used for functions, fields => not visible on 'surface', but can be accessed
+             directly and adapted (e.g. default conversion of array to string, return description of prototype. etc)
+   
+   - shared symbol
+       more symbols with the same 'property'
+          var s1 = Symbol.for('group1') //whatever name instead of group1 
+          var s2 = Symbol.for('group1')     
+          s1 == s2                      //true, returns the same ID
+                  
+Iterators    
+- iterator 
+   - object capable access single element from collection - iterating through elements in defined way 
+
+- objects with defined symbol 'Symbol.iterator' are iterable (~ has assigned iterating function)
+     var a  = [1, 2, 3];
+     var it = a[Symbol.iterator](); //returns iterator
+     console.log(it.next()) //prints 1 and move to 2nd element
+
+- overriding iterating of current array
+     a[Symbol.iterator] = () => {
+        return {
+           next : () => {
+              //return some object, default structure similar to this:
+              return {
+                 done  : false,    //flag if reach behind the last element
+                 value : 0         //current element
+              }
+           }
+        }
+     }
+     
+- custom iterable object - set 'Symbol.iterator' function
+     let obj = {
+        name : "name",
+        [Symbol.iterator] : function () {
+           return {
+              next : function() {
+                 return {
+                    done: false,            //iterating until true
+                    value: "some value"     
+                 }
+              }
+           }
+        }
+     }      
+      
+Generator
+- function which yields values when called
+- starts with asterisk
+     function * gen1() {
+         yeald "val1";
+         yeald "val2";
+     }
+
+     function * gen2(end) {  //can call end-times to get value before undefined
+         for (let i =0; i< end; ++i) {
+            yield i;
+         }
+     }
+
+     let g = gen1();
+     console.log(g.next()); //val1
+     console.log(g.next()); //val2
+     console.log(g.next()); //undefined
+
+- g.throw('Exception desc') - forces generator to create exception
+- g.return('my value') - forces generator to return parameter 'my value' as value instead of expected for this call 
+                       - current expected is skipped, next run will return following expected, current expected will not be returned
+
+Promises
+- avoids callback hell for asyncs, (not mentioned but seems replaced by async/await already :/)
+  
+  var cnt = 0;
+  let prom = new Promise((resolve, reject) => {
+     setTime(()=> {
+         if (cnt < 2)
+            resolve("Done!");
+         else
+            reject("Failed!")
+     }, 1500);  
+  });
+  
+  //single call
+  prom.then(
+      (value) => {            //resolve func
+         console.log(value)
+      },
+      (error) => {            //reject func
+         console.log(error)
+      }
+  );
+  
+  //can be chained
+  prom.then(prom1)
+      .then(prom2);
+      .catch((err) => {
+          console.log(err)
+      })
+      .finally(() => {console.log('finally');}
+      
+- can use: 
+     all method - all must be resolved -> then part
+                - if any is rejected -> catch part
+                - waits for all to finish
+                     
+          Promise.all([prom1, prom2, prom3])
+                 .then((success) => {
+                 
+                 })
+                 .catch((err) => {
+                 
+                 });
+                 
+     race method - waits for the first being finished
+                 - if first finished resolved -> then part
+                 - if first finished rejected -> catch part
+                 
+          Promise.all([prom1, prom2, prom3])
+                 .then((success) => {
+                 
+                 })
+                 .catch((err) => {
+                 
+                 });         
+                 
+Built-in objects extensions
+- Object
+   .assign(obj1, obj2, ...)
+      - merging of objects (works on instances of class objects also, but becoming instance of first param in assign method -> here obj1 class)
+      - kinda like: Object.assign(targetObj, source1, source2, ...)
+         - create copy of targetObj (result object is instanceof targetObj), 
+         - add property from source1 to the copy of targetObj
+         - add property from source2 to the copy of targetObj
+         
+          var obj1 = {a:1},
+              obj1 = {b:2};
+          
+          var res = Object.assign(obj1, obj2) // {a:1, b:2}
+   
+   .setPrototypeOf(obj)
+      - change prototype of object after creation, no idea why i would need this, maybe default fields
+
+- Math
+   .sign()
+      - sign function on number -> 1, 0 ,1
+      - non number type -> NaN
+           Math.sign(3) // => 1
+      
+   .trunc()
+      - cuts off decimals 
+           Math.trunc(3.14); // => 3   
+      - different from floor
+           Math.trunc(-3.14); // => -3 //just cut off decimals 
+           Math.floor(-3.14); // => -4 //round down 
+           
+- String 
+    .startsWith() - case sensitive          
+       'ABCdef'.startsWith('ABC');  //true      
+    .endsWith()   - case sensitive    
+       'ABCdef'.startsWith('def');  //true    
+    .includes     - case sensitive  
+       'ABCdef'.startsWith('Cd');   //true      
+
+- Number
+    .isNan(NaN)          //true, false for types not number but not NaN -> bool, string
+    .isFinite(Infinity)  //false
+    .isInteger(10.1)     //false
+   
+- Arrays
+    - Array(3)      //-> [undefined, undefined, undefined]   
+    - Array.of(3)   //-> [3]
+    
+    .from(array [, transformFunction])
+       var newArray1 = Array.from([1, 2, 3]);
+       var newArray2 = Array.from([1, 2, 3], val => val +1);
+  
+    .fill(value, startIndex, endIndex)
+       - set all elements with the value if no startIndex & endIndex
+       - if startIndex defined, starts filling from startIndex inclusive
+       - if endIndex defined, stops filling till endIndex exclusive
+       
+           newArray1.fill(0, 1, 2) //[1, 2, 3] => [1, 0, 3]
+       
+    .find( filterFunc )
+       - finds first match
+       
+           newArray1.find( (element) => element > 1); // returns 2, value of first element > 1   
+   
+    .copyWithin(targetElementIndex, sourceElementIndex[, sourceElementEndIndex])
+       - change elements within the array (original instance)
+       - replaces element on targetElementIndex with element from sourceElementIndex
+          
+           newArray1.copyWithin(1, 2)     //[1, 2, 3] => [1, 3, 3]
+           newArray1.copyWithin(1, 0, 2)  //[1, 2, 3] => [1, 1, 2]  try [1, 1, 2, 3], but 3 overflew -> cut off
+    
+    .entries()
+       - returns iterator, in format: [index, value] 
+       
+           var it = newArray1.entries();  //can itarate with: for(item of it) {  }                                                 
+   
+Maps
+- java like shit
+- key-value pair, unique keys
+- example:
+    
+    let map = new Map();       //create
+    map.set("key1", "value");  //add    
+    map.set("key2", "value");  //add    
+    map.size()                 //size of map1 -> 2
+    map.set("key1", "value2"); //update
+    map.size()                 //size of map1 -> 2
+    map.get("key1");           //read
+    map.delete("key1");        //delete whole key-value pair
+    map.clear();               //delete all data from map
+    
+    map.keys()                    //return key iterator
+    for (key of map.keys()) {
+       //iterate through keys
+    }
+    map.values()                  //return value iterator
+    for (key of map.values()) {
+       //iterate through values
+    }
+    map.entries()                 //return entry iterator
+    for (key of map.entries()) {  //SHORTHAND: for (key of map)  //go through entries by default
+       //iterate through entries
+    }
+    
+- shorthand creation
+    let map2= new Map([["key1", 1], ["key2", 2]]);  
+    
+- WeakMap
+   - key has to be ONLY JS Object - allows only weak references 
+                                  - can be garbage collected as whole entry
+                                  - affects the map content, wow 
+   - not iterable, can be collected, thus not allowed
+       
+Sets
+- 'array' with unique values
+
+- example:
+    
+    let set = new Set();        //create   
+    set.add(1)                  //adds
+    set.add(2)                  //adds
+    set.add(1)                  //no add, keeps unique values
+    set.has(2)                  //checks if contains 2 -> true   
+    set.size() 
+    set.delete(1)               //deletes 1
+    set.clear()                 //deletes all
+    
+    for (key of set.entries()) {  //has values() and keys() -index, 
+       //iterate through entries
+    }
+    
+- shorthand creation
+    let set = new Set([1,1,2]); //=> [1,2]    
+   
+- WeakSet
+    - has to contain ONLY JS Object
+    - not iterable   
+   
+Reflect API
+- metaprogmraming related shit - changing code on runtime (like in Ruby)
+                               - working with prototypes 
+                               - i.e. dynamically edited classes, functions
+~ reflection API from Java
+
+- creating objects
+   - basically the same shit as: new Class(), but with function
+   - Reflect.construct(ClassName, [constructor params])
+   - Reflect.construct(ClassName, [constructor params], newTarget)
+   
+   class Person {   
+       constructor(name) {
+          this.name = name;
+       }
+   }
+   
+   function foo() {
+      this.age = 30;
+   } 
+   
+   let person1 = Reflect.construct(Person, ["Krakonos"]);        //same as with new Person("Krakonos") 
+   let person2 = Reflect.construct(Person, ["Krakonos"], foo);   //rewrite prototype of person from Person.prototype to foo.prototype
+                                                                 
+- calling methods
+   ~ enforces context to called functions
+   - Reflect.apply(Class.method, context, [input params])
+       - name of the function
+       - context for this
+       - input args for the function
+       
+   class Person {   
+       constructor(name) {
+          this.name = name;
+       }
+       
+       hi () { console.log(this.name + ': hi') }
+   }
+
+   let person2 = Reflect.construct(Person, ["Idiot"]);
+   Reflect.apply(person.hi, person, []);          //pritns: Idiot: hi!, this = person
+   Reflect.apply(person.hi, {name:'Dick'}, []);   //prints: Dick: hi!, this = {name:'Dick'}
+   
+- interacting with prototype of obj
+   - gets prototype of the instance
+   - Reflect.getPrototypeOf(instance)
+      - Reflect.getPrototypeOf(person)
+   - Reflect.getPrototypeOf(originalInstance, newInstancePrototype)
+      - Reflect.getPrototypeOf(person, { height: 10 });
+
+- access properties
+   - Reflect.get(instance, "propertyName")            //getter
+   - Reflect.get(instance, "propertyName", context)   //context for this, if context has the same field -> gets value from context instead of instance
+   - Reflect.set(instance, "propertyName", value)     //setter
+   - Reflect.set(instance, "propertyName", context)   //context for this
+   - Reflect.has(instance, "propertyName")            //if instance contains property
+
+- getting all fields
+   - Reflect.ownKeys(instance) // prints: ["propertyName1", "propertyName2"]
+
+- creating/deleting properties
+   - create property
+       Reflect.defineProperty(instance, 'propertyName', { //config JSON
+          writable: true,              //can be edited?
+          value : ['ahoj', 'hello'],   //initial value
+          configurable : true,         //can the property config be changed after creating?, default false 
+       });
+
+       console.log(instance.propertyName);  //if exists - value, otherwise undefined
+       instance.propertyName = ["hola!"];   //if writable: false -> no error, keeps initial value 
+       console.log(instance.propertyName);  //
+   
+   - delete property 
+       Reflect.deleteProperty(instance, 'propertyName');  // ~ delete instance.propertyName;           
+       console.log(instance.propertyName);                //if exists - value, otherwise undefined
+       
+- prevent extension of object
+   - Reflect.preventExtensions(instance);
+       - bans any extensions, all extension calls will be ignored
+           Reflect.preventExtensions(instance);                     //ban extensions
+           Reflect.defineProperty(instance, 'propertyName', {...})  //try to create propertyName   
+           console.log(instance.propertyName);                      //prints: undefined, creating was not performed
+       
+   - Reflect.isExtensible(instance)    
+       - finds out if extension is allowed for the object
+       
+Proxy API
+- idea wrapping objects to control its interaction via traps - kinda interface for wrapper
+- use same methods and arguments with Reflect API
+   - can traps for Reflect API, can ad new logic
+- traps passed as handler object, as example bellow   
+         
+      let box = Box {
+         height: 10,
+         width : 20
+      };
+      
+      //objet with proxy traps - methods
+      let handler = {
+          // adapt reading access of properties
+          get: (targetClass, propertyName) => {
+             return propertyName in targetClass? targetClass[propertyName] : 'Doesn't exists';
+          },
+          
+          //adapt writing access to properties
+          set: (targetClass, propertyName, newValue) => {
+             //e.g. some validation
+             let valid =   //...do smth
+             if (valid) {  //if validation not passed -> keeps original value, not editing
+                Reflect.set(targetClass, propertyName, newValue);
+             }
+          }
+      }       
+    
+      var proxy = new Proxy(box, handler)   
+      proxy.height       //return height
+      proxy.diameter     //returns Does not exist   
+      proxy.height = 2;  //change value, if passes validation in handler.set() 
+       
+- using Proxy as prototype
+    - instances inherits the proxy logic
+    - can use instance directly with proxy features 
+      
+      Reflect.setPrototypeOf(box, proxy);
+           
+- Proxy as Proxy  
+    - proxy can instance can be wrapped by another proxy
+    - kinda 'composition' of different features of different proxies
+         
+- Functions as Proxy       
+    var foo = () => {
+       doSomething();
+    }   
+    
+    let handler = {   
+       apply: (target, context, paramList) => {
+           //can have some checks, validation, conditions
+           return Relflect.apply(target, context, paramList);
+       }
+    };
+    
+    var proxy = new Proxy(foo, handler);
+    proxy();                                //calling proxy of function
+    
+- Revocable proxy
+   - removable proxy features        
+       
+   let {proxy, revoke} = Proxy.revocable(box, handler);    
+   revoke();           //revoke proxy
+   proxy.height        //error, proxy revoked    

@@ -1,0 +1,78 @@
+Scala
+- https://www.udemy.com/course/rock-the-jvm-scala-for-beginners
+
+- based on java bytecode -> same code as Java, runs on JVM
+
+Data Types
+- Kotlin like
+- types: Int       3     //4B
+         Byte      128   //1B ~ - 128->127
+         Short     -2    //2B
+         Long      12L   //8B
+         Float     2.0f
+         Double    2.0
+         Char      'a'
+         String    "text"
+         Boolean   true/false
+         Unit      ~ void, only value it holds is ()
+         Null      null or empty reference
+         Nothing   subtype of every type
+         Any       supertype of every type ~ java Object
+         AnyRef    super type of any reference
+        
+Symbols
+- scala.Symbol("x")
+- shorthand expression: 'x         
+- case class
+         
+Values
+- Kotlin like declaration & initialization (no semicolons needed - optional):
+- 'val' ~ like Kotlin - immutable, similar to Java 'final'
+        - syntax: val name[:Type] = value
+        - type is optional - compiler infer data type ~ same as Kotlin
+
+    
+            val x:Int = 42   //same as val x = 42
+            println(x)
+
+Variables
+- Kotlin like declaration & initialization (no semicolons needed - optional):
+- 'var' ~ like Kotlin, can re-assigned, used in functional prgramming for 'side effects'  
+        - syntax: var name[:Type] = value
+        - type is optional - compiler infer data type ~ same as Kotlin
+
+            var x:Int = 42   //same as val x = 42
+            println(x)
+
+- vals preffereable over vars (no side effect)
+
+Expressions
+- instruction - say to do something -> store, send, ...
+- expression  - evaluate something -> provides result value
+- everything in scala is expresion (except val/var declaration) - yeah, even reassigning and loops
+
+- compiler can infer type of expression (if assigned)
+- num: + - * / %
+  bit: & | ^ << >> >>>  - right shift with zero extension 
+  logical: == != > >= < <= ! && ||
+  assign: += -= *= /= 
+         -> side effects 
+
+- if expression ~ kinda ternary operator
+    val result = if (condition) resutTrue else resultFalse
+
+- loops
+    - while loop - usual usage
+          var i =0
+          while (i< 10) {
+             ++i;
+          }
+      
+    // not recommended
+    val a = while (i<10) {++i} //returns Unit
+    a = (a = 3+2)              //returns Unit
+          
+- block          
+          
+          
+          

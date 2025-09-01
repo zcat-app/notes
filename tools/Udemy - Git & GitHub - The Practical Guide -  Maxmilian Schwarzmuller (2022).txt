@@ -1,0 +1,569 @@
+Git & GitHub - The Practical Guide
+- video: https://www.udemy.com/course/git-github-practical-guide
+
+Git
+- version control system
+- replaces 'multi files' with different versions
+- stores differences between versions
+- by default on local, good to have some remote service for backups (github, bitbucket)
+
+- commits ~ snapshots
+          - tracks changes from the original state, not duplicate files
+          - collects commits in branches
+
+- branches - independent copy with own changes
+           - merge branches to apply changes from one to another
+
+
+- repository - staging area
+                - index file
+                - changes before commit (like highlighted in IDE)
+             - commits
+                - objects folder
+                - propagated from staging area          
+
+commands:
+- git --version
+    - print git version
+//set git locally, only for current folder/project 
+- git config user.email "my@email.cz"
+  git config user.username "My Name"
+  
+//set globally -> used for every project with git
+- git config --global user.email "my@email.cz"  
+  git config --global user.username "My Name"
+
+- git init
+    - creates repository
+    - .git folder
+    
+- git status
+    - shows tracked files & changes in repository
+        
+- git add file
+  git add .     //whole current directory
+    - add file/files/folder into the staging area
+
+- git ls-files
+    - prints files which belongs to staging area
+
+- git commit -m "Commit message"
+    - commit changes 
+    - every commit has unique id (hash) - can be used for checkout
+
+- git log
+    - shows tree/graph of changes
+    - quit the log reading with q+enter
+
+- git show commitID
+    - prints commit detail
+    
+- git checkout commitId
+    - 'loads' changes related with the commit
+    
+- git checkout branch-name
+    - loads changes on HEAD of the branch (latest local changes)
+
+//branches
+- more branch types, explained later
+  - local  - local commits
+  - remote - on remote repo (github)
+  - remote-tracking (for fetching)
+  - local-tracking (for pushes/pulls)
+  
+- git branch
+    - prints current branch
+
+  git branch -a
+    - prints all tracked branches (even remote)  
+
+  git branch branch_name
+    - creates new branch 'branch_name' if does not exist from current branch
+    
+  git checkout branch_name
+    - switch into the branch_name branch       
+    
+  git checkout -b another_branch
+    - creates new 'another_branch' from current and checkout it      
+    
+  git merge branch-from-which-we-want-to-merge  
+    - merge changes from 'branch-from-which-we-want-to-merge' into current branch
+  
+  git switch branch-name
+    - 2.23+ versions 
+    - creates branch OR switch to existing branch
+    
+  git switch -c new-branch
+    - creates AND checkout new branch from existing
+  
+- revert changes (delete shits from staging area ~ no applied git add) 
+  git checkout .
+    - revert all unstaged changes
+  
+  git checkout filename
+    - revert unstaged changes in filename  
+  
+  git restore
+    - 2.23+ versions  
+    - git retore .          //all changes
+      git restore filename  //changes in filename
+      
+  git clean -dn
+    - prints all newly created files and directories which will be deleted
+  
+  git clean -df
+    - force delete of all newly created files and directories
+      
+- revert change added into staging area 
+  A)     
+     git reset filename     //remove from staging area
+     git checkout filename  //reset to state from HEAD commit ~ revert current changes  
+  B) 
+     git restore --staged filename 
+       - 2.23+ versions
+       - same function as reset
+     git checkout filename    
+                       
+- HEAD
+  - by default points to the latest (newest) commit of the branch
+  - detached HEAD
+     - checkout commit with commitID below the HEAD - kinda non-branch area
+     - commit to the detached head part can lead to losing the change!! after switching branch
+        - commit is done and returns unique commitId, which can recover change after switching branches
+        - once branch is switched, detached head 'branch' is not visible anymore
+        - we can create new branch: git branch branch-name commitId-of-detached 
+           -> recovered, need to have the commitId   
+
+- undo/revert commits     
+  git reset --soft HEAD~1 
+    - number after '~' says how many commits back we want to move  
+    - files added in reverted commit kept in staging area (ready to commit reverted changes)
+   
+  git reset HEAD~1  //-mixed by default 
+    - files added in reverted commit removed from staging area - needs git add (but reverted changes still available)
+    
+  git reset --hard HEAD~1 
+    - number after '~' says how many commits back we want to move   
+    - files added in reverted commit removed from staging area & not recovered (not revert, just step back, no changes left as uncommited)
+    
+- delete 
+  - file   - need to git add + git commit (can get the file if returned to commit before deleting) 
+  - commit - viz 'git reset'
+  - branch - git branch -d branch-to-delete                     //check if branch was merged before delete   
+                        -D branch-to-delete                     //forced, delete anyway
+                        -D branch-to-delete1 branch-to-delete2  //delete multilple branches
+ 
+- .gitignore
+  - in root of the project
+  - skip versioning (skip even adding into staging area) of defined files/folders
+  
+  - direct file:
+      mylog.txt
+      logs/mylog.txt
+      !this-log-keep.txt  //this file is excluded from ignoring!
+       
+  - all files with same extension:
+      *.log
+      
+  - whole folder
+      folder/*   
+
+- stash   
+  - git stash
+    - save current changes in special area, not in commit tree, set the state as in the current HEAD 
+      ~ temporary storage for unstaged and uncommited changes
+   
+    git stash list
+      - list of stashed changes 
+   
+    git stash apply 
+      - returns latest stashed changes
+   
+    git stash apply 1   //index of change from 'git stash list'
+      - returns stashed changes on index 1
+      
+    git stash push -m "stash info message"
+      - push changes on the top of the stashed changes, git stash list returns overview with our message
+   
+    git stash pop 0
+      - apply stashed changes on index 0 and remove from stash
+      
+    git stash drop 0
+      - remove stashed change on index 0  
+      
+    git stash clear
+      - clear all stashed 'memory'
+      
+- reflog
+  - reflog keeps all changes in repo for last 30 days ONLY
+  - 'deleting' commit with git reset --hard HEAD~1 removes the change from log tree
+  - still visible through git reflog
+  - can 'restore' deleted commit to set HEAD on the hash of the commit
+      git reset --hard hash-of-commit         
+  
+  - can restore commit from 'deleted' branch also: git branch -D branch-name
+     - git reflog shows latest changes
+     - git checkout commit-id-from-reflog
+        -> move to detached head area
+        -> create branch: git switch -c new-branch-name 
+        -> restored change in new branch 
+ 
+- merges
+  A) Fast-Forward
+    - if master does not have any changes and feature derived from master
+    
+      git merge feature
+         -> all commits from feature are reflected in master - preserve history
+             - merge moves the HEAD, no additional commit needed
+         => master and feature have the same head
+         
+      git merge --squash feature   
+         -> squash changes from feature branch 
+         -> final changes from feature are set into the staging area
+         -> extra commit if squashed merge is needed 
+    
+  B) Non Fast-Forward
+    - if base of the two branches is not the same (meanwhile new commits were done into master) 
+    - creates additional merge commit
+    
+       git merge --no-ff feature
+         - recursive
+            - most used
+            - by default if changes in master: git merge feature //no need for extra flags
+               - keeps history of commits from features
+               - feature commits above the base from which it was created from (under newer master commits, if no conflicts)
+            - can be squashed   
+               - same as with FF -> prepared in staging area -> needs extra merge commit
+            
+         - octopus
+         - ours
+         - subtree         
+  
+  - most used FF, NFF-recursive
+
+- rebase
+  - if base of the two branches is not the same, we can set new base on the most current commit from master infeature (can create conflicts)
+  - kinda FF merge with less mess in log, but instead of moving HEAD, it creates new commits!!
+  
+  //in feature branch
+  git rebase master
+    - set new base for the current master HEAD
+    - RECOMMITs all commits we have done in feature branch - not just moving head, set new commits on top of the new base
+       -> feature commits are on the top of the master base    
+       -> can create mess for collaboration in public repo (changing hashes = changing history)
+          (No problem if only one person works on he feature, collaboration of more people brings issue)
+
+- conflicts
+   - conflicting changes 
+      - changes on same file in different branches, i.e. renaming variables
+      - conflict needs to be resolved
+      
+      - git status
+         - provides hints
+         
+      - git merge --abort
+         - revert merge  
+         
+      - git log --merge
+         - shows commits which should be merged
+         
+      - git diff
+         - prints conflicts 
+         
+      - when resolved
+         [ git status]
+         - git add .
+         - git commit -m 'merged and resolved'              
+      
+- cherry-pick
+  - copies commits with new IDs
+  - adds on the top of the HEAD of current branch  
+  - can choose specific commit to include in the branch, diff from merge, where we have to take all
+     - create new commit with new commitID -> duplicate commit  
+  - git cherry-pick commit-ID
+     - creates new commit with changes in commit-ID
+  
+- tags
+  - bookmarks in history
+  - lightweight - temporary 
+       - git tag
+          - prints list of tags in current repo
+          
+       - git tag tag-desc commit-Id  
+          - e.g. git tag 1.0 600545653488
+          - lightweight, temporary
+          
+       - git show tag-desc
+          - print detail about the commit
+          
+       - git checkout tag-desc
+          - can be used to checkout commit      
+        
+       - git tag -d tag-desc
+          - removes tag from tag list
+                
+  - annotated - whole object, can contain more info
+       - git tag -a tag-desc -m "latest version"
+          - creates annotated tag on the latest commit in the branch
+          - more info - message, tagger, //depends what we define
+       
+       - same usage as lightweight tags   
+       
+Github
+- development platform
+- cloud hosting for storage - repositories
+- collaboration provider - allows multiple people to collaborate on the project
+
+- Git & Github connection
+    - connect local git with github/remote repo
+       git remote add origin url-of-repository   //origin -> alias of remote, can be named differently, but it is common practice to keep origin
+    
+    - send our commits to the remote
+       git push
+    
+    - receive latest changes from remote    
+       git pull 
+    
+    - create local repo
+      git init
+      
+      //set local config
+      git config user.name "name"
+      git config user.email "e-mail"
+      
+      //set remote
+      git remote add origin "https://github..."
+      
+      //set woke master as main
+      git branch -M main
+      
+      //push local changes, -u sets upstream
+      git push -u origin main //main existing or create new in remote if not existing
+      
+      - get access via personal access token
+         - github/settings/developer settings/generate - can set rights for repo
+         - set for git - can be edited later in the win 'credential manager'
+         
+      git branch -a
+        prints local branch
+        prints 'remote tracking branch'
+        
+      - remote tracking branch is copy of remote branch, it works as local copy of remote
+        -> there is no direct connection between local and remote branch
+        -> it uses 'remote tracking branch' as middle man
+    
+        git branch -r
+          prints remote tracking branches
+        
+        -> edits related to remote (pull/push) are edited via local tracking branches
+      
+      - local tracking branch
+          - simplify interaction with remote - setting the remote -> branch to interact with pull/push
+          -> accepts merges on pull request after fetch into remote-tracking-branch
+              -> pull - call fetch to get updated remote into 'remote tracking branch' 
+              -> merge into local tracking branch 
+          -> accepts merges on push request from local branch
+              -> push - merge local changes to 'remote tracking branch', then push
+              
+        
+      //when commits done an ready for push  
+      git push origin branch-name
+        - creates 'remote-tracking-branch' for branch-name
+        - copies current local branch commits into remote tracking branch
+        - push changes from remote tracking branch to the remote repo (defined by alias ~ usually defined as 'origin')  
+        - if the branch with the 'branch-name' does not exist in remote - created
+      
+      git fetch origin 
+        - updates remote-tracking-branch 
+        
+      - if created 'new-remote-branch' in remote repo
+         -> not visible in remote-tracking-branches
+         -> can get list of branches via:
+              git ls-remote
+         -> git fetch origin              //to copy latest state of remote branches (no merge performed, remote changes not reflected on local)  
+         -> git branch -a                 //lists all 
+         -> git pull origin remote-branch //perform fetch+merge, 
+                                          //remote-branch - branch which should be merged to local after fetching
+              - fetch current state of remote into remote-tracking-branch
+     
+      - local tracking branch 
+         - if creating local branch (diff-name than remote, if using same name => OK)
+         - if want to push 
+              - need setting tracking ~ creating local-tracking 
+          
+         -> git branch --track new-local-branch origin/new-remote-branch 
+              - creates new local branch + local tracking branch
+              ~ git switch -t origin/new-remote-branch
+              
+            git branch -vv      //can show local tracking branches
+             
+            git pull            //with tracking, no need to specify origin+branch
+            git push            //with tracking, no need to specify origin+branch
+    
+    - useful commands:     
+      git remote                           
+        - print all aliases of remote repos (like 'origin')                                     
+      git branch -a 
+        - print all local, local tracking, remote-tracking branches, NOT remote branches  
+      git branch -r 
+        - print all remote branches
+      git remote show origin 
+        - print detail config of remote
+      git branch -vv
+        - print local tracking branches and their remotes    
+      git switch -t origin/feature
+        - switch to the local branch with tracked remote
+      git remote add origin https://oauth2:<your-token>@github.com/FeroHub/github-basics.git  
+        - login to github without relying on auth window
+    
+    - clone     
+      git clone repo-url.git
+        - creates copy of the project even with copy of git conf (branches, remote traking branches etc)
+            
+    - upstream 
+      ~ setting tracking of remote repo, like with --track
+      ~ seting default repo + branch to perform push/pull in current local branch
+         - creates local tracking branches
+      - allows to push and create/change remote
+    
+      - setting defualt upstream
+      git branch --set-upstream-to origin master
+      
+      - setting defualt upstream & push
+      git push -u origin branch
+      git push --set-upstream origin master
+    
+    - delete remote branch
+      - delete local: git branch -D branch-name
+      - delete remote tracking: git branch --delete -- remotes origin/branch-name   
+      - delete remote + tracking remote tracking: git push --delete branch-name  //if remote deleted it deletes remote tracking also   
+      
+    - delete public commit
+      - delete locally
+         git reset --hard HEAD~1 
+         
+         git push --force origin branch-name
+     
+- account types
+   - personal
+      - every user one account
+      - unlimited # public & private repos
+      - unlimited # collaborators
+      
+   - organization
+      - shared account for collaborating users
+      - all from personal account
+      - GitHub Team/Cloud
+      
+   - enterprise     
+      - central management of account
+      - GitHub Enterprise Cloud & GitHub Enterprise Server
+   
+- repository
+    - public - visible for all
+    - private - visible only for owner
+    - internal - for enterprise accounts only]
+    
+    - change from public to private    
+       - repository/settings/danger zone  -> Change repository visibility 
+
+- personal accounts       
+    - commits into public repo
+        - via security token (bad approach - security) 
+           - can limit permissions per token
+    
+           - owner
+           - collaborator   
+               - no need for shared security token
+               -> access to all repos of the selected project
+               -> repo - settings - manage access
+                                         - invate a collaborator
+                                             -> getting push access
+                  
+    - commits into private repo     
+        - if changing on fly from public -> private - preserve existing collaborators
+        - no change for collaborators
+        
+        - collaborators can not have limited read-only access with personal account 
+        - user's settings/moderation settings 
+           - blocked user
+              - ban access for some users
+           - interaction limits
+              - which external users an interact with my repos
+              - applied for all repos owned by account
+              - overrides repo limits
+        - repo's settings/moderation settings
+           - same as user's settings/moderation settings
+           - only per repo
+        - both moderation settings restricts: comments, open issue, create pull request  
+    
+- organization account
+   - adds member role access rights
+   - can be changed to from personal account
+   - or create free org account from scratch (free), accessible from the same git account
+   - repository/settings/member privileges
+                             - can set more restrictive permissions for non-collaborants
+   - add organization member
+       - organization account/people/Invite member
+       - privileges can be edit later
+       - can be converted to "outside" collaborators
+       - privileges set across all repos -> to controll better use 'teams'                       
+   - add "outside" collaborators 
+       - from repo settings, similar to personal account collaborators
+       - can set privileges on invite, but can be changed later
+       
+   - teams
+       - organization account/teams/new team  
+       - set privileges for whole team per repository
+       - feature such as discussion page for team members   
+       - good to double check if there is not clash between 'member privilege' x 'team privilege'
+           -> team restricted, member not => member could push even we do not want to allow
+              => restrict in organization account/people/repository
+              
+- contribution
+   - possible to contribute to the project, even not being collaborator or owner
+   - fork + pull request
+   - fork (to own account) -> clone -> edit code -> commit -> push 
+     -> repo/pull requests/new pull request:
+         select base repo + correct branch <- my fork repo + correct branch            
+           - create pull request
+              - add title
+              - add description
+              
+   - original account will get notification about new pull request
+      - can review changes
+         - comment
+         - approve
+         - request change
+      - close pull request -> reject, optional comment, can be reopened
+      - click on merge - add commit on the top of branch
+                       - do merge  
+                       
+   - once finished, delete fork repo - repo/settings/danger zone/delete
+   
+- issues  
+   - create issue ~ ticket?
+   - title, description, label (bug,invalid, duplicate,...), can be assigned to team member, link to pull request, link to project
+   
+- project
+   - board of progress - kanban  
+   - can manage issues on board
+   
+- readme file
+   - repo - Add readme file
+           # Main Headline
+           ## smaller headline
+           ### even smaller headline
+           
+           - item list
+           - item list
+           
+           ![image label](path/to/image)  
+           
+           [link text](url)
+           
+           `code text`
+           
+           ** bold text ** 
+           
+- create readme for account profile: create new repo with the same name as git account            

@@ -1,0 +1,349 @@
+Unit Testing: Principles, Practices, and Patterns
+- book review: https://www.goodreads.com/book/show/48927138-unit-testing
+
+- enterprise project
+   - long life time
+   - moderate amount of data
+   - complex business logic
+   - performance not so crucial
+   
+- maintaining project
+  - every code change brings disorder - software entropy
+  - no test - fast progress at the beginning
+            - slowing with time up to stop progressing
+  - with tests - improves progress in long term
+               - verify previous functionality not get broken with change
+               - detects regression ~ bugs
+               - but bad tests can lead to decrease of progress as 'no test case'
+              
+- test driven development
+   - A) write failing tests for desired behavior
+     B) write code that make the test pass              
+     C) refactor the code to make it maintainable while keep tests green
+               
+- unit test features
+   - good negative indicator - if writing test is complex -> bad design of prod code 
+                             -> think about more decoupling
+   - bad positive indicator - if writing test is simple -> does not mean a good design
+   - should not be complex to read/understand -> maintain          
+   - typical in AAA sequence (another name given, when, then - same thing)
+       - arrange (~ prepare)           | Given  
+       - act (~ call tested method)    | When
+       - assert (~ verify)             | Then
+   - System Under Test (SUT) - tested class
+   - collaborator - dependency needed for test 
+                  - could be for example DAO, prepared input, etc                     
+               
+- test code x production code
+   - ratio from 1-1, 1-3, to whopping 1-10                               
+   - !!! 'code is not asset but liability' -> more code more space for bugs
+   - test is code too ~ ensure code correctness 
+                      - can have bugs too o_O
+               
+                      
+- coverage metrics
+   - how much code is covered by test suite, 0- 100%
+   - good negative but false positive indicator
+      - more tests does not always mean better ('good test' are crucial)
+   
+   Code coverage ~ test coverage
+      - ratio
+      = number of (production) lines executed by test(s) / total number of production code lines  
+   
+   Branch coverage
+      - ratio
+      = branches traversed by the test(s) / total number of branches
+   
+   - code coverage != branch coverage:
+      - example: void foo(int i) { return i > 0; }
+                 @Test
+                 void testFoo() { foo(2); } 
+                 
+                 code coverage: 100%
+                 branch coverage: 50%
+                 no asserts! : bad test           
+   
+   - coverage does not ensure covering all possible outcomes
+         - we have to assert all changes = ALL possible outcomes
+         - e.g. bad design - state class var changed on return of some property 
+                           - not asserted -> not 'covered' even with 100% code coverage 
+                forgotten asserts
+                
+   - coverage cannot take into account code in external library 
+       - edge cases in library that are hard to find out
+       - should not be our responsibility, but it shows another possible fuckup with relying on coverage only
+       
+   - setting threshold usually contra-productive (lets have 70% -> gaming with assert-free tests - more harm)
+   
+   - good approach: integrate into development cycle - on every change                   
+                    target the most important part of code
+                    adds max value with least maintenance cost             
+ 
+- test dependency
+   - not exclusive some dependencies can be in multiple categories, e.g. Database (DB)
+   - shared 
+       - static variable for state
+       - can be a DB
+       - shared between tests (not prod code)
+   - volatile
+       - either needs:
+           - special config/setup - like DB connection
+           - has non-deterministic behavior - e.g. random number generator     
+   - out-of-process
+       - read only DB, or a new DBcontainer per each test 
+       - file system 
+   - private dependency 
+       -  other class than SUT 
+   - mutable
+       - all shared dependencies, e.g. shared DB
+   - immutable
+       - value objects, e.g. enums, integers, etc.         
+   
+- "test doubles" (= simplified production like objects for testing ~ mocks) for collaborators
+   - mock - test double with observing (verify, number of calls etc.)
+              
+- unit test attributes
+   a) verifies small piece of code (unit)
+   b) does it quickly (subjective)
+   c) does it in isolated manner
+      - but what is the isolation? two approaches:
+        
+      A) classical approach (Detriot) 
+         - test SUT (system under test) = testing unit of behavior (not separate code units)
+         - can test also collaborators (production structures)
+            - can reveal bug in collaborators
+         ! rather isolation of tests (does not matter on order, can be in parallel)
+            - if tests do not influence each other contexts
+               - like shared or out-of-process dependencies (can be mocked, test with shared dependencies can be verified in integration tests)
+            - private dependency is OK to be used
+         - mocks SHARED dependencies   
+            
+      B) mock approach (London)
+         - test on MUT - method under test (SUT - System Under Test = whole class)
+                       - focused on one class
+                       - collaborators mocked - test only interaction with collaborator, not collaborator itself
+                       = testing "unit of code"
+         ! isolation from other classes from the SUT
+         - mocks collaborators 
+             - shared dependencies (e.g. DB)
+             - mutable dependencies (e.g. object changing state)
+         - more bound to implementation details
+             - can hide bad design - harder to workaround in classical approach if test getting complex
+             - hide dependency complexity - classical has bigger push for refactoring to simplify    
+         
+      - both don't need to mock all other IMMUTABLE objects ~ "value object"
+         - valid only for immutable objects (consts/enums, etc) as production structure - no change of state
+ 
+- integration test  
+   - does not full fill at least on of property of unit test
+   - London school can see Detroit school unit tests as integration tests 
+       - does not test unit of code but behavior
+   - if too slow - can bundle some together (especially follow up behavior, that can be initialized by previous result) 
+                 - not always possible 
+   
+- end to end test
+   - subset of integration test - more than 2 dependent resources
+   - from user 'end' (~trigger) to result           
+         
+Unit test
+- repeating / having multiple AAA sections -> smells like integration test
+- avoid branching in test ~ ifs
+                          - keep simple sequence of steps
+                          - keep readability
+                          
+- arrange - probably largest, can use private methods/factory classes
+          - patterns for re-using: mother object
+                                   test data builders
+- act - usually one line of call the tested method
+      - if more lines - rethink what we try to achieve - maybe lack of encapsulation = 'invariant violation'  
+                      - example: purchase + remove from stock - should be done together. otherwise even DB inconsistency                                                            
+- assertion - does not need to be only one
+            - if unit of behavior (not code) - can change more states that should be verified
+            - external library can improve maintainability or even readability (e.g. fluent in C#)
+            
+- split each from AAA with a new line or with comment            
+            
+- fixture - object/resource - file, DB dataset
+          - must be in known fixed state before each test execution    
+          - reusability - for example [static] FACTORY METHODS -> also improves readabilty
+          - avoid instantiate in constructor - losing points on readability
+                                             - until shared in every/most methods - e.g. DB.B connection -> probably better with parent/abstract class
+          
+- avoid coupling between tests - remember isolation condition for unit test?
+                               - e.g. anti-pattern like editing 'fixture' ~ input object value between tests
+
+- naming:
+  tested 'object' - system under test - SUT
+                  - name always as 'sut' ???? bullshit :/   
+   methods - idea to not use name of sut ~ method name  (exception for util methods, thats fine)
+           - allegedly coupling with sut method, rename of the prod method -> rename of the test method (i think thats good, wtf)  
+           - use plain english to be understandable even for non devs (fml, why?) - no rigid rules (ahhhh) 
+           - if used parametrized tests (~ a.k.k.a DataProvider) 
+               - use more generic name - book suggested snake case :/
+               - possibility to split bad/happy path into separate methods -> readability
+               - if too complex logic, maybe better to make one by one method with different names
+
+Pillars of good unit tests
+A) Protection against regressions ~ bugs
+B) Resistance to refactoring
+C) Fast feedback
+D) Maintainability     
+
+
+note: true negative - passing test should be passing (e.g. missed test case or wrong assertion)
+      false negative - passing test should be failing - more severe since beginning
+      true positive - failing test should be failing - 'annoyance' grows with longer project lifetime (resistance to refactor)
+      false positive - failing test should be passing (e.g. refactoring and testing middle steps) 
+
+      test accuracy = number of found bugs / number of false alarms
+
+A) Protection against regressions ~ bugs
+- to rank protection against regression
+   - find the amount of code executed in test ~ kinda more is better, if not forgotten asserts
+   - evaluate complexity of executed code
+   - evaluate code domain significance  - business logic vs boilerplate
+- worthy to check outputs from code not written by us - like library outputs - verify our assumptions (hehe)
+- failing this pillar leads to false negative - test that should fail passing
+
+B) Resistance to refactoring
+- basically that refactoring (code change without change of behavior) will not turn test to red
+- can be false positive - e.g. behavior correct but some assert can not be valid anymore
+                        - when test too bound to impl. details
+                        - can be eliminated if testing only expected result, not intermediate steps          
+- failing this pillar leads to false positive - test that should pass failing   
+
+C) Fast Feedback
+- more difficult with end-to-end tests
+
+D) Maintainability
+- depends on:
+   1) understandability/readability
+   2) how hard is to execute the test
+       - e.g. setting up out of process dependencies  
+
+- hard to maximize all (some pillars are mutual exclusive) - cannot run very fast while cover lot of code - e.g. end-to-end tests
+
+Test concepts
+- pyramid - page 87
+          - bottom - unit tests - biggest amount, fastest
+          - middle - integration - slower, better in finding bugs, but less resistant to refactoring
+          - top - end-to-end - slowest, usually the least amount, most close to user interaction 
+          - depends on context, can get closer to rectangle with only CRUD focused app/service
+- black box - testing without knowing internal structure, based on specification
+            - testing WHAT is the result - behavior
+            - less protection against impl. bugs than white box
+- white box - testing application inner working, based on implementation
+            - testing HOW we got the result - inner steps ~ analyzing the test
+            - less resistant to refactoring ~ false positive than black box 
+            
+Mocks
+- strong opinion if use or not (add test fragility ~ increasing refactoring resistance)
+- test double: mock a) mock - functionality from framework
+                    b) spy - manually created mock
+                    - emulate and examine calls ~  outcome interaction on SUT
+                    - e.g. call to send result to email service
+                    
+               stub a) dummy - just hardocoded value, as input into SUT  
+                    b) stub - 'full' dependency configured to return different values for different scenarios 
+                    c) fake - like stub, to replace dependency which does not exist yet/not implemented           
+                    - emulate income interaction to SUT
+                    - e.g. load from DB
+            
+- do not assert stub results - anti-pattern
+                             - not part of result, but helps to create the result
+- mock and stub can be combined in one object - stub - return test on some condition
+                                              - mock - verify executed action after tested condition
+                                              => called mock if combination
+- CQS - command query separation
+      - good practice
+      - COMMAND - produce side effect - change state of object, file in file system => mocks
+      - QUERY - side effect free - returns data  => stubs
+      - in rel world it can be together (e.g. stack.pop(), but better to keep separated
+      
+Observable behavior, implementation detail, public/private API      
+- Observable behavior
+  - expose operation that helps client to achieve its goal (creates side effect)
+      - operation - calculation or/and     
+  - expose state that helps client to achieve its goal
+      - info about current state
+           
+- Implementation detail                           
+  - everything failing condition for observable behavior
+  
+- bound to public/private API design - observable behavior - public
+                                     - implementation detail - private
+                                     = 'well-designed api'
+                                         - not always possible
+                                     ~ imagine REST API
+- public API - client should call only one operation to achieve the goal, not multiple -> encapsulation (solves invariant violation)                                      
+
+'Hexagonal architecture'
+- separation of: domain layer - business logic
+                 application service - orchestration, e.g. DB interaction, request processing 
+> separation of concerns between business and app services
+> one-way dependency flow - domain classes dependent only between themselves (isolated), not with app services classes
+> app layer communicates with other app layers (different applications), does not have knowledge of other domain layers
+
+- with help of well defined API can help to shape tests - client -> app service layer -> domain                                                         
+                                                                      
+Intra system
+- communication between classes in application
+- implementation details
+- not resistant to refactoring
+
+Inter system            
+- communication between different apps 
+- observable behaviors            
+-> backward compatibility  (still the same interface/API, changed implementation details)
+            
+Unit test styles
+> output based ~ functional (side effect free)
+   - best quality
+   - does not change global or internal state and test only generated output based on input
+   - used by both classics and mockists
+> state based
+   - state of the SUT, or collaborators, or out of process dependency (file/DB) 
+   - preferred by classics
+> communication based  
+   - mocks to verify communication between SUT and its collaborators - e.g. call to mail service   
+   - preferred by mockists
+            
+tl;dr
+- code is liability not asset
+   - every line can bring bug
+   
+- no test 
+   - fast initial state of project
+   - slow to none progress for long running projects
+   
+- having tests 
+   - slower start of the project
+   - relatively good progress with long running projects 
+              
+- based on isolation
+   - Detroit - classic - isolate observable behavior (can be across multiple classes)
+   - London - mockist - isolate class (mock every interaction with other class - not resistant to refactoring)
+
+- complex test - rethink the prod solution design
+
+- tests should:
+   - catch bugs
+   - prepare for refactoring to ensure correctness of new solution 
+   - give fast feedback while stay maintainable
+   
+- dont test impl details (what datatypes used etc.)
+    -> test only expected outcome/behavior not middle steps 
+    -> like API calls give expected result for input without knowing underlying logic (dont assert stubs) 
+        - hide inner logic          
+
+- mock - emulate output interaction from SUT - call email provider
+       - mock can also have some stub calls 
+       - command (CQS)
+  stub - emulate input interaction into SUT - load DB data
+       - dont test stubs/stub calls - implementation detail
+       - query (CQS)
+               
+- unit test styles - output based
+                   - state based
+                   - communication based
+                   - can be used as combination of in single test                                                                                                                                   

@@ -1,0 +1,229 @@
+Maven
+- video: https://www.udemy.com/course/apachemaven
+
+- building tool, IDE independent, easier continuous integration -build, tests,..
+- describes:
+  - how the app is build
+  - what are dependencies
+  - should simplify migration for new features (dependencies/plugins -jars)  
+- described in pom file - Project Object Model
+- can apply inheritance & aggregation
+- build lifecycles - uniform build system
+   - each lifecycle has phases
+- provides test reports - unit, integration, coverage
+- needs internet access (for maven repo Maven Central)   
+- pushes to use best practices, suggest project stucture
+
+Setting
+- env variables M2_HOME & M2 (M2_HOME/bin)
+- set local IDE
+- default maven repo (might need configuration in some IDEs - Eclipse): 
+    USERNAME/.m2
+      - create setting.xml (https://maven.apache.org/settings.html)
+
+Usage
+- archetype - as good start project with default shit
+            - mvn archetype-generate 
+                        -DarchetypeGroupId=org.apache.maven.archetypes 
+                        -DarchetypeArtifactId=maven-archtype-quikstart 
+                        -DarchetypeVersion=1.4
+            - downloads from maven central - official repo
+            - set groupId ~ organization  
+                  artifactId ~ project name
+                  version
+                  package 
+                  
+- std project layout
+     project folder
+        src
+           main
+              java
+              resources
+              webapp
+              config
+              scripts
+              filters
+           test - unit tests
+              java
+              resource
+              filters
+           it - integration test separated from unit tests
+           assembly
+           site   
+        target 
+        
+- pom
+   - inherits all necessary shit from 'super pom'
+      - attributes in project node of xml
+          <project xmlsn=... xmlsn:xsi=... xsi:schemaLocation=...
+   - general project info - name, version
+   - build settings - customize lifecycles, plugins, goals 
+   - build enviroments - dev, test
+   - relationships - modules, submodules 
+   - 'our project pom' + 'super pom' = effective pom         
+   
+   - packaging
+      - by default: jar
+      
+      <packaging>type</packaging>  //jar - lib/app
+                                   //war - web app
+                                   //pom - if has submodules 
+                                   
+- lifecycles
+   clean - clear previous build
+   build/default - builds the project
+   site  - builds project doc 
+   [custom lifecycle - can be created if needed]
+   
+   - can be explored via help plugin: 
+         mvn help:describe -Dcmd=clean //-Dcmd=clean -> clean phase
+    
+   - every lifecycle has phases - executes goals  
+   
+   - clean - pre clean
+             clean
+             post clean
+             
+   - build - many phases (some of them)
+               - compile
+                  - best practice to clean before compile (removes obsolete chunks)
+               - test
+               - package - package compiled sources
+               - integration-test
+               - verify
+               - install - install into loc repo .m2
+               - deploy  - deploy on remote server
+                          
+           - when run with mvn with phase, i.e. mvn compile 
+              - it runs all previous phases also   
+              
+   - site  - builds project doc
+           - needs plugins, such as maven-site-plugin, maven-project-info-reports-plugin
+   
+- plugins
+   - maven.apache.org/plugins/  
+       - core plugins
+           - clean, compiler, failsafe,...
+       - packaging plugins
+           - ear, jar, war, ...    
+       - reporting
+           - checkstyle, javadoc, surefire-report, ...
+       - tools      
+           - help, patch, plugin, ...
+           
+   - can be called via: mvn plugin:goal //calls only goal, not phase -> not caling all previous phases
+        - i.e.: mvn compiler:compile
+                mvn javadoc:javadoc
+                 
+   - configuration
+       pom.xml
+        <project ...>
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>...</groupId>
+          <artifactId>...</artifactId>
+          <version>...</version>
+          
+          <build>
+              <plugins>
+                  <plugin> //define plugin
+                      <groupId>org.apache.maven.plugins</groupId>     //identify by IDs
+                      <artifactId>maven-compiler-plugin</artifactId>
+                      <version>3.6.1</version>                        //and version
+                      <configuration>                                 //set configuration
+                          <verbose>true</verbose>                     //specific values we want to have set
+                      </configuration>
+                      
+                      //we can define when to execute
+                      <executions>                     //i.e. for assembly plugin to create jar package with all dependencies
+                         <execution>
+                            <id>my-name</id>           //my id
+                            <phase>package</phase>     //which phase
+                            <goals>
+                                <goals>single</goals>  //on what goal 
+                            </goals>
+                            
+                            // we can move configuration here if it is related only to the specific execution, 
+                            // otherwise config is common for whole plugin
+                         </execution>
+                      </executions>
+                  </plugin>
+                  
+                  //skip plugins from super pom -> override their phase to 'none'
+                  <plugin>
+                     <groupId>...</groupId> 
+                     <artifactId>...</artifactId>
+                     <version>...</version> 
+                     
+                     <executions>
+                         <execution>
+                             <id>default-plugin-id</id>  //name of plugin we want to exclude
+                             <phase>none</phase>         //set none to not execute default 'behavior', such as packaging into jar file
+                         </execution>
+                     </executions>        
+                  </plugin> 
+              </plugins>
+          </build>
+          
+          ...
+   
+   - mapping phases for simple call: clean, compile, package, install, verify, ...        
+ 
+- properties ~ variables 
+    - if used on multiple places, like version numbers 
+    - called/evaluated via: ${property.name}
+    
+- dependency 
+    - mvnrepository.com
+    - dependency libs
+    - transitive dependency - dependency of dependency 
+                            - can create mess with using diff versions
+                            - classes can be used in project, if not optional
+                            
+    - scope - compile - default, available whole build phase and packaged with app
+            - test    - only for test compilation and test execution
+                      - i.e. unit tests
+            - runtime - required to execute and test, not required during compilation
+                      - i.e. jdbc
+            - provided- if expected to be provided by container/server 
+                      - APIs etc 
+                      ~ available in compile time, but not runtime, has to be provided extra
+            - system  - like provided, but needs explicit path to the JAR on local file system
+                      - not recommended 
+                            
+    <dependencies>
+        <dependency>
+            <groupId></groupId>
+            <artifactId></artifactId>
+            <version>${property.name}</version>
+            <scope></scope>                        //optional, 'compile' by default
+            <optional></optional>                  //true/false 
+                                                   //if true, it will not be used as dependency in our build 
+                                                   //but it will not be used as transitive dependency for project 
+                                                   //dependent on our project
+                                                   //used in frameworks, when we want to let them define choice
+                                                   //i.e. diff UI, interfaces,...
+            <exclusions>
+               <exclusion>                         //exclude dependency, will not be included in our build
+                  <groupId>...                     //can resolve version conflict, or avoid security holes
+                  <artifactId>...                  //but must have replacement  - i.e. slf4j logging api 
+               </exclusion>                        //and providing impl to log4j instead commons.log via
+            </exclusions>                          /jcl-over-slf4j             
+        </dependency>
+        
+        ...
+    </dependencies>                        
+   
+    - print graph of dependency tree: mvn dependency:tree 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+                                                                            

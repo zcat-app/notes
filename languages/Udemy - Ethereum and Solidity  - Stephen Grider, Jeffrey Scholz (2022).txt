@@ -1,0 +1,743 @@
+Ethereum and Solidity
+- Ethereum and Solidity: The Complete Developer's Guide (2022) - Stephen Grider - video: https://www.udemy.com/course/ethereum-and-solidity-the-complete-developers-guide/
+- Advanced Solidity: Yul and Assembly (2022) - Jeffrey Scholz - video: https://www.udemy.com/course/advanced-solidity-yul-and-assembly	
+- Advanced Solidity: Understanding and Optimizing Gas Costs (2022) - Jeffrey Scholz- video: https://www.udemy.com/course/advanced-solidity-understanding-and-optimizing-gas-costs/
+
+pragma - which solidity version is in use
+
+Basic Data Types
+  - string
+  - bool
+  - int  - int8,16,32,...256, default 256
+  - uint - uint8,16,32,...256, default 256
+         - with ints - it is better to do multiplication before dividing - not losing precision
+  
+  - fixed
+  - ufixed
+  - bytes -> array of bytes
+  - address- extra methods inside
+           - address.transfer(wei) // send eth to the address from contract
+           - can be inserted directly in 0x format: 0xae11ec...     
+
+Variables
+- special modifiers
+   - constant
+       - known in compilation time -> more gas efficient
+            uint public constant MY_CONST = 1;
+   - immutable
+       - set once, like java finally -> more gas efficient
+       - usually set in constructor
+            address public immutable i_owner;     
+            
+   - both stores values into the bytecode directly of the contract, not into store slots -> gas efficient
+           
+Global values  
+  msg - object available everywhere - sender + transaction metadata  
+      - msg.sender - sender address
+      - msg.value  - value send
+      - msg.gas    - avail gas                        
+      - msg.data   - data send to contract
+  
+  balance - balance of the contract in wei
+          
+  block - current block data
+        - block.difficulty
+        
+  now - current time      
+  
+Global functions
+  sha3() // hashing
+  keccak256() // hashing alg ~ similar to sha3 (concrete impl of sha3)
+
+Values
+- in wei
+- alias: .01 ether // convert into wei 
+
+- convert
+    - hexa string to int: int(hexashit) 
+    - int to unit: uint(1000);
+    
+Constructor
+- since 0.5.0 -> constructor () {}
+   - before the same name as Contract + public
+   
+Functions
+- public/private - access
+- view/const - dont modify contract, only reads
+- pure - dont modify nor read (log??)
+- payable - expects receiving of funds
+
+- arguments
+   - since 0.5.0 - memory/calldata keyword for string/array/struct
+
+- return
+   - can return multiple values
+     function foo public returns (uint, bool)
+     return (variableA, expressionB)
+
+- modifier
+   - repetitive code, kinda like func, can be set as modifier
+   - example:
+      function foo() public myModifier {
+         //some code
+      }
+   
+      modifier myModifier() {
+         //modifier code
+         //i.e.
+         //require(msg.sender == manager);
+         require(msg.value  == minValue);
+         _;  //placeholder for code of the function which implements modifier 
+      }
+
+- function returning multiple data - specified in (), Go like 
+    //definition of method
+    function fooMulti() public view returns (string memory, string memory) {
+        return (title, description);
+    }
+    
+    //calling method
+    function foo() public view {
+        (a, b) = fooMulti("a", "b");   // read both
+        ( , d) = fooMulti("c", "d");   // read only second returned param
+    }
+    
+- special functions:
+    - do not have 'function' keyword
+    
+    - constructor - java like 
+        - initialization
+        - might call super if it is child
+        
+    - receive
+        - when funds send to the contract  
+               receive() external payable {
+                  //
+               }    
+    
+    - fallback
+         - when contract is called with some data, but not recognized
+         - can be payable, but optional
+               fallback() external [payable] {
+               
+               }           
+       
+Storage/Memory
+- where A) contract stores data OR B) how contract references variables stores data
+- A) storage - holds between function call ~ HDD
+             ~ global variables
+     memory  - temporary ~ RAM
+             ~ function arguments, local variables
+     calldata~ unmodifiable memory        
+  B) storage - variable 'modifier' creates pointer into the 'heap' - to the variable stored in storage
+     memory  - variable 'modifier' creates temporary local copy of variable 
+     
+- arguments by default as memory, but enforcing storage, we can pass 'pointers/references'              
+- newly created objects needs to specify the modified - memory
+
+Complex Data Types
+  Array
+    - static :int[2] myArray;
+    - dynamic:int[] myArray; 
+       ! string is array of arrays -> troubles with JS? array of dynamic array (only for internal usage in solidity?)
+       - myArray.push(element) // adds
+       - myArray[0]            // reads
+       - create new: new int[](0) // new dynamic array with initial size 0
+       - to reset the array -> create new 
+             array = new int[](0);
+         
+  Mapping 
+    - C like, hashmap
+    - keys not stored 
+         -> hashing and assigned to index -> can not get key value, but can verify it is in the map based on provided key
+         -> if map does not contain key, returns default value (or null/undefined)
+    - values are not iterable
+    - mapping(address => bool) public users;
+      //users[key] = value //adding
+      users[msg.address] = true;
+    - no need to init in constructor (if we do not want to)
+    
+      
+  Structs
+    - C like
+    - create object:
+        MyStruct {
+          string desc;
+          unit value;
+          address myAddress;
+          bool success;
+        }
+        
+        function createObject(string desc, uint value, address myAddress) public {
+            MyStruct memory struct = MyStruct({     //has to specify modifier, only memory is possible here (not creating pointer)
+                desc: desc,
+                value : value,
+                myAddress: myAddress,
+                success : false
+            });
+           
+            // simplified syntax -> preserve order from definition
+            MyStruct struct = MyStruct(desc,value,myAddress,false);
+        }
+
+Library ~ java class with internal functions only
+  - special structure
+  - can not have state variables
+  - cannot accept funds  
+  - functions has to be 'internal'
+  - needs to be imported into contract file
+  - can be used for receiver functions
+   
+      //SPDX-License-Identifier: MIT
+      pragma solidity ^0.8.0;
+      
+      library MyLibrary {
+          //.. contract code
+          
+          function foo() view internal returns (uint) {
+             //do smth
+          }
+          
+          //can implement receiver functions  
+          function foo_receive(uint param) view internal returns (uint) {
+              return param + 1;
+          }
+      }
+      
+Contract ~ java class
+  - state variable ~ global variable
+  - every change of the state variable -> gas fees
+  - keyword contract
+  
+      //SPDX-License-Identifier: MIT
+      pragma solidity ^0.8.0;
+      
+      contract MyContract {
+          uint public number;
+          
+          //.. contract code
+          
+          function using_receiver(uint param) {
+              number = param.foo_receive();   //same as foo_receive(param)
+          }
+      } 
+
+Inheritance
+- extends -> is
+- to override parent method mus be virtual
+- overriding method needs override keyword
+ 
+    contract Parent {   
+       function foo() public virtual {   
+       }  
+    }
+          
+    contract Child is Parent {
+      function foo() public override {
+      }  
+    }
+
+   
+Flow control
+- require
+    - evaluate bool expression - if fail, function is execution reverted: 
+                                     a) no further processing 
+                                     b) returns state of contract to the state before calling it (state variables change reverted) 
+                                     c) returns unused gas to calling user/contract  
+    - require(msg.sender == creator)
+      require(msg.value  >= minThreshold) 
+
+Custom errors
+- since 0.8.4
+- require(condition, "Error description")
+    - revert the execution
+    - return error description -> eat lot of gas -> custom error more efficient
+    
+        error MyError;  //before contract
+        
+        contract MyContract {
+            function foo() public {
+               if(true) {
+                  revert MyError();
+               } 
+            }
+        }
+    
+
+For loop
+- as usual ~ java like
+    for (uint i=0; i<10; ++i) {
+    
+    }
+
+While loop
+- as usual ~ java like
+    uint j;
+    while (j < 10) {
+          j++;
+    }  
+
+Math in solidity
+- preferred to use ints
+- since v0.8.0 - no need of SafeMath lib from OpenZepelin 
+               - all math is done in checked {} block - compiler level 
+               - can be turned off for gas optimization:
+                    unchecked { a = a + 1; }
+
+Sending funds from contract
+3 options:
+  - transfer
+       payable(address).transfer(address(this).balance); //revert on fail - throws exception
+       
+  - send
+       bool success = payable(address).send(address(this).balance); //return boolean, need additional require(success) to revert
+       
+  - call ~ recommended together with re-entrancy guard
+       (bool success, bytes memory data) = payable(address).call{value: address(this).balance}(""); //return boolean, need additional require(success) to revert
+     
+External tools
+- OpenZeppelin
+  - feeless meta-transactions
+  - defender-automatization 
+
+- Chainlink 
+  - automatization - triggers event
+  - external data - i.e. access to web2 APIs
+  - VRF for random numbers
+  
+  - needs LINK tokens to pay for query
+  - import into contract via:
+       //import from github repo
+       import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+       
+       - need ABI to interact with chainlink contracts
+       - need address (specific to the network, different on eth than xdai) - i.e. pricefeed
+  
+Attacks
+ - re-entrancy
+    - malicious contract calls vulnerable contract again before changing its state
+    - happen when state of contract is changed after external call
+         - can trigger fallback function of malicious contract - which can call again original contract with unchanged state   
+    - defense:
+         - mutex modifier - lock the state variable before calling other contract
+                          - careful with unlocking - contract can end in deadlock if not unlocked
+                                                   - bad practice to have lock() an unlock() - if attacker triggers lock without unlock -> deadlock
+         - change state of the contract before calling external contract 
+          
+    - cases: 
+         - single function - vulnerable call is in the same function as change of state
+         - cross-function - vulnerable call is in different function - change state before call or mutex
+            
+      
+Testing:
+- js, async calls  await/promises
+- web3.js 
+  - web3.utils.toWei(ethToWei) 
+- mocha lib
+  - provider ganache
+- compile.js
+- deploy.js
+   - provider ganache/testnet   
+- assert.ok
+        .equals
+- try-catch
+   - can catch async exception
+       - try {
+           // some call
+           assert(false); // should before fail, if not rise assert exception
+         }
+         catch(exception) {
+            require.ok(exception); // expected to fail -> successful test
+         } 
+- structure
+  
+  beforeEach(async () => {
+     //repeating init before each 'it'   
+  })
+  
+  describe('Test Ganache', () => {
+    it('deploy contract', () => {
+        assert.ok(inboxContract.options.address); // if contract address is defined   
+    });
+    it...
+  }); 
+         
+- Interacting
+  - hijack provider from metamask for stability into own instance of web3 for frontend
+     - to access to its keys, hijack:  export web3 = new Web3(window.web3.currentProvider)
+  - to interact with contract we need: contract address
+                                       abi
+                                       local instance of contract - new web3.Contract(contract address, abi)
+  - web3
+     - contract.methods.methodName.send({from: accounts[0], value: 'wei'}); // web3.utils.fromWei('10', 'ether')
+                                  .call() //get data, no change                                    
+  - react:
+      - constructor, or just : state = { /*properties*/ }, 
+      - getting properties vie destructurializating {prop1, prop2}    
+      - componentDidMount() - lifecycle method, after component is rendered
+             - can be set as async for await calls
+
+  - write data in react - everything with state, setting with setState()
+                        - kotlin-ish <p>bla bla {js shit} </p> 
+                        - {web3.utils.fromWei(state.balance,'ether')}  
+                                                           
+  - onSubmit = async(event) => {
+        event.preventDefault();
+        //get accounts
+        const accounts = await web3.eth.getAccounts(); 
+        //sending tx
+        await contract.methods.enterTheGame.send({    
+             account: accounts[0],
+             value: web3.utils.toWei(this.state.value, 'ether')
+        });
+    }
+    
+  - [result] = array //picks first element from array
+  
+  - React -> Next.js framework for react, multipages and navigation, + ...
+          - npm install next react react-dom  
+             - folder 'pages' - all components (with the same navigation~path extension for url) 
+                              - index.js - root pake
+                              - about.js - /about page
+                              - every component has to export itself (class(with render())/function implementation)
+          - if user does not have metamask - we can render the page on server side to prevent empty page
+          - UI - semantic-UI, material-UI
+          - getInitilProps -> to load for next server
+- yam
+   - assembly
+      - example:
+        function foo(uint index) external view returns (uint256){
+           uint value;
+           assembly {
+              value = sload(index); 
+           } 
+           returns value;
+        }  
+                  
+  - contract call
+      - create space for hashing functions
+      - pointer to currently allocated memory - used so far by solidity
+      - slot 0 pointer 
+         -> eats 9 gas no matter what
+         -> each mstore function 3 gas - 3 used slots
+      
+      - checks if function is called - 4Bytes
+      - if not -> jump and revert
+           yes -> checks function descriptions
+                    ->jump to the function execution  
+                    
+      - fee for permanent storing added (one time)                
+   
+   - where to aim:
+       - smaller contract -> less gas
+       - cheaper opcodes
+       - zero bytes cost less to store -> more non zero values more gas
+       - more memory allocated more gas (even not used)
+       - reduce storage           
+       
+   - payable x nonpayable
+       - nonpayable functions check if you sent some ether. if so, it reverts -> extra check => + 20 gas    
+   - unchecked block
+       - since 8.0.0 added overflow control
+       - unchecked block ignore it 
+       unchecked {
+          a = a + 1;
+       }
+         
+   - block.basefee since 0.8.7, roughly +/- 12% if block is full/empty 
+   - optimizer -> optimize execution over deployment with more runs 'runned'
+   - storage
+       - setting zero to nonzero    -> 20,000
+                 nonzero to nonzero -> 5,000
+                 nonzero to zero    -> refund
+       - first access to variable in tx -> 2,100
+       - additional access to variable  -> 100 each    
+       
+       - write nonzero to zero = 20000 + 2100       //write + cold access
+         write nonzero and read= 2100 + 20000 + 100 //read + cold access + warm access
+       - storage gas is not saved with smaller ints (8,16,...) all works as 256bit ~ 32 bits
+       - assigning the same value -> if we do not expect change, we can safe by read and extra if and skip assigning
+       - count down instead of up -> reach zero -> gas refund (up to 4,800 if condition met - if 4,800 < 20% of whole tx gas)
+       - setting to zero can be costly, good to combine with some other steps to increase chance for refund from reset               
+       - structs - calls all necessary for inner members
+                 - 
+       - variable packing - using same memory slot for datatypes which does not cover 32B, i.e. 2 uint128, int32+bool etc
+                          - keeps offset in 32B to tract position (masking bits)
+                          - can reduce access to slot gas cost if changing bot values
+                          -> single access is more costly due to masking, pay off to manage these variables together    
+       - array -> for loop, cache length into local variable -> every length access is 100 gas cost (for dynamic arrays)
+               -> for static, length is know and compiler will take care about cache and not going into storage  
+               - length limited by block size - up to 30M gas
+               - good to allocate array once before for loop - maybe rewrite + change non-zero - zero for refund? depends
+    - memory 
+         - calldata vs memory
+            - memory argument function needs to copy calldata into memory for next usage
+                -> good for manipulation with data
+                -> calldata is read only! cannot be changed
+  - tips
+     - function name matter -> hash and sorted hexadec. -> when calling, we need to find the hash 
+          -> tests all hashes against call (22gas per test)
+          -> heaviest function should be first              
+     - comparing <,> are cheaper than <= or >= (needs to run one more opcode): x<y - LT, x<=y LT, IS_ZERO ~ !(x>y)  
+     - multiplying by 2 - bit shift: n << 1 => n*2  -> safe 2 gas
+     - dividing by 2 - bit shift: n >> 1 => n/2 => safe 5 gas 
+     - revert/require -> refund unused gas
+       revert due to not enough gas -> rekt 
+       revert set contract to the state before call -> no change   
+     - logic expression -> lighter on gas evaluate first in case of || -> heavier will be skipped 
+     - metamask precalculates expected execution - can warn if it expect fail   
+     
+- yul
+   - one type only 32Byte word (256bit)
+   - does not use semicolon 
+   - simple level of abstraction over assembly (e.g. for loops) 
+   - keyword 'assembly' and block {} :
+       function foo(uint index) external pure returns (uint256){
+           uint value;
+           assembly {
+              value := 42 
+           } 
+           returns value;
+        }
+   - numbers on stack no need for extra stuff
+   - string in memory ~ kinda heap  - fail, variable is pointer to the heap
+        function foo(uint index) external pure returns (string memory){
+           string value;
+           assembly {
+              value := "hi" //assigning value to the pointer 
+           } 
+           returns value;
+        }                      
+       
+       => need to use bytes32 type: 
+        function foo(uint index) external pure returns (bytes32){
+           bytes32 value;
+           assembly {
+              value := "hi" 
+           } 
+           returns value;  //returns byte array
+           // return string(abi.encode(value)); //returns string - function return type must be changed to string memory
+        }    
+    - basic operation:
+        let x := add(div(x, 2), 2) //! x/2 + 2
+      
+    - for loop
+        for {declaration} (condition) {increment}
+        {
+           //body
+        }
+        
+        for {let i := 2} (lt(i, 8) {i:= add(i, 1)}
+        {
+           if (iszero(mod(x, i)) {
+              value := 1
+              break
+           }
+        }  
+     
+     - booleans - no booleans, if value is 0 then false
+                - iszero(0) -> true    
+                         x  -> false, if x != 0
+                - not(0) - negate all bits in 32 Byte word          
+     
+     - if statement does not have else
+          if lt(x,y) { max := y}
+          if iszero(lt(x,y)) { max := x }  
+     
+     - bits: and() ~ &&, or() ~ ||, xor() ~ ^
+     - num : add() ~ +, sub() ~ -, div() ~ /, mul() ~ *, mod() ~ %  //yul does not offer overflow protection, solidity does
+             shr(b, a) ~ a >> b, shl(b, a) ~ a << b   
+     - switch - similar to other languages, no need for break -> no fall through  
+              - switch var 
+                  case 0x01 {
+                  
+                  }
+                  case 0x02 {
+                  
+                  }
+                  default {
+                  
+                  }
+     - can have functions
+          - argument 32Byte value
+          - return -> returns from yul (like solidity return from function) not into yul workflow 
+            ...
+            function returnUin(v) {
+                mstore(0, v)
+                return(0, 0x20)
+            }           
+            .... 
+          - to rueturn value - named variable in function definition
+            function foo() -> ret {    
+                if something {
+                  ret := 1
+                  leave // no elses, stop executing an return into yul code with value 1
+                        // kinda return but in yul 
+                }
+                ret := 0 //something == false, returns 0
+            }
+                      
+     - memory variables
+        - can not set/access directly 
+        - access via slot and offsets
+        - dangerous, can write into arbitrary location (which is not connected to any variable)
+             - but still available to read from :D 
+        - slots stores 256bits  -> using uint128 variables can ends up storing 2 values in one memory slot!
+            uint128 a; //slot 0
+            uint128 b; //slot 0 with 128b offset
+                           
+            contract ContractName {
+              uint256 variable
+              
+              function get() external view returns (uint256 x) {
+                  assembly {
+                     x:= sload(x.slot)
+                  }                                                
+              }
+            
+              function set(unitn256 slot, unitn256 val) external {
+                  assembly {
+                    sstore(slot, x)
+                  }                                                
+              }
+            
+            }
+        - offset - sets offset in slot for datatype in Bytes ~ how many Bytes to the left we need to shift              
+              assembly {
+                  offset := variableName.offset
+              }        
+                 - to get value we need to shift by number of bits (offset in bytes -> *8)
+                 - some might use division for shifting, but it is more expensive than bit shift
+                 let shifted := shr(mul(variable.offset, 8), value) //shr bit shift, 
+                 - than masking might be needed (not necessary if we choose right datatype such as uint8 instead of uint256 which might keep variable from higher offset)
+                 result := and(0xffff, shifted) 
+     - sstore stores only 32B words, if offset, special masking and bit shifting must be applied to avoid corruption of other variables on the same slot         
+         - mask and delete given bits                               and(originialValue, ..ffff000000ffff..)
+         - set the value and shift to dedicated bits                shr(mul(variable.offset, 8), value)         
+         - 'join' new value with deleted, while keep other variables or(cleared, newAndShifted)
+         - save/update the slot                                     sstore(slot, joinedValue)  
+     
+     - arrays - slots - fixed arrays are known -> no problem, like regular variables
+                      - dynamic arrays - get slot as usual
+                                               assembly {
+                                                   slot := myArray.slot
+                                               }    
+                                        - to get location in memmory we need to use solidity build in keccak256 and abi.encode 
+                                               //location ~ length of the array
+                                               keccak256(abi.encode(slot))         
+                                        - to load the array element, accessed via index
+                                               assembly {
+                                                  ret := sload(add(location, index)
+                                               }
+     - mapping - similar to array, to get location we need to hash slot and key 
+                                        - get slot as usual
+                                               assembly {
+                                                   slot := myArray.slot
+                                               }    
+                                        - to get location in memory we need to use solidity build in keccak256 and abi.encode 
+                                               keccak256(abi.encode(mappingKey, slot))         
+                                        - to load the array element, accessed via index
+                                               assembly {
+                                                  ret := sload(add(location))
+                                               }   
+               - nested mapping - hashes of hashes 
+                                        - keccak256(abi.encode(secondMappingKey, keccak256(abi.encode(firstMappingKey, slot)) )) 
+                                            //~ mapping[firstMappingKey][secondMappingKey]
+               - mapping for arrays - concate keyand arraySlot
+                                    - array location : 
+                                            keccak256(abi.encode(key, uint256(slot))
+                                    - array element - wrap location and add index
+                                            let location := keccak256(abi.encode(keccak256(abi.encode(key, uint256(slot))))
+                                            sload(add(location, index)
+     
+     - memory - ~ heap
+              - 32 Byte sequences
+              - 4 instructions: mload(slot), 
+                                mstore(byteInMemory, value),  //overrides all 32bytes from address
+                                mstore8(byteInMemory, value), //override 1 Byte from address (only one Byte block)
+                                msize() //largest accessed memory index (Byte)   
+              - used for return/set/get values to/from external contracts
+                         revert with string error
+                         log messages
+                         creating other contracts
+                         using keccak256 hash function 
+              - block allows only 30M of gas - protection from exploit of storage on nodes 
+              - solidity reserves 0x00-0x40 scratch space
+                                  0x40-0x60 free memory pointer
+                                  0x60-0x80 empty
+                                  0x80-x usable by contract 
+              - using struct/array as expected, e.g. more single variables
+              - api.encode() - 32Bytes for number of parameters (~number of Bytes), then 32Byte per argument
+                             - if arguments is lower than 256bit -> extend to 256
+              - api.encodePacked - tries to keep short -> does not extend to 32B words, keeps datatype length
+                                 - 32Bytes for number of parameters (~number of Bytes), then N-Byte per argument - depends on datatype
+              - solidity: enforces keyword 'memory' for structs and arrays
+                          abi.encode/encodePacked  
+              - to read array in yul - skip first 32 Bytes (length info) to access first element
+              - data in memory are unpacked (kept as 32Byte), while storage tries to pack/fit smaller datatypes to the same slot
+              - return more than 32B words
+                  assembly {
+                     mstore(0x00, 2)
+                     mstore(0x20, 4)
+                     return (0x00, 0x40)  //return range of the bytes in memory
+                  }
+              - revert should specify range same as the return
+                  assembly {
+                     if iszero(x) { //more efficient than require
+                        revert (0, 0)  //still can return value, equals to require() -> if test + revert
+                     }
+                  }  
+              - keccak256 in yul -> keccak256(freeMemoryPointer, howManyBytes) : keccak256(mload(0x40), 0x60) //3Bytes   
+              - non-indexed arguments for log - in yul needed to put in the memory
+                   log2(       0,      0, signature, val)     //all indexed
+                   //    memStart  memEnd
+                
+                   mstore(0x00, 1)                            //store non-indexed argument into memory
+                   log2(       0,   0x20, signature)          //non-indexed has memory range
+                   //   memStart  memEnd  
+                  
+      - call data: from - tx.origin/origin(), 
+                   to, 
+                   amount - msg.value/callvalue, 
+                   gasPrice - gasprice, 
+                   data - tx.data/calldata()
+                        - can have arbitrary length
+                                
+                   tx to the smart contract - first 4 Bytes specify function selector, 
+                                            - then abi encoded arguments of function, solidity expect 32Bytes multiplie as arguments 
+                                            - solidity returns only size specified in definition, yul can handle different sizes
+                                            - calls between contracts in yul - dev has to keep conventions of to be able to communicate (descriptor, arguments, etc for abi)
+                                            - staticcall - from view function, not changing status
+                                                         (gas(),             addressOfContract,                      28,                       32,                             0x00, 0x20)
+                                                          //remaining gas                           from where read data   how much data in Bytes     memory range where result is stored
+                                            - call - needs to specify how much ether you want to pass to other contract
+                                            - delegatecall
+                                            - if we do not know size of return data 
+                                               -> returndatacopy(slotOf Contract, fromMemory, returndatasize()) - copy returned data with returndatasize 
+                                                  returndatasize() - size of returned data
+                                            - selfbalance() - yul function to get contract balance       
+                                            - calldatasize()
+                                            - calldataload(n-th 32B word) -> loads 32Byte word
+                                                                          -> can map function selector to take 4Bytes (bitshift) and decide what to do/call based on hash of function selector
+                                                                              - e.g. impl of interface in yul                    
+      - dynamic length arguments - arrays keep length, structs just go in other memory area -> less gas (if fix length) 
+      - full yul contract:
+            - need to set yul compiler in remix
+            - code:
+            
+            object "name" {
+              
+                code {                                                  //constructor
+                   datacopy(0, dataoffset("name2"), datasize("name2")
+                   return(0, datasize("name2")
+                }
+            
+                object "name2" {                                        //function of contract, does not matter the name if called from the outside, just execute
+                
+                    code {
+                        mstore(0, 2)
+                        return(0, 0x20) 
+                    }
+                
+                }
+            }                                                                                                                                

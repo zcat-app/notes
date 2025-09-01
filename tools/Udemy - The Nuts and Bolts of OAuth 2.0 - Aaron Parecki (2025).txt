@@ -1,0 +1,311 @@
+OAuth
+- video: https://www.udemy.com/course/oauth-2-simplified
+
+Need to log in through existing service
+- i.e sing in by google
+- old approach - need to insert email and email password 
+               - sucks - need to share the password with other services 
+- search for the right solution - google, flickr, facebook, yahho 
+    - custom solutions how to not 'share' the password
+       - security threat, no power on revoking - only changing password (everywhere)
+       - hard to distinguish app/user connecting to API  
+    - => OAuth1 - drawbacks with mobile phones and API keys
+      => OAuth2 - bearer tokens
+ 
+OAuth 
+- separation authentization and app/api server ->  so called delegated authorization protocol
+- authentization for token to be used in app/API server
+- easier scaling with additional MFA - add to authorization server - all apps/APIs get it for free+
+- oauth 'does not need to know who is the user;, just knows it can use app/API  ~ kinda hotel card with access to your room
+- issues access token to apps - no need to parse, just verify it is valid
+
+OpenID
+- OAuth extention with user data on the top - knows who the user is
+- designed as  single-sign-on protocol on top of OAuth
+ - issues ID token to apps  
+ 
+OAuth roles
+- user ~ resource owner
+- device ~ user agent
+- application ~  OAuth client
+- API ~ resource server
+- authorization server - issuing access token
+
+- always send password to authorization server, never to app (uses token, maybe in cookie)
+
+OAuth Clients
+- public 
+  - no credential (!should not have any secrete - on client side - extractable)
+  
+- confidential
+  - has credentials (some secret) - api key, or password - not so secured
+                                  - public/private key - more secured (mutual TLS or private key JWT)
+  - backend servers without user access
+  
+User Consent - app asks for consent to use some permisssions/access
+             - consent window - to verify (defense agains reply attack) user is present
+                              - goes to authorization server to verify himself ~ 'redirect flow'   
+             - with integration of MFA (multi factor authentization) - easy to enforce on 'authorization' server - all apps/clients get it for free
+             - first party apps or backend apps skip consent   
+             
+Flows
+- Front channel
+  - NO DIRECT connection between sender and recipient
+  - like using browser address bar - browser ensures the communication ~ middleman
+  
+- Back channel
+ - client to server - https, encrypted, DIRECT connection
+                    - known counterparties (who talks to who) 
+                    - certificate for verification  
+                    - used as javascript async/fetch calls instead using browser address bar    
+                    
+- implicit flow - ask for token and delivering it on front channel - obsolete and not recommended
+                                                                   - user cannot be sure how the request arrived to the server
+                                                                   - server cannot be sure how the respond arrived to the user
+                                                                   - originally only solution until browsers started supporting CORS, then became obsolete
+                                                                   
+- authorization code flow - app get time limited auhtorization code via front channel - redirecting
+                          - then prove itself with code via backchannel - secure
+                          - PKCE [read pix'i] - Proof Key for Code Execution  
+                                              - generates a unique and uses secret at the start of the flow
+                                              - uses the secret when redeeming the token - proving it was the app which started the flow, but not if the app is the one which it claims to be -> redirect URI
+                          - application identity - redirect URI - unique url which I (the app owner) have to be in control 
+                                                                - not perfect but only solution nowadays (especially for public clients like single page app or mobile app)   
+                                                               
+- register application
+   - google/twitter/etc server to register your app 
+   - usually need to insert: app id
+                             redirect url  (some prevents wildcards - another security issue)
+                             [T&C. logo, description] 
+   - receive: client id
+              client secret (optional)
+                                                                                   
+Authorization code flow with PKCE on server 
+- client genereates a unique and uses secret at the start of the flow (PKCE code verifier)
+- client hash the secret and send to the server for later verification (PKCE code challenge)
+- client goes to the OAuth server with the hash to log in 
+- OAuth server verifies, show consent and return with temporary (and one time use) code on registered URI/URL (usually limited to 1 minute)  - all in front channel still
+- client send the unique secret generated at the first step, temporary code and secret (if server) in back channel via POST -> safer
+- server verifies the temporary code, unique secret and secret of client (if server) and if good - issues access token 
+- part of response can be refresh token - simplifies obtaining of the new valid access token process when access token expires 
+ 
+ 
+- authorization code injection - PKCE as solution to it - recommended even for confidential clients
+      
+Authorization code flow with PKCE on mobile
+- cannot use secret - could be extracted on client side
+- trying to solve with redirect URI: custom domain - not registered anywhere - apps could fight for duplicate URI
+                                     url pattern ~ 'deep linking' of URI (used when i.e. inserted app url into browser and opens app like Twitter)
+                                                 - app developer has to prove he owns domain name - more secure but not perfect (we rely on browser)
+- old days suffered from using native browser to switch from native app or using embedded webview 
+     - do not share cookies with system
+     - app could sniff passwords - full control over webview
+     - solution: run isolated browser inside of the app, app cannot manipulate content and we can get the authentication in app like fashion - Chrome Custom Tabs or SafariViewCotroller                                                 
+      
+ 
+- client generates a unique and uses secret at the start of the flow (PKCE code verifier)
+- client hash the secret and send to the server for later verification (PKCE code challenge)
+- client asks browser to go to the OAuth server with the hash to log in (in app browser shares cookies with native browser - logged in one is logged in other)
+- OAuth server verifies credentials, show consent and return with temporary (and one time use) code on registered URI/URL (usually limited to 1 minute)
+- client opens redirect URI in browser which is passed to the app 
+- client can send the unique secret generated at the first step, temporary code and secret (if server) in backchannel via POST - safe
+- server verifies the temporary code, unique secret and secret of client (if server) and if good - issues access token 
+- part of response can be refresh token - simplifies obtaining of the new valid access token process when access token expires  
+
+- refresh token - remove need to go through whole cycle - Custom Tabs pop ups
+                - depends on implementation of OAuth server - can be issued with access token
+                                                            - or might need extra call
+                - scope=offline_access - query string param                                                                   
+                - hijack could be dangerous - should be used carefully - keystore -> unlock on finger print/ face verification - no need to CustomTab popup
+      
+Authorization code flow with PKCE on single page-app
+-browser can bring troubles
+   - cannot include secret on client side (would be revealed) -> PKCE 
+   - problem of XSS - cross site script attack - executing unwanted code in app - could hijack access token 
+                    - need to have a good content security policy - limit sources/endpoints from where I can load javascript
+                    - sometimes it is  all fucked thanks to browser extensions injecting their own shit into the webpage
+   - does not have secure storage (cookie, session, local? all accessible to JS) - to preserve secret or refresh token
+   -> limitations on token (refresh only one usage, access - shorter lifetime, etc)                     
+- does not use secret because there is no way how to manage securely
+- client generates a unique and uses secret at the start of the flow (PKCE code verifier) - client will send the hash to the server for later verification (PKCE code challenge) 
+- client hashes of the unique secret and asks browser to go to the OAuth server with the hash in query string (with clientId and redirect url) to log in
+- OAuth server verifies credentials, show consent and return with temporary (and one time use) code in query string on registered redirect URL (usually limited to 1 minute and 1 redeem)
+- client can send the unique secret generated at the first step, temporary code in backchannel via POST - 'safe'
+    - if different domain then where app is running - adapt CORS headers
+- server verifies the temporary code and unique secret and secret of client - issues access token 
+    
+- where to store token? Local Storage - accessible through browser API, 
+                                      - storage across sessions (~ kinda persistent for JS apps)  
+                                      - persisted even on close browser, shared between tabs with the same page open - domain restricted (each domain gets its own 'room')
+                        Session Storage - accessible through browser API,                  
+                                        - limited per session (when the browser window is 'open') ~ survive redirrections/refreshes, not closing   
+                                        - not shared across tabs
+                        Cookie - older storage, not meant for app storage -> originally sent with every request to the server as part of request                 
+    
+    - all accessible from JS -> if XSS attack - it can take it - looks like coming from the same domain (injected into our page)
+    
+    - solutions: 1) keep tokens in memory - harder for XSS
+                                          - but not shareable between tabs, or on refresh
+                 2) service worker - storage of service worker is isolated from the storage of the browser window                                          
+                                   - complicated, whole app needs to use service worker as 'OAuth middle man' 
+                                   - app is not calling directly OAuth (or later API) directly but through service worker
+                                   - does not work on some IEs
+                                   - attacker cannot steal the token, but could convince service worker to call API
+                 3) webcrypto API - not available in IE or Safari,
+                                  - workaround to encrypt access token with generated PK
+                                  - attacker cannot extract but might decrypt - not perfect but increase effort of attacker
+                 -> better to avoid to save in JS at all -> use backend to proxy all OAuth/API calls, backend is king bitches!                                                    
+    
+Authorization code flow with PKCE on IoT
+- no browser, some times even no keyboard
+- idea to split the device which we try to authorize with device on which we do the authorization - different flow
+- example: netflix TV provides some code which is then used on phone to verify
+- user open app on TV -
+- client (TV) asks OAuth server to log in
+- OAuth server returns URL and unique code with some lifetime, URL to verify user, and pooling interval (how often to check if authorized)
+- client shows info on screen and waiting on other device to do login (visiting provided URL) + entering the code
+- another client (mobile) performs the login and approves the device ID to access the app
+- client (TV) is pooling (~heart-beating) server if the code was verified, once applied the TV get access token and user can happily watching
+- leverages usage of reresh token - better UX
+
+Client credentials Flow
+- client credentials grant - no user involved 
+- server takes own credentials and go to 'authorize' iteslf directly
+- mostly machine to machine communiocation - backend calls microservice
+- idea to siplify process to not pass credentials every time but use access tokens, which are most likely used by users from outisde too
+- might not have refresh token - simplification if user is present- machine to machine can authorize itself (simplified flow)
+
+OpenID Connect
+- extension of OAuth - access to API
+                     - no info about user        
+- openID - provides access to info about user
+         - info is used/read on app server 
+         - issues ID token - JSON Web Token - JWT (sometimes used for access tokens too, but access token does not have strict definition -> can be anything)
+                                            - 3 parts: header - id of the key for signing (not key itself, stored on authorizing server)
+                                                                   - if rotating keys
+                                                                   - if not it can be empty - use only one key
+                                                              - alg for signing (i.g. rs256)
+                                                       payload - data - params like userID (+ userdata, i.e. email), authorization server url, expiration time, etc..
+                                                       signature - for verification
+                                            - base64 encoded - if decoded -> plain string JSON     
+Getting ID token
+- ID token can be obtained together with access token in one response (request needs to define openID scope)  - simple, no need for extra verification
+- can ask only opneID token without access token - then verification of signature is important!
+    - this flow is similar to implicit - not so safe - returns only userID - for more, it has to be defined in scope parameter of request (scope - one of params defined in spec)
+    - if sensitive data needed- use authorization flow and backchannel rather than expose user data
+
+- hybrid response: returns access and openID: response: code, scope open-id - returned through back channel - safe, recommended
+                   if defined as parameter response: code+id_toke - id token returned through front channel on redirect, need to verify!
+                   older response parameter: token - obsolete - returns tokens in front channel - not secure, avoid                                                     
+         
+- validation - 1. signature of JWT - verifies nothing was changed
+               2. check issuer - my authorization server?
+               3. check aud parameter = audience - usually app ID
+               4. timestamps iat - issued at
+                             exp - expire at
+               5. check nonce used as nonce in request - to match request-response in the cycle
+     - then we could 'trust' the jwt, use user info: sub - subject - userId
+                                                     amr - authentication method - password,2FA
+                                                     auth_time - when logged/authorized -> might want to limit lifetime on app server, depends on app
+     - verficiation is not needed if authorization flow applied - protected by PKCE and clear it came from server at one go                                                     
+
+- revalidation - if token accepted fomr 'outside world' (= not auth server) - passed between app servers, 
+               - or stored in unsecured location - e.g. cookie
+
+Access Token Types
+- reference token - string referencing somewhere else - like key in DB, or in redis db etc
+                  + simple
+                  + easy to revoke access - just adapt DB
+                  + hides data about token
+                  - has to be stored - to get info about, can grow rapidly
+                  - network for validation needed - app/API has to talk with storage of tokens - issue with scaling, more DB/APIs instances 
+                                    
+- structured token/self-encoded - contain some data in some format, i.e. JWT and encoded base64 to string
+                                - mostly used as JWT
+                                + does not need to be stored -> no need to accss DB for validation
+                                + good when relying on 3rd parthy auth service
+                                - JWT are not encrypted - readable
+                                - if I am not issuing them - 'no way' to revoke before expiration
+                                                           - may revoke with extra request to auth service to check app/user state (if deleted)
+JWT
+- no stric definition - only head, payload, signature and encoded as base64
+                      - [dots in encoded string divide these parts]
+- oauth 2.0 standard enforcing some fields, but is not strict about custom fields
+  - mandatory: issuer - iss
+               expiration - exp
+               issued at - iat
+               audience (which app should use it/ url of API) - aud
+               subject (user id) - sub
+               client_id - app Id 
+               jwt token ID (to see if used more than once) - jti 
+  - optional: scope - scope of access in app
+              auth context class reference, open ID  - acr
+              ath method reference, open ID - amr
+
+Validation of access token
+- API should to validate access token before returning data
+- remote introspection: 
+    - directly request auth server - for reference token only option
+    - auth server has to provide validation endpoint
+    - might be demanding on traffic (geolocation distances, frequent requests) - bad scaling
+- local validation
+    - usually prepared libraries by auth servers
+    - validation proofs that token was valid at the time of issuing (does not reflect any changes on auth server)
+        - set expiration time to control damage
+    - validation as in Getting ID token/validation
+               1. signature of JWT - verifies nothing was changed
+               2. check issuer - my authorization server?
+               3. check aud parameter = audience - usually app ID
+               4. timestamps iat - issued at
+                             exp - expire at
+               5. check nonce used as nonce in request - to match request-response in the cycle           
+    - can extend by some of custom rules
+       
+- API Gateway
+   - handles every request - expired tokens, hackers, valid requests
+   - tries to be fast - local validation  - fast filter of bullshit
+   - filtered requests goes to API itself
+       - if API needs to have only valid tokes (paying) - can perform remote introspection to filter out revoked tokens
+       - some part of the API do not care that much - i.e. showing bonus points or some shit - can skip remote introspection
+         
+Token lifetime
+- shorter lifetime - helps to filter out expired tokens on local validation (reduce probability of revoked tokens)
+                   - also protection when token is leaked - shorter period to make some damage
+                   - decrease UX -> refresh token
+- simple rule: more disturbing (with redirecting to website) is to get access token - longer lifetime to set                 
+- most practical set expiration time on context - different per client (mobile/web), user role (admin/read only) etc
+   - reflects security and usability
+   - using scopes - more sensitive scope of API might need to enforce authentication
+
+Revokes
+- account deactivation (admin/user)
+- revoke of application (i.e. by user, revoke google singed in app)
+- on user change password, or on security update of auth server, etc etc
+- app/api itself can revoke it (i.e. on log out) - special endpoint on auth server to revoke (access/refresh) 
+                                                 - fully on app side, not enforced, auth servers cleanup anyway any expired tokens based on own policy
+
+- solution: as described before 
+    - combination of local and remote based on context  ~ sensitivity of api methods
+    - control with lifetime (expiration)
+            
+OAuth scope
+- to which part of app/API will be granted access (contacts, photos) ~ limited access mostly
+- part of request - to inform user 
+- does not serve as roles or groups - just granting limited access            
+                                    - responsibility of app/API not OAuth
+- no rules, very flexible how to define
+- scope values = only strings to be mapped in app/API
+- can use URI/URL to specify in more detail "photos:read", or "app/photos/read" etc
+- usually at least: read
+                    access                                     
+- good practice: sensitive part of API
+                 independent segments (not whole google, but parts: i.e. gmail, youtube, calendar)
+                 charging of usage 
+                
+- consent screen - might be good to show even for first party app (my own) 
+                     - extra step, but adds security for websites (public clients)                                 
+                     - user is aware that some permission is needed
+                     
+OAuth 2.1 
+- clean up of the specs from obsolete stuff with best practices
+                                                                                                        

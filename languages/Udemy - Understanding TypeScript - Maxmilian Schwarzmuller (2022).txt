@@ -1,0 +1,984 @@
+Typescript
+- video: https://www.udemy.com/course/understanding-typescript
+
+- JS superset - on top of JS
+- browser or node can not execute -> compile into JS (=> simpler code to write/read, error checks, etc)
+- also compile new JS version into older version -> comfy development
+- adds: types to variables -> 'statically typed' - knows type during development
+        new JS features compatible for old browsers
+        abstracts no JS feature to use in JS - interface/generics
+        decorators
+        configurable
+
+- types: 
+     basic (lowercase):
+        number - one rules them all - int/float/double 
+        string - text
+        boolean - true/false
+            
+        samples:
+          let x: number;
+          let x: number = 5;
+          let x = 5;        //kotlin like, type inference - typescript resolve the type itself
+          function add(a:number, b:number)        
+     object:
+        {name: "Name"}    
+        {name: "Name", position: { role: "manager", desc: "bullshitter" }}
+        
+        samples:
+          let obj : { 
+               name: string;     // semicolon
+               age: number;      // limit to one value only -> age : 20 
+          } = { 
+               name: "My Name",  // commas
+               age: 20 
+          }; 
+          let obj = { name: "My Name"; }; //kotlin like, type inference - typescript resolve the type itself  
+          //typescript checks: access to non-existing field -> compilation error
+                               assign wrong type
+     arrays:
+         //strict
+         let myArray: string[];
+         let myArray: string[] = ['one', 'two', 'three'];
+         let myArray = ['one', 'two', 'three']; //kotlin like, type inference - typescript resolve the type itself
+         //associative -> does not heck types, more flexible, but kills typescript advantage
+         let mix: any = ["one", 2]; 
+         
+         //iteration
+         for (const x in myArray) {
+            console.log(x); // can access string methods on x, typescript knows x is string
+         }
+         
+     tuples (~java Pair):
+         let myTuple: [string, number];
+         let myTuple: [string, number] = ['one', 2];
+         let myTuple = ['one', 2]; // !!!! type inference - would not work, would set (string|number)[] - can overwrite string with number and vice-versa
+         
+         - cannot assign empty element if tuple is defined = []
+         - myTuple.push(3) // -> ['one', 2, 3] ~ !!!! strange behavior
+     
+     enums 
+         enum Role {ADMIN, USER, CUSTOMER};
+         - use as: Role.ADMIN === role
+         - by default mapped on numbers, similar to JAVA
+         enum Role {ADMIN = 6, USER, CUSTOMER};  //user =7, customer = 8
+         enum Role {ADMIN = 'ADMIN', USER=4, CUSTOMER=7}; // also possible 
+         - maps values on Names 
+         
+     any
+         - kinda removes typescript advantage of type check by typescript
+         - rather avoidable in typescript 
+        
+     union
+         - allowing more types to be assigned
+         let a: number | string | boolean;
+         function foo(input: string |  number | boolean) {}         
+    
+     literal
+         - specifying type AND value -> const like 
+         let a: 'one-value' | 'two-value';   //allows only two possible string values
+         
+     alias/custom type
+         - similar to C - typename, works as alias
+         - can be used for complex objects - like in C with structs    
+         type NameOfTheNewType = number | string;
+         type User = { name: string; age: number };
+
+     unknown
+         - can store anything as any
+         - any can be assigned to other types, unknown cannot
+             let a: any = 5;
+             let u: unknown = 5;
+             let s: string = any; //OK
+                           = unknown; //Error, needs additional type check: if(typeof u === 'string') { s = u; }
+     
+     never
+         - for function which never returns anything, not even void
+         - i.e. function only throwing Exceptions, or infinite loop
+         function foo(): never {
+             throw {msg: 'msg', code: 404};
+         }
+         
+     Date - timestamp     
+
+- functions
+     return type
+        function foo(a:number, b:number): number { //best practice to use type inference for return type
+          return a+b;
+        }
+        function foo(a:number, b:number) { //type inference
+          return a+b;
+        }
+        
+        void - if function does not return anything ~ in JS as undefined
+        function foo(a:number, b:number): void {}             // function DOES NOT HAVE return at all  
+        function foo(a:number, b:number): void { return; }    // or HAVE EMPTY return
+        
+        undefined - if function returns nothing
+        function foo(a:number, b:number): undefined { return; } - function must HAVE EMPTY return
+        
+        can return more datatypes in associative array
+        function foo(): [string, number] {
+          return ['text', 17];
+        }
+        
+     function as parameter 
+        let f: Function;                        //function in general, no precise description   
+        let f: (a:number, b: number) => string; //function with 2 number arguments and return type string 
+     
+     callbacks   
+        foo(callback: (a:number) => void) {
+           callback(42);
+        }
+        foo((res)=>{
+           console.log(res);
+           return res;        //legal, but ignored since we expect void
+        })
+
+      unused parameter _
+         - go/rust/kotlin like?
+         function foo(_: string) { //tell TS we are OK with unused param
+             return 'why?';
+         }
+     
+
+- compiler
+     watch mode: tsc typescript_file.ts -w
+                 tsc typescript_file.ts --watch
+        - recompile of file save
+        - quit watch mode process via CTRL + C if needed         
+     
+     compile whole project/multiple files
+        command line:
+           tsc --init  // creates typescript config json (tsconfig.json) in the current directory for the project   
+           tsc         // tsc - compiles all ts files in the folder
+           tsc --watch // compiles all files in watch mode
+           
+     include/exclude files fom compilation
+         - in config json file, can use wildcards
+         - compiles include_set - exclude_set
+         tsconfig.json
+         { 
+           "compilerOptions" : {},
+           "exclude" : [
+              "node_modules",            //module dependency dir, by default excluded automatically, no need to specify
+                                         //but needed once we will list extra files, then we need to include
+              "filename_to_exclude.ts",  //exclude specific file
+              "*.dev.ts",                //exclude all files in current folder ending with .dev.ts
+              "**/*.dev.ts"              //exclude all files in any folder ending with .dev.ts
+           ],
+           "include" : [
+              "filename_to_include.ts"   //include listed files/dir, same rules as for exclude
+                                         //by default includes all files from the dir 
+           ],
+           "files": [                    //like include, but for files only
+              "filename.ts"
+           ]
+         }
+                     
+     compilerOptions
+         - how ts is compiled
+         - field in tsconfig.json
+         { 
+           "compilerOptions" : {
+               "target" : "es6",      //version of JS into which we compile into, in VS: CTRL + SPACE for avail options
+               "modules": "commonjs"  //how connect multiple files
+               "lib"    : [           //which types, objects, functions TS knows. 
+                                      //if not set (commented out), default are included - depend on type of JS in target field
+                  "dom",              //these 4 libs are default, if lib not defined  
+                  "es6",
+                  "dom.iterable",
+                  "scripthot"
+               ],
+               "allowJs" : true,      //allow compiling into JS  - default true
+               "checkJs" : true,      //check errors in JS files - default true
+               
+               //"jsx"   : "preserve" //some shit for react
+               //"declaration"        //if shipping as library
+               //"declarationMap"
+               "sourceMap" : true     //helps with debugging - includes TS file into browser
+                                      //browser-analytic-tools/sources/typescript_file - can use breakpoints
+               //"outFile": "./"      //concate and save to single file
+               "outDir" : "./"        //where to store compiled JS files
+               "rootDir" : "./"       //set root dir with TS files
+               "removCommnets" : true //removes all comments for compiled JS
+               "noEmit" : false       //no JS file output, will not create JS file from TS file
+               //"importHelpers"
+               "downlevelIteration":true // good for backward compatibility with older version of JS for FOR Loops
+               "noEmitOnError" : true    //do not produce JS on compilation error (in ANY FILE -> empty output), by default FALSE!!
+               
+               //stricts
+               "strict" : true                      //enables strict type check on compilation, turns on all bellow 
+               "noImplicity" : true                 //enforce to specify func argument types, does not care about variables
+               "strictNullChecks": true             //enforce check for possible null pointer -> workaround with '!'
+                                                    //promising to compiler there will not be null : console.log(getPossibleNullValue()!)
+               "strictFunctionTypes": true          //function types, related to inheritance
+               "strictBindCallApply" : true         //checks params on binded functions
+               "strictPropertyInitialization": true //classes related
+               "noImplicitThis": true               //check wrong usage of 'this'
+               "alwaysStrict": true                 //ensures thta compiled JS uses strict mode: 'use strict'
+               
+               //code quality checks
+               "noUnusedLocals" : true              //checks only unused locals, unused globals are fine
+               "noUnusedParameters" : true          //unused function argument
+               "noImplicitReturns" : true           //error if function can return something OR nothing -> has to have empty return: return;
+               "noFallthroughCaseInSwitch" : true   //forgotten break in switch
+               
+               //moduleResolution - skipped
+               "esModuleInterop" : true
+               
+               //sourceMapOtion - about debugging typescript in browser
+               
+               //experimentalFeatures - related to decorators
+           },
+         }
+    
+     debug in VS code
+         - extension chrome debugger
+         - tsconfig.json > "compilerOptions"."sourceMap" : true
+         - Debug/Run/Chrome (enviroment)
+         - .vscode/launch.json > configuration.url: http://localhost:3000 //or other url when we run server 
+               
+- next-gen JS & Typescript (js >= es6)
+     const - constant, final
+     let - variable, replaces 'var'
+         - var - global, function scope
+         - let - global, function, block scope - an be limited to if block, etc.
+     
+     arrow function: () => {} 
+         - Java lambda like 
+         - () => console.log("empty param");     
+           singleParam => console.log(singleParam);
+           (param1, param2) => param1 + param2; 
+           (param1, param2) => { return param1 + param2; } 
+           
+     default function parameter
+         - C++ like, must be last, cannot be defined as first param (overridden by input)
+         - function foo(a, b = 1) {}       
+           foo(1,2);
+           foo(1); 
+           
+     spreadOperator ...
+         - use elements as list of elements instead of array object - single values
+         - let aArray = [1,2,3,4,5] 
+           let bArray = []
+           //bArray.push(aArray)  //error, adding array object as element
+           bArray.push(...aArray) //adding list of elements - OK 
+           let cArray = [0, ...aArray] 
+         
+         - dereference object - help create deep copy instead of shallow
+                              - key-value pair, not single val like with array
+           let o1 = {a:1, b:2}
+           let s1 = o1         //shallow
+           let d1 = {...o1}    //deep  
+     
+      rest parameters - dynamic number of parameters of function ~ 'vypustka'/vararg
+         - can be used on single values, objects, but even tuples
+         - sum = (...params) => { 
+                    return params.reduce(
+                        (result,value)=> result + value),   //logic
+                        0                                   //init val
+                    ); 
+                 }
+            
+      destructuring array
+         - extract elements from array, does not have influence on original array
+         - order of extracted preserved from array
+         const [element1, element1, ...restElements] = array;
+         console.log(element1)
+         
+      destructuring object
+         - extracting field values from object, order depends on         
+         - order of extracted defined by order of field in destr. object     
+         let o1 = {a:1, b:2}
+         const {a, b} = o1      //field names as in object
+         console.log(a)
+         
+         const {a: myAlias, b} = o1  // we can set new name for variable from field with ':'' -> js, not typescript feature
+         console.log(myAlias)
+         
+- classes & interfaces (OOP) in TS
+      - class - definition of instance/object
+            class ClassName {
+                fieldName: string;                 //name : type
+                defaultValue: string = 'default';  //not needed in constructor if initialized
+                
+                constructor(param: string) {  //optional param with ? -> paramName? : string
+                    this.fieldName = param;   //must call this!!!
+                }
+                
+                //methods
+                methodName(this: ClassName) {      //param this restricts calling of method to only 'legit'~correctly defined ClassName instances 
+                    console.log(this.fieldName);   //to access field or method, must call this!!! otherwise mess with global vars
+                }
+                
+                //getters                          //accessed as property!!!! object.getMethodName
+                get getMethodName() {              // yeah, with white space
+                   return this.fieldName; 
+                }
+                
+                //setters                          //accessed as property!!!! object.setMethodName = 'value'
+                set setMethodName(value: string) { // yeah, with white space
+                   this.fieldName = value; 
+                }
+            }
+            
+            new ClassName('paramValue');
+      
+      - scopes/modifiers: private, protected, public (by default) for fields/methods      
+      - shorthand init
+            class ClassName {
+                //fieldNamePrivate: string;   //not needed, if specified in constructor with scope
+                //fieldNamePublic : string;   //not needed, if specified in constructor with scope
+                
+                constructor(public fieldNamePublic: string, private fieldNamePrivate: string) { //creates fields with the same name as params
+
+                }
+                
+            }      
+      
+      - readonly modifier ~ kinda final
+            class ClassName {
+                readonly fieldName: string; // cannot change after init
+                
+                constructor(param: string) {
+                   this.fieldName = param;
+                }
+                
+            } 
+            
+      - inheritance
+            - can inherit only one class ~ Java like
+            
+            class Parent {
+                constructor(public id: string)
+            }
+            
+            //inherits also the constructor
+            class Child1 extend Parent {
+            
+            }
+            
+            //if different constructor, we need call super for parent  
+            class Child2 extend Parent {
+                constructor(id:string, public name:string) {
+                    super(id); //super must be first call, as in other languages
+                    //another inits
+                }
+            } 
+            
+            Parent p = new Parent("id1"); 
+            Child1 c1 = new Child1("id1");
+            Child2 c2 = new Child2("id1", "name");
+      
+      - overriding
+          - public/protected modifier
+          - optional overriding 
+          
+          -> enforcing via abstract classes - can not be instantiated            
+            abstract MyAbstractClass { 
+            
+                abstract abstractMethodName(): void ;     //cannot have implementation, only declaration
+                abstract optionalAbstractMethod?(): void; //optional - does not need to be implemented    
+            } 
+          
+      - static methods, properties
+          - similar to other languages
+          - access without instantiating
+          - accessible from non static part of class only with full class name: MyClass.name
+          
+          class MyClass {
+          
+             static readonly value: string = "I am read-only, but do not need to be";
+           
+             static functionName() {
+                //do something
+             }
+             
+             //non static method
+             methodName() {
+                //return static variable
+                return MyClass.value;
+             }
+          
+          }
+          
+     - singleton
+         - private construtor + static method (getInstance) + static variable with instance of the class     
+          
+     - interface
+         - TS only feature, not JS
+         - defines structure ~ declaration, no values, definition  
+         - enforces the same functionality between classes ~ polymorf   
+             interface MyInterface {
+                field1: string;   // we can restrict to readonly      
+                methodName(param: string): void;
+             } 
+             
+             let obj: MyInterface = {field1: "name", methodName(param: string) {console.log(param);} }
+          
+         - less flexible than 'custom type' - i.e. unions
+         - can be implemented into class 
+         - can implment multiple interfaces: class Class implements interface1, interface2 {}
+         - interface can extend another (multiple) interfaces
+         
+             class MyClass implements MyInterface {
+                 field1: string;
+                 
+                 constructor(val: string) {
+                    this.field = val;
+                 }
+                 
+                 methodName(param: string) {
+                    console.log(param);
+                 }
+             } 
+          
+         - can be used to define functions, similar to custom type:
+             type myFn = (param: string) => string 
+             let customFn: myFn;
+             customFn = ("Hi") => "Bye"
+             
+             interface iFn {
+                param: string => string
+             } 
+             let interFn: iFn;        
+             interFn = "Hi" => "Bye"  
+         
+         - interface can haveoptional field and methods (not enforced), via '?''   
+             interface MyInterface {
+                field1?: string;   // we can restrict to readonly      
+                methodName?(param: string): void;
+             }
+         
+     - optional parametr    
+         class C {
+             //optional parametr - can be null
+             construtor( n? : string) {
+                //...
+             }
+         }
+            
+         let c1 = new C(); //valid   
+
+- intersecting types
+    - combined properties from multiple types (custom or basic or unions) or interfaces
+    - if union - common possible type: number|string x boolean|number => number
+    
+    type A = {name: string};                interface A {name: string};
+    type B = {name: string, age: number};   interface B {name: string, age: number};
+    type C = A & B;                         interface C = A & B   // ~ interface C extends A, B;
+    
+    let c: C = {name:"", age: 1};
+    
+- type guards
+    - checking type of variables in runtime:
+      //for JS types
+      if (typeof variable === "string") {}
+      //for custom types
+      if ('propertyName' in variable) {}  //or method
+      //for classes
+      if (variable instanceof ClassName) {} / cannot run on interface - interface not compiled into JS  
+ 
+- discriminated union
+    - add common property on which we can decide the type of union
+    interface A {
+      type: 'a';
+      a: string;
+    }
+    interface B {
+      type: 'b';
+      b: string;
+    }
+    type C = A | B
+    
+    function foo(param: C) {
+      switch(param.type) { //type guard based on discriminated union
+        ...
+      }
+    }
+    
+- type casting
+    A) use <Type> and variable -> clash if used in react with jsx code
+       let input = <HTMLInputElement>document.getElementById('input-text'); 
+    B) use variableName as TypeToCast:    
+       let input = document.getElementById('input-text') as HTMLInputElement;
+                   (document.getElementById('input-text') as HTMLInputElement).value = "text";
+      
+- indexed property
+    - easier access to property 
+    
+    interface Container {
+       //id: string; //we can add string, but not other types (as number), it must be the same one as indexed prop
+       [prop: string] : string; //property with string name and string value 
+    }  
+    
+    let a: Container = {}; //OK
+    let b: Container = {error : "BigError"}; //OK
+    let c: Container = {1 : "BigError"}; //OK - 1 can be converted to the string
+
+- function overloading
+    - allows to overload existing function with different types of parameters and return type
+     
+    function foo(a: string) : string; //overloading, do not need to write body
+    function foo(a: number) : number {
+        return a+a;
+    }
+
+- optional chaining
+    - since TS v3.7+
+    - easier access to nestet objects and properties
+    - object?insideObjectProperty?.insideInsideObjectProperty 
+       -> access insideInsideObjectProperty if ancestor props are not null, othervise null
+
+- nullish coalescing
+    - assign default value if null
+    - JS solution const c = '';
+                  const r = c || 'default'; //problem, not false only on null but even empty -> r = 'default'
+    
+    - TS solution const c = '';
+                  const r = c ?? 'default'; //r= 'default' only if null or undefined
+    
+- generics
+    - built in generics, i.e. Array<T>   -> let a: Array<string> = ['a', 'b']  //~ string[]
+                              Promise<T> -> let p: Promise<string> = new Promise((resolve, reject) => { resolve('Resolved'); });
+    -custom genereics:
+        ~ templates in C++
+        - placeholders for types
+        
+        function:
+           //similar cna be achieved with object, but TS will not recognize the merged obj and its properties
+           //-> using generecis
+           function merge<T, U>(param1 T, param2: U): T & U {
+               return Objet.merge(param1, param2)
+           }
+           const merged = merge({name:'name'}, {age:1}); //~ merge<{name:string}, {age:number}>({name:'name'}, {age:1});
+           console.log(merged.age);
+         
+           - retricting generics via 'extend' - javalike
+           function merge<T extends object, U extends string | number>(param1 T, param2: U) { //param1 will be objects
+              //...                                                                           //param2 will be string or number
+           }
+           
+           - for objects - another retrictions: keyof -> TS checks if key is in obj when we want to access -> if not, compilation error
+           function foo<T extends object, U extends keyof T>(obj: T, key: U) {
+              return obj[key];
+           }
+                 
+        class:
+          - to define generic fields
+          class MyClass<T> {
+              container: T[] = [];
+              
+              addToContainer(param: T) {
+                this.container.push(param);
+              }
+              
+              getContainer() {
+                return this.container();
+              }
+              
+              //ofc, can containa a new generic method, i.e. with U
+          }
+          
+          let sc = new MyClass<string>(); 
+                   
+        Partial type:
+          - allows creating empty objs, which we will fill according to def later
+          ~ 'promise' we will make the object valid => temporary make every field optional
+          
+          interface I{ name: string}
+          
+          function foo(): I {
+              let o: Partial<I> = {};
+              i.name = 'name';
+              return o as I; 
+          }
+          
+        Readonly type:
+          - lock the variable/container/object for edits
+          const a: Readonly<string>[] = ["a","b"];
+          a.push("c") //compilation error
+          a.pop() //compilation error
+        
+        *more utility types in doc: https://www.typescriptlang.org/docs/handbook/utility-types.html
+             
+- decorators
+   - compiler to es6, and turn on experimentalDecorators: true in tsconfig.json
+   - mainly bound to classes
+   - usually funtion with Capital letter name
+   - execute when class is defined, not instantied -> meta programming
+   - can be used to enforce some logic before creating objects - i.e. adding HTML element and/or printing info 
+      -> used by Angular (@Component) 
+   
+   - class decorator function - can return value (such as new/extended class)
+   function Logger(constructor: Function) {
+      console.log('I am logging')
+      console.log(param)            // prints definition of constructor
+   }
+   
+   @Logger
+   class MyClass {
+      name = 'Name';
+      
+      constructor() {
+         console.log('I am creating')
+      }
+   }
+
+   - decorator factory: function returning new function 
+     - gives more flexibility to use decorators    
+     - can add more decorators
+          - factories executed top-bottom -> function order  
+          - decorators from factories are executed bottom-up
+       @Decorator1          //factory func body first,  returnend decorator second executed
+       @Decorator2          //factory func body second, returnend decorator first executer
+       class MyClass {
+       
+       }
+       
+       function Logger(logString: string) {
+          return function(constructor: Function) {
+              console.log(logString)
+              console.log(param)           // prints definition of constructor
+          }
+       }
+       @Logger('Log-MyClass')
+       class MyClass {
+          name = 'Name';
+          
+          constructor() {
+             console.log('I am creating')
+          }
+       }
+
+   - property decorator
+       function LogProp(target: any, propertyName: string) {  //runs when class registred by JS
+          console.log(target, propertyName)                   //target - obj prototype, propertyName - name
+       }
+       - can not return value (can but ignored)
+
+   - accessor - set/get method, 
+       function LogMethod(target: any, name: string, descriptor:PropertyDescriptor) {  //runs when class registred by JS
+          console.log(target, name, descriptor)                                        //target - obj prototype, name - name
+       }                                                                               //descriptor - function descriptor object
+       - can return value -> new logic for the method (i.e. autobinding 'this' to the object)
+                                                                                    
+   - parameter decorator
+       function LogParam(target: any, name: string, position: number) {  //runs when class registred by JS
+          console.log(target, name, descriptor)                          //target - obj prototype, name - method name
+       }                                                                 //position - param position
+       - can not return value (can but ignored)
+                                                                   
+   - sample:
+       
+       class MyClass {
+          @LogProp
+          name = 'Name';
+          
+          constructor() {
+             console.log('I am creating')
+          }
+          
+          @LogMethod
+          method(@LogParam param1: string) {
+              return name + "_" + string;
+          }
+       }
+             
+   - all running independent from instationating, runs when JS registred 
+        - meta programming - i.e. angular component or autobinding on listeners, 
+   - can be used as decoration pattern to extend/adapt existing class:
+   
+     function decoratorFunc() {  // factory 
+        return function <T extends {new (...args: any[])  // decorator for creating objects 
+            : {name: string}>(constructorParam: Funtion) {   //returning objects with name: string property 
+                return class extend constructorParam {       //extending original class
+                    construtor() { 
+                        super(); 
+                        //new shit                           //with new shit logic/params
+                    } 
+                }
+        }
+     }
+   
+   -note: validator package with decorators: npm install class-validator --dev
+          http package with decorators: nest.js 
+          https://www.typescriptlang.org/docs/handbook/decorators.html
+
+- modules
+   - spliting into multiple files 
+        A) shared namespace, file bundling
+            - could be pain for imports and dependecies 
+                 -> runtime errors rather than compilation, due to lack of dependecy (missing import)
+                     - found mising dependency only when called dependent code, hard to detect
+            
+            - file1.ts
+                namespace MyNamespace {     //define namespace with its name
+                   export const A = 'A';    //export everything what we want to share outside
+                                            //it could be whatever, class, interface, function,...
+                }
+                
+            - file2.ts
+                /// <reference path="file1.ts" />  //TS feature, special import to get access to const A
+                                                   //but not outside of namespace
+                namespace MyNamespace{             //create namespace with the same name int the file
+                    console.log(A);                //we can access A from file1
+                }
+                
+                - this alone is TS-wise OK, but compiles two separated JS files, which do not see each other
+                   -> we nee to tell compiler to bundle them together
+                
+            - tsconfig.json
+                module: "amd" //not common.js, some JS shit workaround
+                ... 
+                outFile : "./dist/bundle.js"
+                    
+            
+        B} ES6 imports/exports - bundeled with webpack or other tools
+            - works only in chrome/firefox -> to fix it, we need 3rd party tool such as webpack
+            - browser gets imports - if defined
+            - if missing dependecy - TS can find out during compiling
+            
+            - file1.ts
+                export const A = 'A';    //export everything what we want to share outside
+                                         //it could be whatever, class, interface, function,...
+                export const boobs = () => { console.log('(.)(.)')};
+                
+            - file2.ts
+                import {A} from "./file1.ts";      //ES6 import file on path to get access to const A - directly defined what i want to import                                   
+                console.log(A);                    //we can access A from file1
+                
+                - if want to access more members of file1.ts -> import {A, boobs} from "./file1.ts";
+                - can be grouped into obj with alias -> import * as BS from "./file1.ts";
+                                            BS.boobs();                       //accessible with . notation
+                - single import can be aliased also -> import {boobs as Tits} from "./file1.ts";                            
+                - possible export default member -> imported as single element, if not specified othervise
+                    file1.ts:  export default const A = 'A';
+                    file2.ts:  import C from "./file1.ts"; //using A with alias C
+                                            
+            - tsconfig.json
+                module: "es2015" //es6 support compilation
+                ... 
+                //outFile : "./dist/bundle.js"     //comment out, not needed
+            
+                - compiled to the ingle file, but browser need to be informed it is done via es6 modules -> edit html file 
+            
+            - index.html
+                <script  type="module" src="compiled.js" /> //no defer keyword
+                
+            - puting modules/files together -> TS/ES6 handles by itself imports and prevents multiple importing, if there
+              are more files with the same dependency -> imported only once    
+            - wors only in some browsers which can collect dependent modules, to make it work in multiple browsers 
+               -> webpack -> generates single JS file   
+               
+- webpack
+   -  https://webpack.js.org/
+   - solves issue of ES6 modules, when browser needs to download all dependencies -> build one JS file - less request to collect, less processing
+   - bundling and building tool, not only for TS, but also CSS 
+   - optimize/minimize the code - less code
+                                - less imports  
+   - runs own server, no need to run lite-server or any external servers
+   - runs on top of nodejs
+   - install dependeies: npm -install --save-dev webpack            //tool which transform TS into JS and perform the bundeling 
+                                                 webpack-cli        //to run webpack commands
+                                                 webpack-dev-server //server which run the webpack, recompiles changes etc
+                                                 typescript         //good ot have per project - avoiding dependecy issues with global version
+                                                 ts-loader          //tells to webpack how to transform(compile) TS inot JS
+   - config:
+      tsconfig.json
+         target: "es6"        //maybe es5, depends which browser we want to support
+         module: "es2015"     //or es6  
+         removeComments: true //reduce the size
+         
+         sourceMap: true      //helps debugging, generates extra map file for that 
+         
+         outDir = "./dist/"   //java target like folder 
+         //rootDir            //webpack takes over, no need to define 
+         
+      webpack.config.js - conf file for webpack
+                        - prerequisity - remove extension from ES6 imports: import C from "./file1.ts" -> import C from "./file1"
+                        - good to have one for development, one for production, i.e.: webpack.config.js        //default
+                                                                                      webpack.config.prod.js
+                              
+        const path = require ('path')';  //nodejs import style, import from nodejs std lib, no need to instal extra dependency
+        //for production
+        const CleanPlugin = require('clean-webpack-plugin');
+        
+        
+        module.export = {                //export style for nodejs
+           module: 'development'         //dev build - less optimalizations, for release: mode: 'production'
+           entry: './src/app.ts'         //entry file, ts-loader then track dependencies (imports) from this file for bundeling
+           output : {
+              filename: 'bundle.js',                    //final budled file, can add hash to see cache conflics: bundle.[contenthas].js
+              path: path.resolve(__dirname, 'dist'),    //needs absolute path, __dirname - current dir, 'dist' - subfolder in current dir 
+              //not used for production mode, we will not put output to the server memory but store the file which will be loaded
+              publicPath: 'dist'                        //where the finla output is relative to html file, needs to be defined when changing code to refresh on webpack server
+           },
+           devtool: 'inline-source-map',                //use sourceMap from tsconfig for debugging
+           //for production: devtool: 'none'                                             
+           module : {                                   //for ts-loader to know how to compile TS into JS
+              rules: [                                  //array with rulse for different kind of files - TS, CSS, etc (see official doc)
+                 {
+                    test: /\.ts$/,                      //for all ts files (regex)
+                    use: 'ts-loader',                   //module to use
+                    exclude: /node-modules              //exclude node-modules folder from bundeling
+                 } 
+              ]
+           },
+           resolve: {
+              extensions : ['.ts', '.js']               //extension of imported files which should be resolved for bundeling (loaded and processed) - we could remove it from import 
+           },
+           //for prodution
+           plugins: [
+              new CleanPlugin.CleanWebpackPlugin()      //npm install --save-dev clean-webpack-plugin - clean dist folder whenever we built the project
+           ]
+           
+        }; 
+         
+    package.json
+       ...
+       "scripts": {
+          "start": "webpack-dev-server",                //runs as: npm start                                     
+          "build": "webpack"                            //runs as: npm build
+          //for production
+          webpack --config webpack.config.prod.js
+       }
+       ...     
+ 
+- external libs
+   - vanila JS libs
+       - npm install --save lodash           //or another lib
+       - TS has problem with indetifing pure JS -> types lib (definitions of JS functions)
+       - npm install --save-dev @types/lodash    //get lodash specific TS translations
+       - usage in our TS file
+           import _ from 'lodash';
+           
+           console.log(_.shuffle([1, 2, 3]));
+           
+       - for nonexisting translated JS - declare
+          declare var GLObAL : string; //promising to the TS we will have the var in runtime (i.e. via imported script in html - global value)
+             -> suppress compilation error
+          console.log(global);
+    
+   - JS lib with TS support    
+       - class-transformer - easy convert from general JSON to custom class  
+          - npm install class-transformer --save  
+          - npm install reflect-metadata  --save
+          
+            import "reflet-metadata";
+            import {plainToClass} from "class-transformer";
+            
+            const arrayOfMyClasses [] = plainToClass(MyClass, jsonArray);
+       
+       - axios - http requests
+          
+   - TS libs
+       - class-validator - validating decorators
+       - turn on experimentalDecorators: true in tsconfig.json
+       
+       - npm install class-vlaidator --save
+         
+         import {IsNotEmpty, IsNumber, IsPositive, validate} from 'class-validator' 
+            
+         class myClass {
+            @IsNotEmpty
+            title: string:
+            @IsNumber()
+            @IsPositive()
+            value: number;
+         } 
+         
+         const myObj = new MyClass('name', 5)
+         validate(myObj).then(errors => {
+            if (errors.length > 0) {
+               //log 
+            }
+         });  
+ 
+- react + TS
+   - create-react-app package with TS support
+   - npx create-react-app my-app --typescript   //creates react app in subfolder my-app of current dir with TS support
+      - creates: tsconfig.json with predefined config
+                 package.json //with dependecies
+                 readme
+                 folder structure -src
+                                     - .css
+                                     - .ts
+                                     - .tsx - extension with support of jsx react files
+                                     
+                                  -public
+   
+   - function component 
+      - tsx with jsx tags
+      - state control through hook: const ref = useRef<T>(); //can be processed in event handler
+                                    const handler = (event) => {
+                                       console.log(ref.current.value) //current state  
+                                    }
+      
+                                    <input type="text" id="id" ref={ref} />
+   
+      - passing value between components
+         - Component1:
+              <Component2 myCustomProp = {var} > 
+         
+           Component2:
+              const Component2: React.FC: {myCustomProp: () => void} = props => {
+                  props.myCustomProp();  //if function
+              }
+      - states - useState<T>();
+     
+- nodejs + TS
+   - tsconfig.js
+        target: "es2018", //depends on node version
+        module: "commonjs"
+        moduleResolution: "node" //must be node!
+        
+        outdir: "./dist"
+        rootDir: "./src"
+   - for express:
+       node install --save express body-parser     
+                    --save-dev nodemon //no need to restart server with every change
+                               @types/node     //TS transation for node
+                                      express  //TS transation for express
+       app.ts
+          //const express = require('express'); //node way, 
+          import express, {Request, Respond, NextFunction} from 'express' //js way -> TS can reognize types
+      
+          const app = express();
+          app.use('/route', myRoute);
+          //to handle any error
+          app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+              res.status(500).json({message: 'Error'})
+          });
+          
+       controller.ts
+          import {RequestHandler} from 'express'
+          
+          export handler: RequestHandler = (req, res, next) => {} //RequestHandler has param types already defined
+          
+   - NestJs - serverside framework for node with TS support out of the box 
+                 
+JS note: 
+  +stringValue => converts to the number or NaN 
+  arrays - reference value  
+  html atribute dragable = true | false -> dragEvent: dragStart, 
+                                                      dragEnd, 
+                                                      
+                                                      dragOver,   //highligh dropable area
+                                                      drop,
+                                                      dragLeave   //cancel moving,move  outside of dropable area
+                                               .dataTransfer property -> info caried by event 
+                                                     
+  event.preventDefault(); //in handler -> stop promoting event
+  
+  .addEventListener('click', this.myHandler.bind(this)); //called in class
+                                                         //myHandler steal this for itself, binding enforces this as class context - or use decorator
+  var element = document.getElementById('id')           //returns html element
+                        .importNode(content, true)
+  element.insertAdjancetElement('beforeend', element)   //insert html element 
+                                 'afterbegin'
+         .firstElementChild()  
+         .querySelector('h2')!.textContent = val        //sets text into the first? found element  
+  encodeURI(someText) => encodes to valid uri 
+  - free maps api: https://openlayers.org/en/latest/doc/quickstart.html                                                                                                                   

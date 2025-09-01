@@ -1,0 +1,635 @@
+Java Application Performance and Memory Management 
+- video: https://www.udemy.com/course/java-application-performance-and-memory-management/
+
+Just in Time and Code cache
+- java code compiled to byte code
+- byte code interpreted by JVM
+- JVM is multithread, performs some optimizations (like JIT)
+- can convert most used instructions into native instructions of OS
+    -> Just In Time (JIT) compilation - dedicated thread
+    -> performance might be better when app is running then first run
+- java params : -XX:+PrintCompilation - detail description of compilation
+                
+                -XX - advance option
+                +/- turn on/off
+                Parameter - case sensitive  
+                
+- PrintCompilation report (columns description)  
+   -> time for compilation
+   -> order (longer block take more)
+   -> type of compiling 0-none, only interpreted, 
+                        4-deep level of compilation 
+   -> s - synchronized method
+      n - native method
+      % - most optimal - cache and native
+      ! - exception handling
+   -> lines of code compiled (included libs)
+   
+       
+- JIT compilers
+   ( 0 level - no compilation)
+   - C1 - 1-3 level of compilation  
+   - C2 - 4 level of compilation - more optimized
+        - can use code cache for fast executing
+   - jvm choose based on profiling in run time
+       - measures number of calls of method, loops inside of method, etc,
+   
+   - -XX:+UnlockDiagnosticVMOptions -XX:+LogCompilation -> export compilation 
+     log in XML
+     
+- Code Cache
+   - if full, JVM cannot optimize application
+   - cache is full, but used, cannot drop - warning message form JVM (not error)
+   - -XX:+PrintCodeCache     
+       - shows usage of code cache
+       - max size depends on JAVA version 
+           - 7 <= 32/48 (64b JVM)
+           - 8 > ->240 MB (64b JVM)
+       - configurable: InitialCoedCacheSize - when app starts (usually 160kB)
+                       ResevedCodeChaceSize - how much up to can grow  (default 24 MB)
+                       CodeCahceExpansionSize - how quickly should be added another space   
+                       
+                       - XX:ReservedCodeCacheSize=28  (bytes)
+                                                    k kilo
+                                                    m mega
+                                                    g giga
+- monitoring code cache - JConsole
+                            - jdk_home/bin/jconsole                                    
+                            - local on remote processes
+                            - windows 
+                                - users/username/appdata/local/temp/hsperfdata
+                                   - allow for modifing
+                            - JVM uses resources to connect to running app 
+                              - extra code cache for connection, some recompilation    
+                              
+Compilation and setting compilation params
+
+- JVM (32 bits) might be faster for heapsize < 3GB 
+      - pointers are smaller -> faster, if we use int/float instead of long/double  
+      - but max size is 4GB
+      - only C1 compiler (client compiler)
+          - faster start up
+- JVM (64 bits) faster with longs and doubles
+      - max size depends on OS       
+      - has both C1 (client) and C2 (server) compilers
+      
+      - C1 - short term running apps, fast start up, short life
+      - C2 - long term running apps - webserver, more optimizations, fast start 
+             up not needed
+
+           - turn off C2 compiler: -client
+                - faster start up time - less analysis of code
+                - some OS ignore that
+           [- turn on server compiler: -server (32b/64b)
+                                       -d64 (64b)] 
+- turn off tiered compilation, only interpret the code (0- level, no compilation)
+      - -XX:-TieredCompilation
+      - bad idea
+
+- prints default JVM options: java -XX:-PrintFlagsFinal 
+    - -XX:+UnlockDiagnosticVMOptions -XX:PrintFlagsFinal
+        - enables options for diagnostic tools for JVM + print used flags 
+    
+- info about specific flags - jinfo: 
+                             jinfo -flag CICompilerCount          jpsId
+                                         [any existing flag name]
+                                  
+                             get running java processes id with command: jps
+                                  -kinda like unix ps
+                                  
+- set number of threads for compiling: -XX:CICompilerCount=n - min 2: client
+                                                                      server
+- max amount of threads for compilation  supported on local machine: 
+    - jinfo -flag CompileThreshold  (can be around 10000)
+    - can be set to our (lower) threshold: -XX:CompileThreshold=n   
+    
+Memory
+- stack, heap, metaspace
+
+  - Stack
+    - every thread has own stack -> multiple stack managed by JVM 
+    - local vars are added to the stack -> freed when program reached end of the 
+      block
+    - only for local primitives and local object references  
+    - not shared
+      
+  - Heap  
+    - for objects - efficient, object can have more fields -> would have 
+      to pass stack with multiple data
+    - shared with threads
+    - default heap size is set for JVM according to HW
+       - can be tuned further
+         - -XX:InitialHeapSize=1g   or shortcut: -Xms1g     //no need for '=' in shortcut
+           -XX:MaxHeapSize=600m     or shortcut: -Xmx600m   //no need for '=' in shortcut
+              - if app crashing on out of memory on heap space - memory leaks,
+                just increasing max heap size is usually not best approach
+                
+Passing arguments
+  - By Value
+      - copy of the value, modification done to copy, not original variable
+      - only primitives   
+                     
+  - By Reference
+      - copy reference, modification is reflected to the object
+      - for objects (actually reference is passed by value - copy of original reference in java)                                     
+                                                                                                      
+  - 'final' keyword
+      - compiler can do inline insert for finals -> optimization
+      - variable - can be assigned only once final int a; int a = 1;
+                 - diff from constants, the are assigned immediately 
+                 - object can change its properties 
+                      -> violates constant correctness, thus keyword final
+      - method - cannot be overridden by child
+      - class  - cannot be extended                 
+      - const - reserved keyword not able to be used
+      
+Escaping references
+  - escaping from encapsulation 
+     - e.g. returning collection from class 
+        method
+           class ClassName {
+              private Collection<Type> c;     //encapsulated field
+               
+              public Collection<Type> getCollection() {
+                 return c;                   //returns reference which escape encapsulation 
+              }  
+           }
+           
+     - called elsewhere
+           Collection c = obj.getCollection()
+           c.clear()   //class field is manipulated outside of the class where it belongs
+  
+  - strategy to avoid escaping references
+     Collections
+         A) using iterators -> still allows edits, not perfect but no performance impact (good if need performance)
+            - e.g. Iterable interface:
+                class ClassName implements Iterable<Type> {
+                   private Collection<Type> c; 
+                   
+                   @Override
+                   public Iterator<Type> iterator() {
+                      return c.iterator();              //returns iterator
+                   }
+                   
+                }
+                                                   
+            - called elsewhere
+                 for (Type t: ClassNameObj) {
+                     //... iterates
+                 }  
+                 
+        B) duplicating the property = deep copy  
+            - copyList = new ArrayList(originalList); //creates new heap copy 
+            - be careful if collection of objects! objects can be edited
+               - e.g. added object -> not visible to original collection
+                      setProp of existing object - might be visible to original collection, if objects are not deep copy also
+            - should not be a big impact on performance (if not having huge data -> memory + GC)    
+            
+        C) using copy of original as immutable collections
+            - Java8: 
+                 return Collection.unmodifiableMap(originalCollection);  //always creates copy 
+              Java 10+ :
+                 return Map.copyOf(originalCollection);                  //unmodifiable by default, better performance in java10+
+                                                                                                      -> if already unmodifiable, no copy
+    Objects
+        E) duplicate object = deep copy                                                                                                 
+             - via copy constructor
+                  public ClassName(ClassName obj) {
+                     this.a = obj.a; 
+                  }                                                                                         
+                                                                                                      
+        F) create immutable object enforced via interface
+             - create interface with only getters 'extracted' from the class 
+             - use the interface (polymorf style)
+             
+        E) hiding with modules, java9+  
+             -similar to javasript shit for modules
+              - module M1 {
+                   export package_path_to_classes;
+                }  
+                
+                module M2 {
+                   requires M1;  //available only  classes from M1.package_pat_to_classes
+                }  
+                                                                                                          
+Metaspace & internal JVM memory
+- with java 8+
+- before java8+ -> PermGen
+    - was triggering outOfMemoryError: PermGen 
+        -> class loaders weren't garbage collected properly -> memoryleak
+        -> tuning with now deprecated flags: -XX:PermSize=N, -XX:MaxPermSize=N, N-memory size (e.g. 200m)  
+                                                                                    
+- for metadata (wow) 
+     - e.g. loaded classes 
+            bytecode, names and JIT data (which method is compiled, etc)
+            static method and variables (references and primitive types) 
+            !!!! static variables are referenced by the Class objects which 
+                 are referenced by ClassLoaders
+                  -> static variables are only garbage collected when the class 
+                     loader which has loaded the class in which static field is 
+                     was garbage collected
+                     
+- metaspace controls the space dynamically, not fixed like with PermGen
+- metaspace reduces probability of memory error, new flags: 
+     MetaspaceSize,
+     MaxMetaspaceSize, 
+     MinMetaspaceFreeRatio - the minimum percentage of class metadata capacity free after garbage collection, 
+     MaxMetaspaceFreeRatio   
+          
+- java allows create objects only on the heap, but for objects which are block/method specific, 
+  JVM can optimize to create it on stack to improve memory management          
+
+- String pool
+   - before java7 as part of permGen
+   - with java7+ movd to the heap -> can be garbage collected
+   - strings are immutable objects
+   - if assigning the same string - reusing the same string object
+       - not only s1.equals(s2) //values
+         but even s1 == s2      //objects 
+   - in rare case can be duplicate string on heap
+          e.g. intVal = 1; intVal.toString() and stringVal = "1"
+             -> JVN runs string de-duplication in runtime to optimize and keep only one value 
+          - can enforce using string pool via intern() method, i.e. intVal.toString().intern()                     
+   - implemented as hashMap
+      - can tune the size -> bigger - less conflicts, but occupy more memory
+         - initially for hashmap = 16, in reality can be around 60k (in Java8 def 60013)
+         - defines max elements per 'bucket', e.g. 2
+      - -XX:PrintStringTableStatistics - prints symbolTable & stringTable tats
+        -XX:StringTableSize=N, N-must be prime number, bigger than 60013 to increase default java8 size
+        
+                                
+Garbage Collection (GC)
+- first time used in Lisp, not Java
+- free memory from objects which are not used (not reachable by any reference from 
+  stack/metaspace, references on heap can be marked as garbage, if wrapping object 
+  is garbage - no ref from stack/metaspace), 
+- should prevent memory leaks
+- garbage collection can be triggered from code, but usually not good idea
+    Java8:
+      Runtime.getRuntime().freeMemory() //prints available memory
+      System.gc()                       //tries to trigger Garbage Collection, no guarantee to execute
+    
+    Java11
+      System.gc()                       //java11 introduces new optimizations, new alg to GC
+                                        //if allocated more memory from OS than needed, it returns 
+                                        //the unused -> can be limited by -Xms to ensure min size 
+                                        //in java8-up only, in java11-dynamic up & down resize
+- GC uses system resources - it can slow or even pause the running application 
+    -> thus not good idea to trigger manually from code via System.gc()
+    -> JVM optimizes when to execute
+
+    - finalize()
+      - deprecated since java9
+      - for any Object
+          @Override
+          public void finalize() {
+             //triggered when object is garbage collected
+          }   
+      - could happen that it was not executed for all objects from heap, e.g. when application ended
+         - very bad place to close resource - like db connection
+         - never sure if and when it will be executed    
+    
+Memory leaks
+- soft leak
+    - object remain referenced but no longer needed
+
+    JVisiualVm
+      - oracle j8: java/jdk/bin/jvisualvm for 
+      - openjdk  : visualvm.github.io as external tool     
+      - possible issue on windows 
+           -> Users/username/AppData/Local/Temp/hsperfdata 
+              - folder setting - Everyone - Full control permission      
+      - analytic tool to monitor the heap - to observe unusual behavior  
+
+    HeapDump
+      - file with info about heap in some fixed point of time
+      - can be triggered: A) from JVisualVM (process/tab Monitor/button Heap Dump)
+                               - more for local debugging
+                             
+                          B) from command line with VM options: 
+                               -XX:+HeapDUmpOnOutOfMemoryError
+                               -XX:HeapDumpPath=someFilePath  
+                               - good to track production issues
+    
+      - useful tool: from Eclipse, standalone app - Memory Analyzer
+         - can acquire heap dump from running java processes
+         - or can open/import existing dump
+             - can perform auto detection for memory leaks and highlight suspicious places
+
+- Generational GC
+   - valid for java8 (phew... archaeology)
+   - consumes computer resources - must be effective
+   - two steps - marking objects
+                  - program is stopped - all its threads are paused 
+                  - go through stack and mark all 'live' object which has reference from stack
+               - sweeping marked objects
+                  - free unmarked objects
+                  - 'defragments' remaining objects - move to new memory blocks -> more 'new' memory available
+   
+   - performance improvement - dividing into generations
+   - assumption - if object survives first round of garbage collecting, probably it will stay alive longer
+   - heap contains 2 sections
+       A) young
+           - much smaller, more frequent, much quicker ~ minor collection
+           - for new objects
+           - most will probably die during first garbage collecting
+           - surviving object moved to the old section
+           
+           - contains another 3 sections (can be dynamically resized by JVM):
+               1) eden
+                 - for new objects, if full - garbage collect 
+                   -> survivors into s0/s1
+                      - switching where to move (s0/s1) after collecting
+                      - one of s0/s1 is always empty
+                      - after collecting eden survivors are moved to s1 together with survivors from s0
+                      - if survivors survive threshold (default 5) swaps between s0-s1 => move to old section
+                         - threshold is configurable
+                   -> another new objects can be inserted                   
+               2) survivor space s0
+               3) survivor space s1
+       B) old    
+           - less frequent and slower ~ major collection
+           - bigger section, more objects
+           - can take even seconds (young usually in ms, no notice)
+           - only when needed
+           
+   - tracking in JVisualVM
+       - needed extra plugin /Tools/Plugins/VisuaGC
+       - reopen connection with java process
+       
+   - can get GC info about garbage collecting to run java with -verbose:gc    
+        prints info: GC ~ minor GC
+                     Full GC ~ major GC
+   - tuning
+      -XX:-UseAdaptiveSizePolicy - turn off dynamic resize of young section of heap (eden, s0, s1)
+                                 - note: as said on the start '-' after ':' -> turn off
+                                                              '+'                   on
+      -XX:NewRatio=n - how many times the memory of old section should be bigger than young section of the heap                                                        
+                     - only integer values
+      
+      -XX:SurvivorRatio=n  - how much the memory eden will be bigger than s0/s1
+                           ~ 1/n for s0, 1/n for s1, (n-2)/n for eden
+                           - JVM can adapt sizes if adaptive policy turned on
+                           
+      -XX:MaxTenuringTreshold=n - how many times survivor swapped s0/s1 before moved to old the section
+                                - max 15 (some java version allows n>15 which means infinity -> never moved into old)
+                                - bad idea to adapt, JVM usually do better
+
+- type of GC
+   - when GC runs - whole app is paused ("stop the world"), does not matter which type of GC we have
+   
+   A) serial
+      - not good with more java apps
+      - good when performance of app is not crucial 
+         - good if more performance sensitive app is running on the server 
+            - stop release resources for GC and the other more performance sensitive app
+      -XX:+UseSerialGC
+            
+   B) parallel
+      - performs minor collection (young section in parallel)
+      - good we have more processors 
+      - XX:+UseParallelGC (default on java8)
+      
+   C) mostly concurrent
+      - effort to make 'realtime GC'
+      - application pausing for marking is minimized as much as possible
+      - two types: - XX:+UseConcMarkSweepGC   - default in java9
+                   - XX:+UseG1GC              - default in java10
+                   - both available in java8             
+                   
+- G1
+  - heap divided into regions (default 2048 regions)
+  - regions regions are allocated to different parts -old, eden, s0, s1                    
+  
+  - minor collection (young)
+     - take all regions belonging to the young
+     - remark them - decided by JVM 
+        - if s0/s1 collected - some s0/s1 can be marked as eden                 
+        - can add new regions to eden (or s0/s1 if needed)            
+  
+  - major collection (old)
+     - take old regions, mark which contains mostly garbage                 
+     - these regions are processed first (garbage first -> G1)              
+     - does not need to perform full garbage collection
+         -> OK to free only some regions (if more not needed) -> better performance
+         
+  -XX:ConcGCThreads=n, number of concurrent threads for regions
+  -XX:InitiatingHeapOcupancyPercent=n, GC starts when Heap reach threshold of fullness (default 55)       
+  -XX:UseStringDeDuplication, since java8, available only for G1 GCs
+                             - not used much, stringpool usually solves this
+  
+Profiling app performance
+- profiler can change performance of app - attaching itself to the JVM
+- Java Mission Control - JMC
+   - free standalone from openJDK (used to be in oracle java7, now paid oracle version)
+   
+   - select & expand java process 
+      - MBean Server ~ UI for jmx console  
+          - overview tab - customizable dashboard (editable widgets)
+          - mbean browser - excel like stats 
+                             - can add key figure any into overview tab graph
+          - system tab - info about computer HW, OS, JVM
+          - memory tab - some GC stats, heap, et
+          - threads tab - 
+          - diagnostic commands - commands executable on running JVM
+      
+      - Flight recorder
+          - replay the profiling from recorded dataset (got by profiling)
+          - flight recording is function of JVM (java7+)
+             - run with: -XX:+UnlockCommercialFeatures (only for oracle)
+                         -XX:+FlightRecorder
+             - start flight recording               
+                  - continuous - until we stop (stays in memory before saved)
+                  - fixed time
+                  
+                  - event setting - continuous - good for prod, low overhead
+                                  - profiling - local debug, bigger overhead
+                  - event option - thread dump interval 
+             
+             - right click and select Dump
+                  - creates some report and hints to improve
+                  
+             - can be triggered from cmd (example with some settings):
+                 -XX:StartFlightRecording=delay=2min,duration=60s,name=Test,filename=recording.jfr,settings=profile
+                 -XX:+FlightRecorder //needed, plus -XX:+UnlockCommercialFeatures (only for oracle)
+ 
+Assessing performance
+- evaluate performance - base on time -> end of execution - start of the execution
+                                        : catch - native compilation
+                                                    - some can be decided by JVM to compile for native compilation
+                                                          -> warm up period - call method multiple times to convince JVM to 
+                                                                              compile the method 
+                                                                                      => compilation not happening in measuring phase
+                                                                            - can decrease -XX:CompileThreshold=n to reduce 
+                                                                              warm up period     
+                                                          
+                                                          - can be checked with -XX:+PrintCompilation
+                                                    
+                                                - garbage collection
+                                                    - stop the world and mark objects to free memory, not related to the executed code
+        
+
+                       - microbenchmark - measuring small piece of code - block/method                            
+                                        :catch - run isolated - no fight for resources (memory/CPU) with others (threads, other apps)
+                                               - if locally - most likely different HW than server                  
+
+                       - macrobenchmark - microbenchmark can improve isolated method, but it can lead to decreased performance in
+                              app as whole (using shared resources etc.)
+                                        - good to check if app as whole was improved, i.e. measure after startup time
+
+- JMH - Java Microbenchmark Harness 
+   - part of open JDK
+   - handles warm up period itself
+   - runs benchmark multiple times to get meaningful data
+   - tries to be more real world (production) like
+   
+   - 2 ways to run: 1)  copy project to the same package as jmh and run inside
+                    2) create jar and add to the project
+    
+   - annotation @Benchmark - annotate method which should be measured
+   - create executable - jar file, and run it (mvn clean install; java -jar file.jar)  
+        -prints result
+            - benchmark: measured method
+              mode : thrpt - operations per sec, avgt - avg time 
+              score: how many times per second was the method executed (thrpt -> thrpt = better , avgt -> lower better)
+              error: std deviation from score
+                          
+- profile the app performance flow - detect frequently called parts - JMC
+                                       - optionally adapt
+                                   - benchmark these parts - JMH
+                                       - improve the bad code parts
+                              
+Lists
+- diff implementations: 
+     ArrayList, 
+         AttributeList       - extends ArrayList, for MBean objects (JMC), not generic
+         RoleList            - extends ArrayList, specific to managing role objects, not generic 
+         RoleUnresolvedList  - extends ArrayList, specific to managing role objects, not generic
+     CopyOnWriteArrayList
+     Vector
+         Stack               - extends Vector, LI-FO, since java1, later was introduced Deque interface and its implementations (recommended to use Deque)
+     LinkedList
+ 
+- ArrayList
+   - added in java1.2
+   - internally uses array
+   - default capacity 10, could be worthy to set own initial size if we expect lot of elements (=> less resizing): new ArrayList<>(10000);
+   - every 'resizing': currentCapacity + currentCapacity/2 (max arraylist size: MAX_INT-8, otherwise OutOfMemoryError)
+   - creates new copy into resized array, old array is garbage collected   
+   - fast access to the element 
+   - bad for resize and shifting elements (remove/add if needed to shift the rest of the array)
+         
+- CopyOnWriteArrayList
+   - threadsafe variant of ArrayList
+   - more costly for adding/removing
+   - good for multithread app accessing same list with lot of reads, iterating 
+   - bad for expecting many edits (edit~write/add/remove/resize)
+
+- Vector
+   - in java since beginning
+   - similar to ArrayList, uses array
+   - thread safe, ArrayList is not (need sync block or CopyOnWriteArrayList)
+   
+- LinkedList
+   - implements Deque and List interface
+   - 'pointers' ~ references: to previous element
+                              to next element 
+                              to the object on heap in the element                            
+   - best for adding elements, usually for removing also (if we know element to remove, otherwise need to iterate through elements to find)
+
+- sorting
+   - ArayList and LinkedList use both Arrays.sort(), LinkedList has to be converted into array (should not be slower much)
+
+Maps
+- HashMap
+   - (key, value) pair, random order of keys
+   - default as array with 16 elements/buckets
+   - getting element from map with 10 elements same speed as from map with e.g. 1M elements 
+       key -> hash into int (.hashCode() method)
+           -> find element where to store (modulo): hash % arraySize
+           -> if the same modulo result - store in the bucket as linked list (just add)
+   - resize: based on 'factor' - if 3/4 (75%) of buckets has some 'element' (~is used)
+                                    -> double the size of map (~newSize = oldSize*2)
+             when resized, needs to recalculate where to insert elements/values based on new 
+             modulo result: keyHash % newArraySize -> overhead
+             
+   - hash: 1) must be 'good function', must not returning same value (or small range of values) -> one bucket with loooong linked list
+           2) equal objects must have equal hashcode
+                 
+   - can set initial size and factor: new HashMap<>(6000, 0.5f)
+       - size will be always power of 2 -> it will create map with AT LEAST 6000 buckets -> closest higher ^2 value: 8192
+   - best performance - lot of buckets 
+                          - faster search in array, but demanding on memory
+                          - less buckets (linked lists)
+                        +
+                        small factor
+                          - more empty buckets
+                          
+   - interesting: stackoverflow.com/question/7115445 - optimizing hashmap thread
+   
+- LinkedHashMap
+   - preserve order of keys (by insertion), but keeps the same performance for search as HashMap
+   - same implementation as HashMap + adds tracking pointers on added elements
+      => linked list in bucket (as before) -> same search time as HashMap
+         + 
+         extra linked list on whole data structure (tracking the order) -> sorted iteration over keys
+   
+- HashTable,   
+   - ordered map, thread safe version of HashMap, since java1.0
+
+- TreeMap    
+   - like LinkedHashMap, but ordered by the natural order of key value not order of insert
+   - worse performance - due to ordering, good for smaller amount of data
+   
+Choices
+- Primitives vs Objects
+   - primitives are faster (wow :/), significant with bigger data
+- BigDecimals vs Doubles
+   - "suprisingly" the Double is faster, BigDecimlas has to preserve the precision  
+   - careful with BigDecimals: .equals() & .compareTo() differences -> inner structure like 'scale' field influences .hash() and usages in Set (equals) vs TreeSet (compareTo)
+- StringBuilder vs Concatination
+   - StringBuilder is more performant in general, 
+     however we can achieve JVM optimization (if we concate on one line - no temp results)
+       e.g. String s = s1 + s2 + s3; vs String s = s1; s = s + s2; s = s + s3;
+         -> JVM optimizes/compiles one line concatenation same StringBuilder approach
+- Loops vs Streams
+   - in general loops are slightly efficient, but not significantly
+   - sometimes bad usage of streams can slow down significantly - e.g. using complex methods instead of multiple basic (flatMamp vs toMap.filter)
+   - parallelStream can brings better performance (if we have more CPUs) 
+- Logging   
+   - wrap logger.log into if statement
+   - if (logger.isLoggable(Level.INFO)) {      //creates string only if allowed (otherwise creating even not need)
+         logger.log(Logger.INFO, s1 + s2 + s3) //strings created + concated + [formatted] + garbage collected
+     } 
+
+GraalVM
+- oracle alternative VM to Java VM 
+- should be able to run Java bytecode of JVM but it should run faster
+- provides alternative Java compiler & native compiler (no need of JVM)
+                                               -> creates executable for given OS, like .exe
+- experimental feature in java11
+
+Other JVM languages
+- Groovy, 
+  Scala, 
+  Clojure, 
+  JRuby, 
+  Kotlin
+    - does not have primitives, can compile variable as primitive
+    - adds null safety -> slight influence on performance
+
+- compare byte code    
+  - javap -v JavaClassFile.class -> prints readable bytecode
+                                       constant pool
+                                       code with instructions 
+        - more about byte code docs.oracle.com/javase/specs/jvms/se/html/jvms-6.html
+  
+  - cfr - java  decompiler
+        - java -jar cfr-0.142.jar JavaClassFile.class
+        - rewrite into Java code (can compare code in Java)
+
+OpenJ9 - another "better" jvm?
+
+
+
+                                                                                                                                           

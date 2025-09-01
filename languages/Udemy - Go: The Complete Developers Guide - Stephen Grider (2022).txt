@@ -1,0 +1,377 @@
+Go
+- video: https://www.udemy.com/course/go-the-complete-developers-guide/
+
+- not object oriented, no classes, but can have structs -> c like + receiver functions (like kotlin/rust)
+- no overloading of functions foo(int) x foo(float) -> not allowed, duplicate declaration
+- fast compile time -> machine code (faster than interpreting)
+- no separate runtime libs -> independent
+- for portable+efficient apps, web services, concurrency - routines (CSP), no shared memory 
+- garbage collector, no VM support -> less optimal for memory
+- new versions support generics/templates,
+- errors as value - always must be received -> enforcing handling
+- allows pass object (value) into func with pointer arg (for value passed types) -> auto conversion
+- godoc ~ javadoc(Java)/doxygen(C++) like tool
+- fmt.Println(var, var, var) -> concate together with " "
+
+- vscode as 'IDE'
+
+- go cmd line commands
+  - go build -> compile to executable format
+    go run file1.go, file2.go -> compile and execute up to 2 files
+    go fmt -> formatting codes in each file of current directory
+    go install -> compiles and install packages
+    go get -> download raw sources of someone else packages
+    go test -> runs tests
+    
+- package ~ java like
+  - namespace, project scope
+  - executable package - generates file we can run
+                       - must have name "main" to create executable 
+                         - has to contain func main() {...}
+    reusable package - helper with reusable logic ~ lib   
+    
+-imports ~ java like
+  - getting access to the packages logic (reusable packages and std libs)
+  - all must be used - optimization, unused is 'expensive'
+  - can import more packages:
+     //single package
+     import "fmt"
+     //multiple packages
+     import(
+        "fmt"
+        "strings"
+     )
+  - note: external tool goimports which fill necessary imports (?useless?) 
+  
+- fuction main ~ java like
+  - first function for executing
+  
+- variables
+    var name type = value;
+    - nil (not null) 
+    - bool
+    - string
+    - int, uint 
+    - float
+    - complex 
+    - pointers, arrays, structs, unions, functions, slices, interfaces, maps, channels
+    - doc https://golangdocs.com/variables-in-golang 
+    
+    - fast init of var (no datatype needed): 
+         name := value1 // init :=
+         name = value2  // assignment = 
+         
+    - global variables:
+         var name type
+         var name type = value;
+         //cannot be name := value     
+    
+    - EVERY DECLAreD VARIABLE MUST BE USED, otherwise compiler error
+    - if we want to omit the variable, use _ as name
+        i.e. for index, element := range slice
+             for _, element := range slice // we do not plan to use indax value, let compiler know
+   
+    - type conversion
+        string(variableOfInt) -> int value as string
+
+- pointers - C like
+  - *pointer -> dereference 
+  - &value -> address  
+  - Go allows pass object (value) into func with pointer arg -> auto conversion  
+
+- basic types + struct passed by value by default
+   - int, float, string, bool, struct
+- reference types passed by reference
+   - slice, map, channel, pointer, function   
+  
+- if -> kotlin like
+   if expression {
+   
+   } else { // can not be on the new line
+   
+   }
+     
+- functions 
+     func name() returnType {
+        retrn valueOfReturnType
+     } 
+     
+     i.e.:     
+     func getString() string {
+        return "Hello";
+     } 
+     
+     - if two files in the same package can call functions from diff file 
+     - can return multiple types ~ solidity like
+     
+     func name() (returnType1, returnType2) {
+        retrn (valueOfReturnType1, valueOfReturnType2)
+     }
+     
+   - anonymous function/lambda => function literal
+         func() { 
+           //do something
+         } ()   //() call/execute anonymous function  
+     
+- arrays
+   - must keep the same data type (nit associative as php)
+   - Array - static size = fixed length
+   - Slice - dynamic, can grow or shrink
+           - name := [] string {"myString", getString()}
+             name = append (name, "new text") // not modifying, creates a new slice  
+   - length -> len(sliceName)
+   
+- ranges [startNumber:EndNumberExclusive]
+   - [0:2] -> 0,1 
+     [:2]  -> 0,1
+     [2:]  -> 2...end
+             
+- for loop 
+   - for index, element := range sliceName { //re-init index, element every iteration, thus :=
+        fmt.Println(i, element)
+     } 
+     
+     for _, element := range sliceName // if we do not care about index
+     for index := range sliceName      // if we do not care about element value            
+
+   - infinite loop:
+       for {
+         // something
+       }
+
+- replaceing objects with custom types
+   - kinda typename from C
+      -> type MyType [] string
+   - gets all properties of 'extending type', i.e. slice of strings
+      
+   - binding with receiver functions to add logic
+      - receiver function, any var of that type can access this function:
+        func (name customTypeReference) name() {
+          //.. do something
+        }
+        i.e.
+        func (d deck) print() {   // convention to name the ref with 1-2 letters, first letters of the type
+          //d is value/ref copy to the variable, depends on data type
+        }
+   - if object is not used in receiver func, we can omit its name, i.e.:
+        func (deck) print() {   // convention to name the ref with 1-2 letters, first letters of the type
+            fmt.println("i do not use the original object")
+        }   
+ 
+- store data to the file -> convert to bytes
+   - ioutil.WriteFile(             //write file
+        "filename",                // with filename
+        []bytes(                   // convert to bytes
+            Join(stringSlice, ",") // convert string slice to string -> join slice elements with delimiter ","
+        ),
+        0666                       //set permission to access file
+
+- read file
+   - bs, err := ioutil.ReadFile(filename)
+   	 if err != nil { //handle 'exception'
+		    fmt.Println("Error:", err)
+		    os.Exit(1)   //end process
+	   }
+     
+     strings.Split(string(bs), ",")
+     
+- random numbers
+   - pseudo-random, for better randomness -> improve seed
+   - r := rand.New(rand.NewSource(time.Now().UnixNano())   //set timestamp as seed  
+     r.Intn(maxExcluxiveNumber)  //upper limit, not included    
+     
+- testing
+   - name test file with the same name with "_testuffix" -> srcFilename_test.go
+   - test should have the same package as tested src file
+   - test methods start with "Test" prefix
+   func TestNewDeck(t *testing.T) { t-testHandler
+	     d := newDeck()
+
+	     if len(d) != 16 {
+		      t.Errorf("Expected deck of len 16, but found:", len(d)) //add failure to the handler
+	     }
+    }
+    
+- structs
+   - c like, can make composition
+   - can have receiver functions - by default pass by value
+                                 - to adapt original, need pointer
+                                 - like method
+   - no hierarchy - inheritance, but embedded structs can achieve similar behavior
+                  -> derived/aliased type does not inherit receiver func -> workaround with embedded struct 
+                                   
+   - type typeName struct {
+        name1 string
+        name2 string
+     } 
+     
+     type typeName2 struct {
+        id1 int
+        prop1 typeName
+     }
+     
+     //type typeName2 struct {
+     // id1 int
+     // id1 int
+     //}
+     
+     func foo() {
+        //create:
+        //1)
+        structInstance := typeName { "Name1", "Name2" }
+        //2)
+        structInstance := typeName { name1: "Name1", name2: "Name2" }
+        //3)
+        var structInstance typeName
+        structInstance.name1 = "Name1"
+        structInstance.name2 = "Name2"
+        
+        fmt.Println(structInstance) -> prints JSON like
+        fmt.Printf("%+v", structInstance) -> prints JSON like with property names (%+v)
+        
+        // struct with other structs
+        instance := typeName2 {
+           id: 1, 
+           prop1: typeName {
+              name1: "Name1",
+              name2: "Name2",         //must have comma after last value
+           },                         //must have comma after last value
+        } 
+     } 
+     
+     func (v value) recFunc () {
+        v = ...
+     }  
+     
+     func (v *value) recFunc() {
+        *v.prop = 1;
+     }
+     
+   - embedded struct -> workaround to achieve inheritance effect
+                         - composition over inheritance
+     type typeName2 struct {
+         a int
+         b int
+     }
+     
+     type myEmbeddedType struct {
+         c int
+         typeName2 //anonymous field, no name, just type
+     }
+   
+     var o myEmbeddedType;
+     o.c = 1
+     o.a = 1 //legal
+     o.b = 1 //legal, we can even call methods from typeName2, if has any!
+     
+- map 
+  - java like hashmap
+  - map[keyType]valueType 
+    //var map[string]string
+    myMap := make(map[string]string) //creates empty map
+    myMap := map[string]string {
+       "red" : "#ff0000",
+       "green" : "#00ff00",          //MUST have comma after last prop
+    }  
+  - access
+       myMap[key] 
+  - add/edit value
+       myMap[key] = value
+  - remove
+       delete(myMap, key) 
+  - iterating over
+       for key, value := range myMap {
+          //use key/value
+       }          
+     
+- interfaces
+  - shared logic, "polymorphism", can not create object of interface
+  - no implements keyword -> no manual binding, Go finds function with same footprint ~ 'implicit' 
+  - every function's receiver is mapped the the type of the interface   
+    
+  - type myInterface interface {
+        foo() string                         // define func
+    }    
+    
+    type struct1 struct{}
+    func (struc1) foo() string { return "1" } //stuct1 implements foo
+    type struct2 struct{}
+    func (struc2) foo() string { return "2" } //stuct2 implements foo 
+    
+    func myFunc(mi myInterface) {
+       mi.foo()
+    }
+    
+    func main() {
+        o1 := struct1 {}
+        o2 := struct2 {}
+        myFunc(o1)                            //Go resolves if struct1 implements interface
+        myFunc(o2)                            //Go resolves if struct2 implements interface
+    }
+    
+    - interface can wrap/group other interfaces together
+      type readInterface interface {
+          read() string                         // define func
+      } 
+      type writeInterface interface {
+          write()                          // define func
+      } 
+      type myInterface interface {
+          readInterface
+          writeInterface
+      } 
+     
+- routines
+   - C like process, one per CPU
+   - keyword go + function call:
+       go functionName(arg1)
+   - Go scheduler maintain when while be run
+      - if any CPU is available
+      - once one finishes and unlock CPU, other is assigned by scheduler     
+   ! concurrency, not parallelism (if on one CPU)     
+     
+- channels
+   - communication between routines, sync tool
+   - has assigned data type, data going through channel must be same type
+   - func main() {
+        c := make(chan string) //create channel of type string
+        for ... {
+           go foo(arg1, c)     //pass the channel to the function in new routine
+        }                      
+        fmt.Println(<- c)      //get data from the channel to the output  
+        //val := <- c
+     }
+     
+     func foo(s string, c chan string) {
+         c <- "message for the channel"     //passing value through '<-'' operator
+     }
+     
+   - receiving make message creates another blocking, but if in the main routine 
+     it will not wait for finishing all sub-routines once it will get first 
+     message => a) receive in for loop - 5 routines calls 
+                    -> for 1..5 with catching <-c //wtf? looks idiotic
+                    
+- repeating routine
+   - trigger new routine once received message from the channel
+     go foo(val, channel)
+     
+     for {
+        go foo(<-channel, channel)  // blocking operation, it will not beat foo every nanosec  
+     }  
+     
+     for message := range c {       //same as previous call, pass message from channel as arg
+        go foo(message, channel)    // blocking operation, it will not beat foo every nanosec  
+     }
+     
+   - delay between routines -> time.Sleep(time.Second * amount_of_seconds_variable) 
+      -> "best practice" from anonymous func
+             for message := range c {       
+                go func(param string) {
+                    time.Sleep(time.Second * 2) //sleep 2 sec
+                    foo(param, c)               // DO NOT USE message DIRECTLY = other routine scope, 
+                                                // not predictable with changes -> pass as param to the lambda
+                }(message)    
+             }
+            
+     
+                      

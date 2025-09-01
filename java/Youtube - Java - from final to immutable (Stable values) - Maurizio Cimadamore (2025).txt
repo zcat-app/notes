@@ -1,0 +1,63 @@
+From Final to Immutable: The not-so-final word on `final` 
+- video: https://www.youtube.com/watch?v=FLXaRJaWlu4
+
+- final fields
+	- used for immutable objects
+	- adds memory barrier to constructor ordering for constructing in thread env - prevents another constructor call
+        - no need for: defensive copy (e.g. for compositions)
+                       thread synchronization 
+	- not so final - reflection can change with: Clazz.class.getDeclaredField("name").setAccessible(true)
+		       - due to serialization/deserialization - create empty obj and set data
+		       - came after java 5
+		       
+
+- final means final
+	- -XX:+TrustNonStaticFinalFields 
+	   -lot of bookkeeping
+	   - first bad case ruin the optimizations
+	- can go with compilation warning to suggest future problems
+	   --enable-final-field-mutation <module-name>
+	   --illegal-final-field-mutation=deny|allow|warn|debug
+	- still can access field before get initialized (inside of constructor) -> more restrictions needed  
+   
+- strict final fields 
+	- with value class - java 25
+	   value class MyClass {
+	       /*strict*/ final int myField; // no strict keyword yet - influence on whole class
+	   }
+	- no lazy support
+	- super() after init phase - always!
+	- can only: write before super, 
+	            read after super
+   
+- stable value
+	- @Stable - treats field as constant
+		    - race with threads
+		    -> different value in different parts of the app o_O
+		    - unsafe - update to 'sentinel value' is ignored (if  == 0, cannot set to 0, still wait for assignment)
+		    - 'sentinel value' - value that shows field is not set, e.g. -1
+		    - not enough!
+		    
+	-> java25 preview: JEP 502
+	    - StableValue<> API
+	    - wrapper, set only once, atomic
+	    - laziness + immutability
+	    - var x = StableValue.of(); //not set
+	      x.orElseSet(() -> 1);     //set the value
+
+	- constant folded access as records (better than just final fields)
+	- low level focus, better to wrap build in other blocks with higher abstraction:
+		- can be wrapped to caching supplier
+		    Supplier<X> getCachingSupplier(Supplier<x> supplier) {
+		       StableValue<X> cache = StableValue.of();
+		       return () -> cache.orElseGet(supplier)
+		    }
+		 simplified as : x = StableValue.supplier(supplier) 
+			         x.get();
+	- stable collections
+	  - based on StableValue API:
+	       StableValue.list(size, i -> new Point(i, i+1));
+	  - still thread safe, set only once, every element of collection is lazy
+	  - still preserves constant folded access like for records (even accessing field of elements)
+	  
+- or use records :P    

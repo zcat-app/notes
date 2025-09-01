@@ -1,0 +1,89 @@
+SCIFI - SOLID is dead
+- video: https://www.youtube.com/watch?v=rmEh3E1ZIfU
+
+- composition oriented principles
+- tries to provide better reusability, implementability, testability
+- aims to produce smaller and simpler long living components
+
+software
+- requirement -> design -> solution
+                            - SOLID, design patterns, hexagonal arch, microservices, event driven arch, cqrs, etc.
+                            - trying to bend solutions to requirement - might lead to over/mis engineered solutions for sake of best practices
+
+goal to focus on appropriate practices through design thinking over relying on best practices and bending them
+design for composability -> simpler smaller code
+                         -> higher reusability
+                         -> better testability
+                         => 'higher quality' - better code, less cost
+                        
+SCIFI
+- Split unit responsibility recursively
+- Connect resulting units
+- Improve interfaces of units
+- Facilitate the use of units
+- Iterate on the design
+
+- do any of these steps only if it benefits you (design phase or coding phase)
+
+S ~ Split unit responsibility
+- split that testing can be isolated
+- for reusability 
+  - split that it can be independently reused in another context
+  - more direct impl dependency  rather than with interface
+- for replaceability 
+  - split that component can replace unit independently
+  - often with interface dependency
+  
+- thus the component with replaceable components is reusable in other contexts   
+
+- splitting types: 
+1. action from action
+ - e.g. load file, process the file
+2. action from scope/context
+ - e.g. open DB connection, begin transaction, perform Db action, commit, close connection
+    - contexts: connections management
+                transaction management
+                performing actions
+3. action from state
+   - managing state
+      - managing wicket tree - adding nodes
+   - using state
+      - counting nodes, filtering nodes
+      
+C ~ Connect split units into composition  
+- connection direction
+  - decide in which way and order the units will follow
+
+- connection mutability
+  - static - hard-coded local references ~ local final objects
+                       member references ~ constants
+           ~ not mutable, bad for composability
+           
+  - dynamic - creation time - passed into constructors - if not planning to change connection
+            - configuration time - passed into setters - if plan to change connections, but rarely
+            - call time - passed as parameters into method - if planning to change connections often
+            ~ changeable at runtime
+            ~ kinda types of dependency injections
+  - applicable on objects but also lambdas
+  
+I ~ Improve interfaces 
+- can introduce overloading on parameters if necessary
+- make more reusable if necessary
+  - e.g. getSubstring(offset)
+         getSubstring(offset, length)
+  
+F ~ Facilitate the use of units
+- try to put units together
+- can help with Builders, Facades or Dependency Injection Containers to 'hide' from user how are units assembled together
+   - so we use patterns at the end *sigh*
+   - 'only' support class that should make units easy to use
+   
+I ~ Iterate on the design
+- adjust design (split further recursively, shuffle connections etc.) if it still brings benefits
+- if speculation on design (~ maybe benefit) - time to stop
+- iteration can be after initial try, after another change request, after year - depends
+
+Deviation from principles is OK, maybe for performance we might keep some units not split
+Not only for OOP, also functional, architecture, or data design
+
+

@@ -1,0 +1,106 @@
+Visual studio crash course
+- https://www.youtube.com/watch?v=WPqXP_kLzpo
+
+- not full service IDE, enhanced text editor
+- cross platform
+
+- zkratky
+   ctrl + B           - hide 'quick menu' on left 
+   ctrl + ~           - hide/show terminal 
+    
+   ctrl + F           - search in file 
+   ctrl + H           - search in file and replace    
+   ctrl + P           - search for file
+   
+   ctrl + tab         - move to the next file
+   ctrl + tab + shift - move to the prev file 
+   ctrl + W           - lose current file
+    
+   ctrl + shift + E   - show file explorer on left 
+   ctrl + shift + F   - show search on left (in project)
+   ctrl + shift + H   - show search and replace on left (in project) - can be per item, per file, per all 
+   ctrl + shift + G   - show version control on left 
+   ctrl + shift + D   - show debug menu on left 
+   
+   ctrl + shift + P   - available commands though search (~ ctrl + shitf + a v intellij) 
+                          
+   ctrl + Z           - search in file and replace    
+   ctrl + Y           - search for file
+   ctrl + D           - select whole word 
+   ctrl + C           - copy whole line if nothing selected
+   ctrl + X           - cut
+   ctrl + V           - insert 
+   
+   Home               - start of line
+   End                - end of line
+   ctrl + Home        - begin of file
+   ctrl + End         - end of file    
+     
+   ctrl + ,           - settings  
+   
+   ctrl + +/-         - zoom in/zoom out 
+                                               
+- grid layout
+   - open file side by side - drag second file to the end of window
+                            - drag and see options   
+
+- intellisense - autocomplete
+               - extension emmet -> helper for creting file structure, html tags, etc for HTML/CSS
+                                 -> ! as first character, choose from intellisense structure of file -> basic HTML etc.
+                                 
+- settings
+   - word wrap (new line formatting with splitting words)
+   - text ligaments in json setting - special characters for ==, !== etc (unusable)
+   - exclude files (git like to not show in file explorer ~ gitignore file)  
+   
+- extensions
+   - prettier - can format code on save file
+   - advance new file - allow to create new file through 'ctrl + shift + P'       
+   - better comments - color highlighting different types of code: TODO, !, *, param, ...       
+   - live sever - runs basic html on local server   
+   - polacode - image snapshot of selected source code      
+   - autorename tag - rename html tag in pair - start tag-end tag       
+   - bracket pair colorizer - highlight brackets in pair     
+   - bookmarks - anchor in code
+   - cloak - hiding env file secrets when sharing screen
+   - css peak - shows css in modalonhover of html with the class
+   - debugger for chrome - js
+   - dotENV - color highlighting of env files
+   - markdown PDF - use tags to format pdf end export as such , shows preview in VS code
+   - setting sync - portable settings files (now built in, can connect with github)
+   - gitlens - git display features
+   - live share - need github account
+                - shared session - peer programming
+                                 - read, read/write permission 
+   
+- snippets - naseptavac na zkratky clg + press enter -> console.log()   
+           - customizable (ctrl + shift + p / settings/user snippets) - global
+                                                                      - per language
+                                                                      - in json file
+                                                                      
+- debugging - IDE like
+            - set enviroment
+            - variable watchers & explorer
+            
+- terminal - set instance - powershell
+                          - git bash
+                          - cmd line
+           - can have multiple terminals - tab/side by side
+           - ctrl + ~ - hide/show   
+           - customizable - in settings: font, pointer, location,...  
+
+- git
+   - terminal + command line                                   
+   - git left menu
+       - ctrl + shift + G
+       - add
+       - revert
+       - see diff      
+   - integration with gitHub - publish to github
+   - gitlens extension - file history, line history, blame function       
+                                                                                 
+   
+   
+   
+   
+   

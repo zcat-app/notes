@@ -1,0 +1,544 @@
+Oracle DB
+- video: https://www.udemy.com/course/hibernate-tutorial-advanced/
+
+* Architecture
+   - demand on memory - all operations are memory related
+                      - need to optimize
+   - flow of query:
+       - user process (i.e. submitting query)  
+       -> passed to server process        
+          A) allocate memory in Program/Process global area - PGA 
+              - assign private (session specific) memory area to process 
+              - readable by owner only (the process)  
+              - never writes directly into DB but through BUFFER CACHE, in
+                special cases can read directly from DB
+          
+          B) pass data into the Shared/System Global Area - SGA 
+              - global shared memory   
+              C) creating execution plan to run query 
+                 - expensive to create the same multiple times (i.e. multiple users runs it)                               
+                 - stores execution plans in shared SQL area, if needed, assigned to users PGA (like cache)
+                 - fun fact: -SGA ~80%, PGA ~20% of the memory
+            
+                 - SHARED POOL block - preprocessing query
+                     C1) DATA DICTIONARY CACHE  
+                        - validate query: table names, columns, permisions,
+                          fast check if exists
+                        - check against data from DB tablespace ~ dictionary views
+                     C2) LIBRARY CACHE
+                        - SQL SHARED AREA cache
+                           - stores execution plans of queries
+                        - manages SQL SHARED AREA, control its size, deletes most 
+                          unused to maintain memory space 
+                        - creates/choose execution plan   
+                     C3) RESULT CACHE
+                        - check if have cached result, if not, goes to BUFFER CACHE with 
+                          created execution plan
+                        - first querying may be slow, second faster -> cached
+                        - the same for other users using the same query
+                        - if data difference in DB/Cache - flush and reload
+                     - OTHER
+                        - db memory related, not used for tuning  
+                        
+         D) loaded data blocks are store in BUFFER CACHE 
+             - holds data block
+             - query data - check BUFFER CACHE, if not there, reads from disc
+                            and update BUFFER CACHE
+             - update data - made in BUFFER CACHE and then saved on disc
+             
+         E) update RESULT CACHE SHARED POOL block
+         F) return memory sorted (not query sorted) data into PGA
+         G) PGA performs sorting, grouping, etc. and return data to user/application    
+                 
+     Other parts of SGA:                    
+       - REDO LOG BUFFER 
+           - keeps initial values with metadata
+           - back up for query failures to recover 
+           
+       - JAVA POOLS - java classes
+       - STREAM POOLS - stream handling    
+       
+       - DATA DISK - mostly interacting with Buffer cache, but in some cases can be accessed by PGA directly
+       - REDO LOG DISK - interact with redolog buffer   
+       
+     Data Blocks
+       - data stored in blocks (both memory and disk) 
+       - smallest unit of storage, can contain multiple rows or indexes even rows 
+         and indexes of multiple tables 
+       - can not be extended directly, depends on DB: 2kb - 32kB (mostly 8kB)  
+       - block header
+           - type: row/index block
+             table info: which table
+             row directory: addresses of rows - rowId -> easier access
+       - data part
+           - rows/indexes
+           - extra free memory per row for row modification -> cheaper then move rows 
+             to another block 
+           - extra free memory per block - for further edits, if row free space overflow, 
+             or inserts 
+           - if no space left, moved to another block
+           - free space between rows is settable by flags: 
+                 PCTFREE - leave some free space
+                 PCTUSE  - use all space  (generally not recommended because of 
+                           for updates/inserts and updating connected indexes)
+           - for clustered tables - block can have rows from different tables, but
+             mostly on table only                
+       - when querying - search for block with row, then search for address of row by rowId
+    
+     Data Row
+       - always on blocks, can be mixed with other table (must be clustered, 
+         usually one table only)
+       - contains: 
+           ROW HEAD
+            row overhead, 
+            number of columns,
+            cluster key ID (if clustered),
+            row ID, 
+           COLUMN DATA 
+            column length (bytes), 
+            column value,
+            column length, 
+            column value... 
+            
+     PGA
+      - 4 main memory areas: 
+        - SESSION AREA
+           - when user connecting - session is created
+           - every session allocates some memory in DB !! -> create only necessary 
+             sessions and close session when done
+           - session is per user - session variables, session status, login info,...
+        - PRIVATE SQL AREA
+           - PERSISTENT AREA
+               - store bind variables from CURSORS (each query is turned into CURSOR in DB)
+               - released when cursor closed
+           - RUNTIME AREA
+               - execution state info - reading data, finished reading, etc
+        - CURSOSRS AREA
+           - info of cursors
+        - SQL WORK AREA
+           - operate data returned from disk
+           - data loaded in memory order -> sorting, merging grouping is handled here
+           - 4 main blocks: 
+             - SORT
+             - HASH JOIN
+             - BITMAP MERGE
+             - BITMAP CREATE
+      - all session specific operations are stored in PGA
+      - all session specific data operations are performed in PGA
+      - less memory - worse performance - can be set manually, or by oracle automatically  
+         -> get as much as it needs
+         
+    SHARED POOL
+     - shared by all sessions
+     - container of subcaches:
+        - DATA DICTIONARY CAHCE
+           - fast to check permissions, if columns exists or what are columns 
+             (if select * from T)
+           - stores definistions and names
+        - RESULT CACHE
+           - result commonly used queries
+           - results of queries but also functions results!
+           - most used cache
+           - handled by DB itself, but can be forced to store/not store query
+        - LIBRARY CACHE
+           - SHARED SQL AREA
+             - stores execution plans
+             - reused to SIMILAR queries, not only identical
+           - stores procedures, packages, control structure - i.e. locks
+        - OTHER           
+           - fuck it, no need for tuning :D   
+     - flow: 
+          1) check DATA DICTIONARY - OK, 
+          2) check LIBRARY CACHE for execution plan (create if needed),
+          3) check RESULT CACHE if can return without querying 
+          4) if not in RESULT CACHE, go to BUFFER CACHE or directly DB based on
+             execution plan from 2)
+             
+    BUFFER CACHE
+     - biggest memory area in SGA, shared - all users can read
+     - stores copies of datablocks loaded from disc
+     - contains data and indexes
+     ! loads only absent data blocks, no reload of existing
+     - faster than reading from disc -> beneficial for i.e. joins to not load
+       the same data many times from disc (as nested join and shit)   
+     - stores most recent and most used data 
+     - make faster not only querying the same data, but also same table or index
+       (reusing the same data blocks) 
+     
+     - SERVER PROCESS - reads from disc and stores into BUFFER CACHE  
+     - DATABASE WRITER PROCESS - update/write on disc                                                                     
+                               - updates all changed from BUFFER CACHE (called dirty blocks)
+                               
+    REDO LOG BUFFER
+     - guarantees 'not to lose data'                           
+     - redo log entry used for: INSERT, UPDATE, DELETE, CREATE, ALTER, DROP actions
+     - entry contains changes in DB - used for RECOVERY operations (like after crash)
+     - entries stored in REDO lOG BUFFER - storage is temporary (circular buffer)    
+     - buffer stores into redo log files: 
+           - every 3s, 
+           - or if buffer full 
+           - or if commit is performed
+     - then redo deletes from buffer and from disc (if was stored)                           
+     ! NOT USED FOR ROLLBACKS, rollback is handled differently, 
+       but rollbacks delete from here too
+     - EACH CHANGE IN DB CREATES REDO LOG ENTRY
+     
+    Undo in DB
+      - when loading data from disc
+         - load into UNDO DATA memory space
+             - not modifiable, for ROLLBACKS
+             - ensure read consistency
+                 - changes visible for me only until commit, others UNDO DATA cache
+                 - guaranteed for 15s, might be adapted by altering tablespace to 
+                   handle all changes by DBA
+             - might be used for FLASHBACK (after commit, still stored temporary)
+             -> my update might not be visible to other user, if his read operation
+                is slower
+               
+         - load into BUFFER CACHE                             
+         - connected to the segments
+         [ Block < Extent < Segment < Tablespace (smallest -> largest) ]
+         
+    DML 
+      - flow: 
+         1) checks SHARED POOL if there is similar execution plan - if not, create
+         2) checks DATA DICTIONARY if query is valid - if not in cache, read from disc
+            and fill cache
+         3) check BUFFER CACHE and UNDO SEGMENTS for related data
+             - if not there, load from disc to BUFFER CACHE
+         4) locks BUFFER CACHE for other users before modification until COMMIT/ROLLBACK
+         5) applies changes into REDO LOG BUFFER
+         6) applies changes into BUFFER CACHE for changed BLOCKS are marks as dirty
+         7) return modifying info data to the user, i.e. '5 rows updated'
+         
+         user can continue to update data further in transaction until COMMIT/ROLLBACK
+            -> repeats from 1)
+            
+      - COMMIT
+         - creates commit with Current System CHange number - used to identify change in 
+           REDO LOG BUFFER (timestamps)     
+         - LOG WRITER PROCESS writes REDO LOG BUFFER entries into REDO LOG files and clear 
+           buffer
+         - DB WRITER PROCESS writes dirty blocks on disc and unlock related blocks in 
+           BUFFER CACHE
+         - returns info about finished TRANSACTION      
+         
+    Automatic Memory management
+      - controls both PGA and SGA
+      - tries to find optimal memory size for each memory areas to increase PERFORMANCE 
+      - recommended to keep automatic
+      - per PGA there are free chunks of memory to have option to increase size of 
+        SGA/PGA areas         
+    
+    Oracle DB storage Architecture
+      - storage ~ disc
+      - storage file types:   
+          * Control files - keeps physical structure info of DB
+                          - without them cannot access data in DB 
+          * Data Files - actual data of DB
+                       - tables, procedures, data       
+          * Online Redo Log Files - REDO LOG entries about applied changes
+                                  - prevents data loss due to crash
+          * Archived Redo Log Files - older Online Redo Log Files
+          * Backup Files - for DB recovery
+                         - exact copy of DB data
+                         - mostly on different disc for safety reasons (fire, floods, etc)
+          * Parameter Files - configuration of DB instances
+          * Password Files - passwords of admin users - sysdba, sysoper, sysasm
+          * Alert Log and Trace Files - logs and errors occurred in DB
+          
+    Logical and physical structure of DB  
+      - Logical
+          - Block 
+              - smallest, 2KB-32KB
+              - physical data structure depends on OS
+          - Extent 
+              - combination of several consecutive blocks
+              - stores specific info
+          - Segment
+              - combination of several extents
+              - stores big data as tables of indexes
+                  - data segment
+                  - index segment
+                  - undo segment
+                  - temporary segment
+                      - help segment providing workspace to finish execution
+                  [tables and indexes are stored in dedicated segments, not 
+                   the same segments]
+          - Tablespace
+               - combination of segments
+               - largest logical unit in DB
+               - container for releted data 
+                  - all data of application
+               - types: 
+                  - TEMPORARY
+                     - data per session
+                     - stored in TEMPORARY FILES
+                  - PERMANENT
+                     - persistent schema objects 
+                     - stored in DATA FILES
+               [- each DB has at least 2, but can have more crated by users
+                     - system tablespace
+                     - sysaux tablespace ]    
+               - better control with tablespaces - memory, users, DB statuses 
+           
+           - Schema 
+               - collection of DB objects own by DB user 
+               - (tables, views, procedures,...)             
+
+* Tuning basics
+  - performance drops due to:
+     - bad sql
+     - structural changes - table structure, drop/create index etc
+     - data volume - more data can trigger different execution plans
+     - application changes - different datatypes, not bound variables etc 
+     - obsolete DB statistics - should be kept up to date                   
+     - DB upgrades - can affect some queries
+     - DB parameters changes - size PGA, SGA,..
+     - changes of OS or hardware 
+  - rule: tune when creating, then tune after finishing query
+  
+  Bad SQL
+     - using more resources than necessary
+     - defined by:
+        - parsing time - allocation memory, creating execution plan
+        - I/O operations - reading data from disc (reads 1000s blocks to get 1 block)
+        - CPU time - bad joins, sorting etc
+        - waits - i.e. multiple users want to read lot of data - handled sequentially by CPU
+                - wait on CPU + execution time
+  
+  Effective Schema Design
+     A) setting right datatypes
+       - i.e. varchar(100) - variable datatype - inserting 2 Bytes only, in reality
+          Oracle will optimize and use only 2 Bytes, not 1000 Bytes  
+          the same for CLOB, Number, etc...    
+         x CHAR - fixed size, use always the same size 
+          
+     B) use the same datatype for related keys
+       - if not during JOIN oracle converts into same datatype ALL ROWS - CPU usage
+       - dont mix variable size data type with fixed - out of memory error
+       
+     C) enforce data integrity
+       - correct settings of keys: PK - FK
+       - constrains for columns where needed  
+       
+     D) use normalization  
+       - divide tables with simple responsibility - smaller tables - faster joins
+       
+     E) Use right table
+       - heap-organized table
+       - index clustered table 
+       - hash clustered table
+       - index organized table
+       - external table ,...
+       
+     F) Create clusters 
+       - JOINing still the same tables -> clustering (mostly increases performance)
+       
+     G) Use indexes and correct type of index  
+       - cheap reading, expensive creation
+       
+     H) create index organized tables  
+       - table stored in the index
+       - for smaller tables which are queried often 
+       
+  Table partitioning
+     - loading table from DB usually gets all blocks
+     - index is not enough for huge tables 
+        - compares rowId with each row - has to compare each row in blocks
+        - problem if i.e. searching multiple records in range, instead of single row
+     ~ dividing table into smaller table per some criteria - date, country, etc   
+       i.e.: PARTITION BY RANGE (AGE) 
+               ( 
+                 PARTITION P1 VALUES LESS THAN (25) TABLESPACE USERS,
+                 PARTITION P2 VALUES LESS THAN (60) TABLESPACE USERS,
+                 PARTITION P3 VALUES LESS THAN (MAXVALUE) TABLESPACE USERS,
+               )
+    - possible to query partition directly: SELECT * FROM P1
+    - divide by most common filter 
+        - try to achieve to have searched data only in 1 partition 
+        - if in more partitions, query will go through needed partitions 
+    [- partitioning used for indexes -> partitioned index]        
+    - allows backup/recover only dedicated partition 
+    - improves parallel execution
+  
+  SQL Statement Execution
+    1) Checks syntax of query
+         - keywords 
+         
+    2) Checks semantic of query
+         - checks against DATA DICTIONARY CACHE - table name, columns 
+            
+    3) Checks privileges 
+         - checks against DATA DICTIONARY CACHE
+         
+    - if any error during this - executions is stopped with error, 
+      no further processing     
+      
+    4) Allocates PRIVATE SQL AREA - PGA
+         - needed i.e. for cursors 
+         - can contain row id in SHARED POOL cache if query was already 
+           executed - fast (remember 50 rows by default, but settable)
+                             
+    5) Checks SHARED SQL AREA - SGA
+         ~ search for execution plan in SHARED POOL 
+           (key-value datatype, key: hash, value execution plan -> search for hash 
+            in SHARED POOL CAHCE, thus any change in query affect the hash) 
+         
+         + 6) Execute statement  -> fast  'soft parse'
+         
+         - 6) Allocate SHARED SQL AREA    'hard parse' - mostly costs more than execution
+              - if needed, remove obsolete execution plan from cache and replaces
+                with newly created
+           7) Optimizes
+              - settable interval for evaluation optimal execution plans (default
+                is 1s - use lot of CPU)
+           8) Row source generation
+              - generates steps of execution plans
+           9) execute statement and store execution plan into SHARED POOL CACHE
+               
+    - parse if costly operation (even soft), if possible, better to use RESULT CACHE
+                     
+  Optimizer
+    - software to find best execution plan as fast as possible    
+    - checks schema information - basic overview
+        - search indexes, if so, what type is there, etc     
+        - search ACCESS PATH
+             -> compare options to read table - whole table
+                                              - using indexes  
+        - checks statistics to select ACCESS PATH
+             - table info
+                - if query is selective (search for small amount of result -> use index)
+                - result is bigger amount - fuck index, go for fill table...                                              
+                     
+    - flow
+        1) QUERY TRANSFORMER
+             - tries to change query to optimize with providing same result (and 
+               semantically equivalent)
+             
+        2) ESTIMATOR
+             - tries to optimize cost ~ combination of usage of CPU, memory and disc
+             - simple version: cost per block * number of block to read
+             - based on statistics from DATA DICTIONARY
+        3) PLAN GENERATOR 
+             - generates plans for estimator in loop (default timelimit 1s)  
+             - based on estimator, plan generator pick the best one and pass it
+               to rows source generator 
+                 
+    - might not find better - obsolete statistics, time restriction to 1s          
+               
+    - TRANSFORMER
+       - multiple functions which it tries to apply on query, such as: 
+       - OR EXPANSION 
+           - OR in WHERE part of the query -> indexes will not be use
+           -> use AND to get the same result (UNION ALL example with indexes)
+           - in some cases might be better to load whole table - depends on cost
+           - based on cost, estimator will choose better          
+       - SUBQUERY UNNESTING
+           - transform nested queries into JOINS (but still preserves the same result) 
+           - i.e. inner join on index keys instead of IN (subselect of ids)
+               -> load only matching indexes to the memory not whole tables!
+       - more like COMPLEX VIEW MERGING, IN to EXISTS, FILTER PUSH DOWN, ... 
+       - depends on the cost - influenced by many factors as selectivity or cardinality 
+       
+    Selectivity and cardinality
+      - Selectivity estimated proportion of result rows to all rows of selected table
+         = result rows/ total rows
+         - less rows -> higher selectivity 
+         - influence on execution plan  
+         - affect estimates of: I/O cost
+                                sort cost
+                                
+      - Cardinality = total rows * selectivity
+         - expected number of result rows   
+         - affect estimates of: join cost
+                                sort cost
+                                filter cost
+                                
+      - bad stats about selectivity and cardinality -> bad cist estimation!
+      - exact values are not know before run 
+           -> it has to estimate
+           -> uses distinct number of rows in filter in where clause  
+               = 1/amount_of_distinct_rows                             
+               -> low distinct rows to total -> possible low selectivity (but not 
+                  sure in case of 3MM records but some might be there only once)
+               - more columns in where class - multiply estimate selectivity of them:
+                  estimated_selectivity = 1/C1 * 1/C2 * 1/C3
+               - related columns may confuse optimizer (dependent columns in where clause
+                 i.e. countryId, advDateId -> advId per Country - low * high selectivity)           
+    Cost                 
+      - optimizer estimate of number of I/Os to execute statement ~ get block
+         
+      = ( number_of_single-block read * single-block read time              //-> index search
+        + number_of_multi-block read  * multi-block read time               //-> full table or range search
+        + number of CPU cycles/CPU speed)                                   //-> sorting, hashing, caching,..
+        / single-block read time                                            // avg value
+      
+      - Disk I/O
+      - CPU usage
+      - Memory usage - reloading the same block for joins from cache
+      
+    Plan Generator   
+      - generates plans and gives them to estimator to evaluate
+      - picks best based on cost and pass to row source generator
+      - ties different techniques as i.e. change join orders, choose the best 
+        join order and type (hash join, etc.)    
+        
+    Row source generator
+      - generates iterative execution plan for BD -> tree structure of row sources
+      - row source is area of the rowset (table, view, join result) 
+      - shows :
+          - execution methods
+          - access methods
+          - join methods
+          - data operations (filter,sort,aggregation..)
+          
+    Principles
+      - identify problem, get data and analyze them, chose strategy to fix
+      - strategies: parse time reduction - parse once, not repetitively
+                    plan comparison - compare best and worst plan to find bottleneck
+                    quick solution - check stats and execution plan - guide optimizer to solve it       
+                    finding and implementing good plan - SQL Tuning Advisor in SQL developer
+                    query analysis - most effective but most hard
+                                   - check/change - statistics parameters
+                                                  - query structure
+                                                  - access paths
+                                                  - join orders and methods
+                                                  - partition pruning, paralelization, kung fu :D
+                                   - get execution plan
+                                   - info about objects in query - indexes, tables, columns, views (underlying tables info)          
+                                   - check statistics -> object stats -update or dynamic sampling 
+                                                         +   
+                                                         system stats -i.e. overloaded CPU - batches, other queries
+                                   - checks histograms - checks selecetivity estimation failures unique data vs redundant in same column 
+                                   
+                                   
+                                   - parameter settings 
+                                   - with tools SQLT, DBMS_STATS,...     
+                                   
+                                   - check volume of data - only necessary data
+                                   - check predicates - join can become cartesian product    
+                                   - check problematic constructs:
+                                       - outer joins
+                                       - views
+                                       - subqueries
+                                       - IN or OR list
+                                       - hierarchical queries 
+                                   - check execution plan - SQL Trace, ... 
+                                       - access path
+                                          - indexes, tables
+                                       - join order and type
+                                       - actual and estimated number of rows (stats)
+                                       - detect where costs and logical reads differ significantly
+                                   - using query tuning techniques 
+                                   -> as result can be: 
+                                       - update stats for optimizer  
+                                       - use dynamic statistics
+                                       - create/recreate index
+                                       - create index organized table
+                                       [- function based indexes, eliminating implicit data type conversions,.. ]
+                                       
+* Execution Plans & Statistics                                       
+                                       
+                                       
+                                                    

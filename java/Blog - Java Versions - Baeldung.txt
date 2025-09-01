@@ -1,0 +1,204 @@
+Java Versions
+
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA  9  ------------------------------------
+//------------------------------------------------------------------------------
+of for collections: Java9
+  - simplified initialization of collection with elements, no need of creating empty collection and adding elements
+  
+    Set.of("a", "b", "c");
+    List.of("a", "b", "c");
+    Map.of("key1", "value1", "key2", "value2");
+    Map.ofEntries(Map.entry("key1", "value1"), Map.entry("key2", "value2"); 
+
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 10  ------------------------------------
+//------------------------------------------------------------------------------
+Local variable Inference: Java10 
+  - local variable do not need type ONLY with assigned value (MUST have assigned value - definition)
+  - added key word var (var var = 1; //possible, due to backward compatibility)
+  
+  void foo {
+    var myString = "stringText";
+  }
+
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 11  ------------------------------------
+//------------------------------------------------------------------------------
+Running Java file without compilation: Java11
+  - no need for javac:
+       javac Hello.java
+       java Hello
+       
+    -> java Hello.java  
+
+Nest Based Access Control : Java11
+  - nestmates - outer and their inner classes
+  - class.isNestmateOf, 
+    class.getNestHost
+  - nestmates can access each other private members
+  
+Local variable syntax for lambda: Java11
+  - var supported for lambdas (params, params with annotations)  
+ 
+Collection.toArray(InitFunc): Java11
+  - transform collection into array
+  - //before: collection.stream.toArray(element -> new MyObject(element));
+    collection.toArray(size -> new String[size]);
+                       String[]::new
+    
+Collection.copyOf() : Java11
+  - no null value or null collction allowed
+  - creates deep copy as unmodifiable collection
+  
+Files.readString/Files/writeString : Java11 
+  - Files.readString(path) //-> returns string file content
+    Files.writeString(path, stringVariable) //-> save variable into the file
+    
+Predicate.not() : Java11
+  - Predicate object can be negated by .negate(), but if we use function reference as predicate, we can not do that -> Predicate.not()
+    
+    Predicate p = () -> false;
+    collection.stream.filter(p).collect(toList) 
+    -> 
+    collection.stream.filter(p.negate()).collect(toList)
+    
+    collection.stream().filter(::functionRef).collect(toList()) 
+    -> 
+    collection.stream().filter(Predicate.not(::functionRef)).collect(toList())
+        
+ 
+String API : Java 11
+  - methods for String class
+  - "   ".isBlank()       -> if empty or contains only whitespaces
+    "  a ".strip()         -> trim whitespaces from left and right 
+    "   a".stripLeading()  -> trim left whitespaces
+    "a   ".stripTrailing() -> trim right whitespaces
+    "a\na".lines()         -> divide text by \n or \r into stream of texts
+    "a   ".Repeat(10)      -> repeat the text 10 times
+    
+    
+    "%s and %d".formatted("text", 2)     //Java13-4 ~ rust/kotlin
+
+Optional.isEmpty() : Java 11
+  - checks if optional is empty, before -> isPresent  
+  
+HTTP client API : Java 11 
+  - standardized in Java
+  - synch/asynch requests
+  
+   HttpClient httpClient = HttpClient.newBuilder()
+                                     .version(HttpClient.Version.HTTP_2)
+                                     .connectTimeout(Duration.ofSeconds(20))
+                                     .build();
+   HttpRequest httpRequest = HttpRequest.newBuilder()
+                                        .GET()
+                                        .uri(URI.create(STRING_URL))
+                                        .build();
+   HttpResponse httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+Epsilon C
+  - experimental, No-Op (not collecting) -> simulation out of memory
+
+JFR - profiling tool as part of JDK
+JMC, JavaFx, Java EE + COBRA - removed, available as standalone 
+   
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 12  ------------------------------------
+//------------------------------------------------------------------------------  
+String API
+  - .indent(4)   //adjusts the indentation of each line
+    .indent(-4)  //removes spaces from the begging of each line
+    
+    .transform(s -> s.toLowerCase())  //any operation in lambda
+    
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 14  ------------------------------------
+//------------------------------------------------------------------------------    
+Enhanced Switch/Switch expression : Java12 (14)
+  - rust like
+  - removes breaks
+  
+    var value = switch(x) { //returns value
+       case "a", "b" -> "a or b";
+       case "c" -> {
+          //some logic, but we need to return the value -> cannot use 'return' -> 'yield'
+          yield "c";
+       }
+       default -> "unexpected char" ;
+    };//semicolon needed!
+
+instance of: Java14
+  - if instanceof true -> can store if not casted variable
+  
+    if (myVariable instanceof Myclass nameOfCastedVariable) {
+        nameOfCastedVariable.propertyOfMyclass();   // do not need to cast
+    }
+    
+Meaningful NullPointerException : Java14
+  - adds more info for nullpointer exceptions
+  - more clear where the nullpointer happened   
+ 
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 15  ------------------------------------
+//------------------------------------------------------------------------------    
+Text Blocks: Java13 (15) 
+  - simplified formatting, no need for escape marks, insert code between """ text """ 
+  - cleaner, i.e. json formatting
+  - can call formatted() to inject variable values
+  
+    String textBlock = """  // <- text must be start new line  
+                   here is "text" with space, tab, quotes
+                     oooo                                 //trailing whitespaces are trimmed
+                          new line & etc :) """;          //adds whitespaces according shif from start from the first line, here 7
+
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 16  ------------------------------------
+//------------------------------------------------------------------------------
+Records: Java14 (16)
+  - simplified version of class definitions ~ kinda kotlinish/typesript
+  - reduce the necessary mess with getters, setters etc
+  - generates: property fields
+               constructor
+               getters
+               setters
+               hashCode
+               equals
+               toString
+  - we can provide our own impl of default methods
+  - we can add static field, static initializators, static methods and instance methods (not instance variables)
+  - allows compact constructor (not allowed in classes) ~ typescript/rust like
+     - i.e. adding validation with exception, param assigned to prop without explicit writing
+     
+       record Record(String prop1){
+          Record {
+            if (prop1 == null) {                         
+               trhow new IllegalArgumentException("prop1 must not be null")
+            }
+          }
+       }
+    
+    //definition           
+    public record MyClass(String prop1, int prop2) {} 
+     
+    // instantiate and call method/accessor
+    void foo() {
+        MyClass o = new MyClass("prop1", 2);
+        System.out.println(o.prop1())
+    } 
+//------------------------------------------------------------------------------
+//-------------------------------  JAVA 17  ------------------------------------
+//------------------------------------------------------------------------------                          
+Sealed classes: Java17
+  - adds restrictions who can extend class or implement interface
+  - we need to add permissions (classes which can extend class/implement interface)
+  - extending(class)/implementing(interface) class MUST have one of modifiers: sealed     //needs permits if allowing extending
+                                                                               non-sealed //everyone can extend    
+                                                                               final      //no extend allowed further
+  
+    public sealed class Parent permits Child {
+    }
+    
+    public class Child  extends Parent {
+    }  
+                                

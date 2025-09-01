@@ -1,0 +1,1205 @@
+Distributed systems and cloud computing (videos on obsolete version 3.4.12)
+- video: https://www.udemy.com/course/distributed-systems-cloud-computing-with-java/
+
+- centralized system vs distributed systems
+- centralized system 
+    - one machine
+    - vertical scaling - upgrading hardware to improve performance & storage (~ handle the load)
+                       - limited scaling
+    - single point of failure
+        - no power, upgrade will shut down the whole service
+        - ddos, hackers
+    - huge latency issue for people from with longer distance (oversea, other continent)                     
+    
+- distributed systems
+    - multiple devices
+    - horizontal scaling - can grow and shrink on demand - cost efficiency
+    - better latency
+    - no single point of failure
+    - can improve security
+  
+Distributed system
+- "system of several PROCESSES running on different DEVICES communicating through NETWORK and sharing a STATE or working together to achieve a COMMON GOAL"
+- process - running application in the memory, isolated from other processes (even of the same app)
+          - can communicate through network, or filesystem, or memory if on the same machine
+          - can have multiple processes of the same application  
+          - if processes runs multiple machines - total isolation - can scale horizontally, should ensure fault tolerance and reliability in case of some device goes down
+                                                - can communicate only through the network
+                                                
+Node 
+- process running on its machine that is part of the distributed system
+
+Cluster
+- collection of nodes connected to each other, communicating through the network
+- nodes in cluster usually works on the same task (even running the same code)
+
+
+- distribution of tasks: a) manually distribute - not scalable for 1000s of tasks
+                         b) manually select leader/master node - the node which distributes the task programatically
+                                                               - then collects results 
+                                                               - BUT leader can crash/fail 
+                         c) automatically selected leader by other nodes (workers) and they watch the leader's 'health'
+                              - if failure detected - remaining node elects a new leader
+                              - if old leader reconnects again - it becomes a worker node (not a leader anymore, since a new one is already working)
+                              - hard since each node knows only about itself
+                                  - needs a service registry & discovery
+                                  - needs a failure detection mechanism for selecting a new leader                                    
+                                  
+Zookeeper
+- open source high performance distributed system coordination services 
+- provides abstraction layer for higher level distribution algorithms 
+- used by Kafka Hadoop, and many others
+- it is distributed system by itself (usually odd amount of nodes > 3)
+    - uses redundancy to work even on some failures 
+    + provides low level reliable algorithms - simplifies our lives
+- nodes communicate through zookeepers 'service' instead of direct communication
+
+Znode system
+~ similar to file system = tree structure (nodes are called znodes)
+                         - data abstraction
+- hybrid between directory-file (unix) 
+    - can store data and stats (like files)
+    - can stare another nodes (like directories)
+    
+- two types: persistent - survives across sessions and keeps the content
+             emphemeral - lives only within the current session (~ when the app disconnects it get discarded)
+                        - good for failure detection (node which created it disconnects - emphemeral znode disappear)     
+                        
+Leader election algorithm with zookeeper
+1) each node create its znode (announces candidacy) under election parent
+2) when node all registered (creates znode), it start querying all children (candidates) of the election node (their parent) = get info about other nodes
+3) election node then selects the node based on the order in which they created znodes - lowest wins => others know they are not leader if there were znodes created before them
+
+Zookeeper directory
+- conf/zoo-sample.cfg
+   - prepared standalone config to run as server (a single process) locally
+   - rename to zoo.cgf (or reuse your own)
+      - zoo.conf is the file which it search for on start up
+   - defines port where it will run
+   - dataDir - directory for log files
+   
+- bin/
+   - script for every main OS  (linux/macOS/Windows)
+   - zkServer.sh/cmd
+   - to start local server:
+       zkServer.sh start (linux)
+       zkServer.cmd (windows, no parameter!)
+   
+   - zkCli.sh/cmd
+      - interaction with zookeeper via command line
+      - starts shell-like command line interface
+        - help - prints all commands
+        - ls - prints znodes on the path
+        - create - creates znodes with data
+                 - can create hierarchy from the command line
+        - get - prints info about znode on the path 
+                note:
+                 reminder znodes looks like filesystem -> path: znode/znode like direcotry/direcotry/file ]
+                 looking like files, but znodes are store only in memory, no files are actualy created ]
+        - deleteall - remove znodes on the path (and its children, like rm -r in linux)
+                    - rmr in older versions, deprecated now   
+                        
+Zookeeper threading
+- on start there is main thread
+- adding zookeeper object - adds 2 more threads:
+    - event thread
+      - handles clients state change events - connection
+                                            - disconnection
+      - znode Watchers and Triggers to which we are subscribed
+      - events executed in order how they arrived (queue)                         
+    - I/O thread
+      - no direct interaction from custom app - handles all network communication with zookeper servers
+      - handles zookeeper request and responses
+      - responds to pings
+      - handles sessions, timeouts, etc
+                   
+Maven dependency: 
+    <dependency>
+        <groupId>org.apache.zookeeper</groupId>
+        <artifactId>zookeeper</artifactId>
+        <version>3.9.3</version>   <!-- change to version you need/run locally -->
+    </dependency> 
+    
+Connect to zookeper from Java
+- might need configuration of log4j for logging (in older < 3.8.0)
+    - resource/log4j.properties
+        log4j.rootLogger=WARN, zookeeper
+        # Direct log messages to stdout
+       log4j.appender.zookeeper=org.apache.log4j.ConsoleAppender
+       log4j.appender.zookeeper.Target=System.out
+       log4j.appender.zookeeper.layout=org.apache.log4j.PatternLayout
+       log4j.appender.zookeeper.layout.ConversionPattern=%d{HH:mm:ss} %-5p %c{1}:%L - %m%n
+- versions 3.8.0+ uses Logback, see: https://medium.com/expedia-group-tech/upgrading-apache-zookeeper-from-3-7-0-to-3-8-0-to-get-rid-of-the-log4j-vulnerability-46543e768540    
+
+- watchers - observing events which changes state
+           - Watcher interface
+              - implements process(WatchedEvent)                
+                  - called by zookeeper library on separate thread when watched event is triggered
+                  - connection/disconnection event None type
+                     example:
+                        public void process(WatchedEvent watchedEvent) {
+                           switch(watchedEvent.getType()) {
+                              case None:  // connection event ~ type Event.EventType.None
+                                if (Event.KeeperState.SyncConnected == watchedEvent.getState()) {
+                                  //on connected
+                                }
+                                else {
+                                  //on disconnected
+                                }
+                                break; 
+                           }                                               
+                        }
+                        
+- to connect to the zookeeper:
+    - create Zookeeper object: new Zookeeper(zookeeperUrlAndPort, sessionTimeoutInMs, watcherObject);
+      - creates the connection to zookeper
+      - can be handled within Watcher implementation
+         - process method above
+      - when zookeeper server is shutdown - again Watcher can handle it
+         - zookeeper object should close the connection and cleanup/release resources 
+            - zookeeper.close()   
+      - to keep app running we need to block (suspend) the main thread
+            - zookeeper.wait() 
+    
+Election algorithm
+- create candidates - candidates are empheral nodes with sequence numbers in the zookeeper withing the zookeeper namespace (created path for znode with zkClient)
+    String ELECTION_NAMESPACE = "/election" //same as path used with zkCli.cmd create
+    String currentLeaderName;
+    
+    private void create candidate() {
+       String zNodeNamePrefix = ELECTION_NAMESPACE + "/c"; //'c' to represent candidates
+       String zNodeCandidateFullPath = zookeeper.create(
+          zNodePrefix,                     //name prefix
+          new byte[] {},                   //optional data
+          ZooDefs.Id.OPEN_ACL_UNSAFE,      //access list
+          CreateMode.EPHEMERAL_SEQUENTIAL  //ephemeral node with number sequence - used for election
+       );
+       currentLeaderName =  zNodeCandidateFullPath.replace(ELECTION_NAMESPACE +"/", ""); //remove prefix as name
+    }                                                                                                              
+                   
+- then implement election algorithm - finding candidate with the lowest sequence of ephemeral znode
+    private void electLeader() {
+        List<String> children = zooKeeper.getChildren(ELECTION_NAMESPACE, false); //get all nodes from the election namespace (false - without default watcher)
+        
+        Collections.sort(children); //sort by name in ascending order, first should have the lowest sequence number
+        String lowestNumberChildren = children.get(0);
+        
+        if (lowestNumberChildren.equals(currentLeaderName)) {
+            //leader actions
+        } 
+        else {
+            //not a leader actions
+        }
+        
+    }                    
+            
+- to execute: package jar file with dependencies and set the main class with maven:
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.4.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>LeaderElection</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+            
+- to simulate distributed system - run multiple instances (~ processes) of the program
+   - everyone will connect to the zookeeper server
+   - everyone register its own candidate
+   - everyone tries to get elected as leader - only the lowest sequence number is leader            
+   NOTE: might fail building on some java 8 versions with assembly plugin
+   
+Watchers
+- we can register watchers for: getChildren(..., watcher) - notify if any change on znodes happen
+                                getData(zNodePath, watcher) - when data of znode on the path gets edited
+                                exists(zNodepath, watcher) - notify if any change on the path (created/deleted znode)     
+     - these watchers have one-time trigger - notified only once (different from watcher when creating zookeeper object)           
+- watcher will be notified on change of the state on the dataset   
+- watching znode:
+     private void watchZNode() throws KeeperException InterruptedException {
+         Stat stat = zookeeper.exists(ZNODE_PATH, this, stat);
+         if (stat == null) return; // znode does not exist yet
+         
+         byte[] data = zookeeper.getData(ZNODE_PATH, this); //register watcher on data of the root znode
+         List<String> children = zookeeper.getChildren(ZNODE_PATH, this); // register watcher on children znodes         
+     } 
+ 
+     @Override //same interface like we checked connection
+     public void process(WatchedEvent watchedEnvet) {
+         switch(watchedEvent) {
+            case None:
+              //connection/disconnection
+              break;
+            case NodeDeleted:
+                break;
+            case NodeCreated:
+                break;
+            case NodeDataChanged:
+                break;
+            case NodeChildrenChanged:
+                break;      
+         } 
+         // if needed - re-register the one time watcher
+         try {
+            watchZNode();
+         }
+         catch (Exception e) {
+            System.out.println("Exception on re-registering the watcher: " + e.getMessage());
+         } 
+     }
+ 
+Leader election and failure detection
+- all nodes can watch leader, on fail all nodes notified 
+   - The Herd effect - large number of nodes waiting event
+                     - when event happen - all nodes notified and wake up (do some action)
+                     - only one node will succeed ~ bad design ~ bad performance - cluster can freeze  
+                        - all nodes try to getChildren() - current state of nodes to find a new leader
+                                                         - all nodes start to watch a new leader   
+                                                         - can ddos zookeeper
+   - Re-election algorithm
+      - each node follows only znode of 'previous' cluster node (i.e. ordered based on sequence number)                                                        
+      - on leader fail only the direct successor is notified
+        - only this node calls get children and verify itself as leader - reduce the traffic
+        - basically chain of nodes where every node checks previous, if failing node is not leader, following just switch to follow the node before the failed one   
+        
+        - adapt //not a leader actions in electLeader() and handle NodeDeleted event in watcher's process():
+           private void reElectLeader() {
+              var previousZnodeStat = null;
+              
+              while (previousZnodeStat == null) { //znode is gone = cluster node failure) -> go to find other previous znode you can watch 
+              
+                  List<String> childrenOfElectionZnode = zooKeeper.getChildren(ELECTION_NAMESPACE, false); //get all nodes from the election namespace (false - without default watcher)
+            
+                  Collections.sort(childrenOfElectionZnode); //sort by name inascending order, first should have the lowest sequence number
+                  String lowestNumberChildrenName = childrenOfElectionZnode.get(0);
+        
+                  if (lowestNumberChildrenName.equals(currentLeaderName)) {
+                      //leader actions
+                      return;
+                  } 
+                  else {
+                     var previousZnodeIndex =  Collections.binarySearch(childrenOfElectionZnode, lowestNumberChildrenName) - 1; //-1 to get previous znode index
+                     var previousZnodeChildName = childrenOfElectionZnode.get(previousZnodeIndex);
+                     previousZnodeStat = zookeeper.exists(ELECTION_NAMESPACE + "/" + previousZnodeChildName, this); 
+                  }
+                  
+              }
+              
+              @Override //same interface like we checked connection
+              public void process(WatchedEvent watchedEnvet) {
+                   switch(watchedEvent) {
+                      case None:
+                        //connection/disconnection
+                        break;
+                      case NodeDeleted:
+                          reElectLeader();
+                          break;      
+                   } 
+              }              
+        
+          }  
+      - this adaptation to have linked list like checks it provides horizontally scalable (can add any amount of nodes) and fault tolerant 
+        (can survive multiple node failures) re-electing algorithm without The Herd Effect
+        
+Service registry and Service Discovery
+- static configuration - on file for all nodes with addresses before app starts
+                       - needs to be updated (if change of IP address, or removal/failure of nodes)    
+- dynamic configuration - central configuration file
+                        - automated management tool (Checf/Puppet) distribute to the nodes in cluster     
+                        - still need person to maintain central configuration
+- zookeeper discovery
+    - fully automated process - very scalable and dynamic (adding/removing on fly)
+    - still need to distribute zookeeper address to the cluster - still element of static configuration
+    A) Filling service registry
+       - permanent znode root, e.g. /service_registry
+       - adding nodes to the root znode 
+           - every cluster node fills its IP address as data of corresponding znode
+           - data kept in memory, thus it is good practice to keep it minimal
+    B) Discovery of service registry    
+       - cluster node register watcher with getChildren()  - notified on any change of all nodes
+                                            getData() - notified on change of IP address         
+    - can implement pure peer-to-peer
+    - different from leader-workers architecture (workers do not need to know about each other, leader should know about all workers)
+         - workers register to cluster
+         - only leader registers for notifications
+             - only leader knows about network/cluster state and can distribute the work in cluster
+         - if leader dies, new elected leader unregister itself from registry and start distributing the work    
+
+- similar tool for service discovery: etcd
+                                      consul
+                                      Netflix Eureka   
+                                      
+- service registry class (we can have class for election and class for service registry, both sharing the same zookeeper reference)
+    
+        //create the root znode of the service registry
+        createServiceregistryZnode() {
+           try{
+             if (zookeeper.exists(SERVICE_REGISTRY_ZNODE_PATH, false) == null) {  //exists + create can create ('thread' ~ process) race - handled internally by zookeeper with KeeperException thrown 
+              zookeeper.create(
+                 SERVICE_REGISTRY_ZNODE_PATH,     //path
+                 new byte[] {},                   //optional data
+                 ZooDefs.Id.OPEN_ACL_UNSAFE,      //access list
+                 CreateMode.PERSISTENT);          //persistent node - survive killing of the session
+             }
+           }
+           catch (KeeperException) {
+              //race between nodes, print info
+           }
+        }                                              
+        
+        //add 'currentNode' (the node which runs the process) to the service registry cluster
+        registerToCluster(String metadata) {
+            currentNode = zookeeper.create(
+                 SERVICE_REGISTRY_ZNODE_PATH + "/c",     //path
+                 metadata.getBytes(),                    //optional data
+                 ZooDefs.Id.OPEN_ACL_UNSAFE,             //access list
+                 CreateMode.EPHEMERAL_SEQUENTIAL);       //ephemeral with sequence (sequence just to have 'unique' ID)
+             }
+        }
+        
+        //unregister 'currentNode' (the node which runs the process) from cluster - e.g. when becoming leader
+        unregisterFromCluster() {
+            if (currentNode != null && zookeeper.exists(currentNode, false) != null) {
+                zookeeper.delete(currentNode, -1);
+            }
+        }
+        
+        //keep updated addresses
+        synchronized void updateAddresses() {
+           var childrenNames = zookeeper.ghetChildren(SERVICE_REGISTRY_ZNODE_PATH, true);
+           var addressList = new ArrayList(); // to store addresses
+           for (var childnName : childrenNames) {
+               var childFullPath =  SERVICE_REGISTRY_ZNODE_PATH+ "/" + childnName;
+               var childStat = zookeeper.exists(childFullPath, this); //boom - this is race, we access resource for second time
+                                                                      //while something might change - cannot be solved with lock/mutex
+                                                                      //need to be checked
+               if (childStat == null) {
+                  continue; //skip if some thing changed - removed
+               }                                                  
+               
+               var data = zookeeper.getData(childFullPath, false, childStat);  //note: not reported as race - might be worthy to recheck :/
+               var address = new String(data);   
+               addressList.add(addressList);                                 
+           }
+           //keep addresses in class field
+        }  
+        
+        //on event  watcher implementation process() call update addresses
+        process(WatchedEvent event) {
+           try{
+             updateAddresses()
+           } catch...
+        }
+        
+        //then register for updates: a) on initialization
+                                     b) separate method     
+        // = just call updateAddresses()
+        
+Network communication        
+- TCP/IP model
+    - DataLink (Ethernet/802.11/...)-> Internet (IP/ICMP/...) > Transport (TCP/UDP/...) -> Application Layer (HTTP/FTP/...)  
+    - Datalink ~ physical layer - physical transfer of data between hardware
+                                - encapsulate data, flow control, error detection and correction, ...
+                                - Ethernet protocol - wraps data into frames and delivers based on MAC addresses from device to device
+      Internet layer - delivers data across multiple networks
+                     - Internet protocol - uses  IP addresses to deliver packet from one host/device to another
+                                         - does not care about which application the data packet is for not what application send it
+      Transport layer - end-to-end ~ process-to-process delivery of data across the network ~ knows what process waits for data and from what process it was sent
+                      - identified by port number (16-bit) - destination must port must be known ahead of time (OS can assign the packet to the process it belongs to based on the port)
+                                                           - source port is on fly - taken free port to use at the moment of sending   
+                      - user datagram protocol - UDP
+                          - connectionless, transfer datagrams (limited size)
+                          - best effort - fast but unreliable - datagrams can be lost, reordered or duplicated
+                          - allows broadcasting - sending to all devices on the network ~ kinda decoupling sender & receivers
+                          - e.g. sending debug messages to distributed logging service
+                                 streaming service (video/audio) - losing couple of frames is acceptable
+                                 online gaming 
+
+                      - transmission control protocol - TCP    
+                          - reliable - guarantees data send not lost and in the exact order
+                          - connection between exactly 2 points (no broadcast)
+                             - established before start sending data
+                             - should be shut down at the end
+                          - stream of bytes instead of datagrams - do not distinguish which byte belongs to what message (in case of multiple senders sending the data)                                                                                                                                                     
+      Application layer - File Transfer Protocol - transfer files
+                          Simple Mail Transfer Protocol - sending/receiving emails
+                          Domain Name System - translate IP address to host names
+                          HyperText Transfer Protocol - transfer hypermedia documents, videos, images, sounds
+       
+HTTP
+- originally designed for browser-server interaction for websites
+- can be used for general messages in distributed systems - flexible protocol
+- every transaction - 2 parts: request + response
+HTTP REQUEST
+- has always 5 parts: method: get/post/put/delete/options/trace/connect/patch/head
+                                 - GET - safe - retrieve data without 'side effect'
+                                              - like getter in java
+                                       - idempotent - multiple execution should return the same result as when run once    
+                                       - e.g. health check of the cluster (get status of nodes) 
+                                              obtain data from distributed DBs       
+                                 - POST - can contain message body
+                                        - can have side effects - can permofrm complex operation and return result
+                                        - e.g. send messages between nodes (as message body)
+                       relative path: hepls handeling request by the app
+                                             after host:port part of the URL
+                                             can contain query string/parameters to help to give more focused order
+                       http protocol version: e.g. http/1.1 - creating a new TCP connection for each request 
+                                                            - otherwise blocked by waiting for response - expensive
+                                                                 - number of connections is limited by: number of available ports
+                                                                                                        OS threshold    
+                                                            - plain text headers - easy to catch and read (e.g. with wireshark)                                      
+                                                                                                     
+                                                   http/2 - can handle multiple requests & responses in a single connection
+                                                          - headers are compressed - save payload size + harder to sniff - achieved by having multiple internal streams in that connection   
+                       headers: key-value pairs about content and connection between peers
+                                can have list as value - values divided by ';'
+                                some headers used only in response, some only in request
+                                provides metadata for before reading the message itself (can allocate resources, skip, etc)
+                                  - e.g. Content-Length, Content-Type, Content-Encoding
+                                can add custom headers, e.g. for debugging, A/B testing, etc
+                                        
+                       message body: actual data for the app  (optional)
+                                     any data we want to pass
+        
+HTTP RESPONSE
+- has always 5 parts: protocol version: like request
+                      status code - 1xx - informational response
+                                    2xx - success
+                                    3xx - redirection
+                                    4xx - client error
+                                    5xx - server error
+                      status message - related to status code
+                      headers - can add extra info, such as timestamp for duration of task, or similar
+                      message body - can be result data of the task which was triggered           
+
+Http server in Java
+  - package com.sun.net.httpserver.HttpServer
+  - create :
+      var httpServer = HttpServer.create(new InetSocketAddress(PORT_NUMBER), REQUEST_QUEUE_SIZE);  //if REQUEST_QUEUE_SIZE = 0 - default set by OS
+  - add context ~ relative path to control 
+                - can add multiple contexts    
+      var myContext = httpServer.createContext(MY_RELATIVE_PATH); //e.g. "/status"
+  - add handler to to created context
+      myContext.addHandler((httpExchange) -> {
+          // process httpExchange request and set response
+          // e.g. filter request type "GET".equals(httpExchange.getRequestMethod())
+                  checks headers and can prepare app for processing based on headers
+          
+          httpExchange.setResponse(STATUS_CODE, RESPONSE_DATA.length);
+          httpExchange.getResponseBody().write(RESPONSE_DATA.toBytes());
+          httpExchange.getResponseBody().flush();
+          httpExchange.getResponseBody().close();
+      })    
+  - create thread pool for server to handle multiple requests
+      server.setExecutor(Executors.newFixedThreadPool(0));  //0 ~ default size will be set by OS
+  - start the server to listen on the defined port
+      server.start();  
+        
+cURL - command line http client (postman for nerds)
+     - basic testing for server / fetching data
+     - arguments: --request {HTTP_METHOD}
+                  --header {HEADER_LINE} 
+                  --verbose / -v 
+                  --data {SOME_DATA}
+                  HTTP server_address       
+      
+Http Client
+- build in JAVA since version 11
+- supports async requests:
+   - not blocked by waiting on server response
+   - CompletableFuture<>
+       var responseFuture1 = client.sendAsync(request, ...);
+       var responseFuture2 = client.sendAsync(request, ...);
+       
+       // like basic threading ~ join() to get results before further processing
+       var data1 = responseFuture1.join();
+       var data2 = responseFuture2.join();
+       
+- maintain connection pool to HTTP servers
+   - holds connection with server while requests/responds flows
+   - enabled by default if server & clients support http/2
+      - if one of them does not support http/2 - we need to enable explicitly
+   - JDK 11 built-in client - supports http/2
+     JDK 11 built-in server does not support http/2  
+   - third party libs might need to set some flag (smthg like .setKeepAlive(true) or so)   
+- create
+     HttpClient.newBuilder()
+               .version(HttpClient.Version.HTTP_2)
+               .build();   
+                                    
+- create request:
+      HttpRequest.newBuilder()
+                 .POST(HttpRequest.BodyPublishers.ofByteArray(payloadInByteArray) //set body message of request 
+                 .url(URI.create(serverUrl) //pass server url                       
+                 .build() 
+                     
+- send async request                     
+      client.sendAsync(request, HttpResponse.BodyHandlers.ofString()) //set request and response handler
+            .thenApply(HttpResponse::body); //when get response - process it
+            
+Establishing connection requires quite some ping pong (on TCP layer) and lead to many exchanges before 
+HTTP transfer is realized - it might be worthy to apply batching of tasks to reduce the overload of 
+communication which orchestrates the connection setup and transfers             
+            
+Delivery semantics in Distributed systems
+- defines how the system should react on communication failure (client-server communication)
+- trying to achieve: EXACTLY ONCE delivery semantics (sometimes impossible)
+                       - perfect state without failures - all requests gets response
+
+AT MOST ONCE semantics 
+  - client send request to server only once
+     - if server never receive request or crash before send response
+     - then client never delivers the request to the server
+  => never performed or performed ONLY once
+  - e.g. logging/monitoring service, user notifications
+         adding/substracting etc -> not good for update of account balance :)
+         appending 
+              
+AT LEAST ONCE semantics            
+  - client keep resending request to server until getting response
+     - if server performed task but did not send response - it will execute the task again (multiple times)
+  - should be used only for idempotent operations 
+  
+  idempotent operation
+   - can run multiple times but has the same result/effect as if it run only once
+   - e.g. read first record
+          change status column
+          delete record by ID
+          
+workaround for AT MOST ONCE semantics in case where we have to use AT LEAST ONCE semantics
+- example: order service - billing service on e-shop
+- extend request with additional meta info like nonce + retry flag
+- if nonces are equals, billing did not happen, if it is equals we had failure 
+- if there was failure - execute the task
+- update to most up to date state and try to send response to the client            
+- in some case it might be impossible to 'transform' (~ do the workaround)                   
+            
+Passing complex data/data structures - Serialization and Deserialization
+
+Serialization 
+- translation data that can be sent/stored and reconstructed later
+
+Deserialization
+- reconstruction of data back to the object/data structure
+             
+Serialization formats
+- JSON - JavaScript Object Notation
+       - simplest, most popular 
+       - plain text representation of objects, arrays, datatypes, etc
+       - language independent
+       - easy integration to front-end js tools
+       - Java needs 3rd party library to map JSONs
+          - e.g. Json list to map into Set/List/something else?
+       - does not have schema - defined fields - int/long/double?
+                              - one node can send something, but other expect a different type
+                                 => cannot be enforced   
+  Java Object Serialization   
+   - implements Serializable interface - just marker - no methods
+   - serialize to bytestream directly, no need for extra steps as JSON
+   - not plain text - more 'optimized', but harder to read by eye (still possible to reconstruct when intercepted), impossible to adjust
+   - strict about datatypes, clear what should be what
+   - native JVM support = bound to JVM - might be hard to integrate with nodes in different languages
+   
+   - serialization:
+       - all members will be serialized except: static members
+                                                transient members
+             - nested classes (members) has to be serializable, otherwise InvalidClassException!                                   
+       - example:
+           byte[] serialize(Data data) {
+              var byteStream = new ByteArrayOutputStream();
+              var objectOutput = new ObjectOutputStream(byteStream);
+              objectOutput.write(data)
+              objectOutput.flush();
+              return byteStrean.toByteArray();
+           }
+      
+   - deserialization - class has to match original definition
+                     - class has to have empty constructor
+                     - if one of above not met - InvalidClassException
+        - example:
+           byte[] deserialize(byte [] bytes) {
+              var byteStream = new ByteArrayInputStream(bytes);
+              var objectOutput = new ObjectInputStream(byteStream);
+              return (Data) byteStream.readObject();
+           }
+           
+  Google's Protocol Buffers
+    - tries t combine efficiency of Java with flexibility of JSON
+    - proto file - message schema - defines structure of message
+        example:
+          message Task {
+            required string username = 1;
+            repeated string category = 2;
+            repeated uint64 age = 3;
+            optional bool debug = 4;
+          }
+          
+          tag - unique number for member
+          name - just for readability, can be changed on the fly
+          required - must not miss and have always value 
+          optional - can be removed, replaced but with different tag
+          repeated - list/collection of any length (even empty) and any value  
+    
+    - proto compiler - generates class for dedicated language - Java, C++, ...
+         - generates getters and setters
+         - for repeated (~collection) adds: getElement(int index)
+                                            getCount()      
+         - generates builder class (uses all generated setters)
+         - generates methods for serialization/deserialization      
+     
+    - when transferred encoded tags (hard to read without proto file)                                                                                                  
+       - smaller in size & more 'secure' (questionable, but OK)
+       
+    - if used need to: download proto compiler and compile proto file for Java  
+                          - generates Java class   
+                       add protobuffer dependency into pom file - gets necessary dependencies for compiled class from the proto file   
+                         <groupId>com.google.protobuf</groupId>   
+                         <artifactId>protobuf-java</artifactId>      
+         
+Document search TF-IDF
+- term frequency (TF) - number of occurrences of term / number of words
+                      - but does not reflect priority (e.g. the boob -> the - high frequency) 
+- inverse document frequency (IDF) - improvement, reflects how much info the searched term provides
+                                   - assigns priority/weight to terms based on how common it is across all docs
+                                   = log (number of documents / number of documents with the term)
+- TF-IDF = TF(term) * IDF(term)  
+         - higher score, better fit 
+         - statistical algorithm, suitable for lot of data to provide better results
+         - highly parallelizable 
+         - can not match google or others, but can get the job done with its simplicity
+         - impl details in the course: https://www.udemy.com/course/distributed-systems-cloud-computing-with-java
+             - election, service registry with leader-workers design + serializations example
+
+- parallelization - decide which 'dimension' should be parallelizable (e.g. compute per country)
+                  - with growing data (in that dimension) - should be easy to horizontally scale (add more nodes) 
+                  - detecting the right dimension to keep system performant (which dimension is expected to grow big)
+
+Load balancer                  
+- problem: huge amount: of users - for example for webserver to handle requests
+                        of tasks - for leader to distribute tasks for workers (lot of connections which might go out of limits of OS)
+                                 - aggregating of results from workers might create performance bottleneck
+                                     => more leaders = coordinators (can be even its own cluster) - can work but: it forces client to do load balancing on its side (every app talking to cluster)
+                                                                                                           it cannot work on public API - multiple hosts (which address should client call?)
+                                                                                                              => also good practice to not expose also for internal system - easier scaling
+- device/tool which distributes network traffic across cluster of application servers
+- prevents any application server to become performance bottleneck
+- monitors server 'health' - distributes only to servers which are online (not crashed)- better reliability
+- can be set in layers - meaning between each clusters,  for example:
+     load balancer - (web) server for user requests - load balancer - coordinator cluster - 
+- load balancer can also do 'auto-scaling'
+   => add more nodes (~ servers) on demand - if traffic is to high to temporarily improve the performance
+                                           - if traffic goes down - it can remove unnecessary server
+
+- can be: HARDWARE - dedicated device just designed for load balancing
+                   - high performance
+                   - handle large amount of servers
+                   - very reliable
+
+          SOFTWARE - easy to configure, update, upgrade or troubleshoot
+                   - cheaper and more cost effective
+                   - many open source: HAProxy, Nginx
+- in real world we can use both in different layers of the distributed system, e.g. for public access hardware, for internal processes (e.g. coordinators) software                   
+
+Load balancer strategies
+- Static - expects uniform load (same hard tasks)
+   - Round Robin - assign servers in order              
+   - Weighted Round Robin - strong servers can get more load with assigned weight              
+                          - used also to rollout new upgrades of servers gradually
+                              - for beginning with lower load, once confident we can rollout on others too
+   - Source IP Hash - can keep the same user/client assigned to the server with which he interacted before
+                    - good when: local server caching - preloaded data when streaming
+                                 open session - shopping cart and lost connection or refresh  
+
+                    - hash of user IP - hash used to decide which server is assigned
+- Pro-Active - reflecting actual load on servers - more real life
+                                                 - can prevent overloading, more stable
+   - Least Connection - amount of server connections used as weight
+                      - tries to reuse server with smaller weight 
+   - Weighted Response Time - health check ping pong - measures time to respond
+                            - fastest can get more load, slowest should get lower load
+   - Agent Based policy - special app on serer measures metrics like CPU usage, network traffic, memory usage, etc                           
+                        - reports metrics to load balancer to make better decision where to distribute the load  
+
+- each distributed system can fit different load-balancing strategy (application specific)
+
+Load Balancing Layers
+- OSI Model
+   - Layer4 - Transport
+            - simple forwarding of TCP packets, small overhead 
+            - does not inspect content of packets beyond a first few
+                - update header source-destination 
+   - Layer7 - Application
+            - inspect also HTTP header, better control
+            - can decide or even go with different strategy in  cluster based on: 
+                - request URL
+                - type of requested data
+                - HTTP method
+                - browser cookies
+                
+HAProxy [read H'A' Proxy]
+- free open-source, reliable, high performance TCP/HTTP load balancer
+- linux only, can use docker elsewhere
+- haproxy.cfg - global section - OS specific
+                               - params for entire load balancing
+                               - e.g. maxconn - max connection
+              - proxies section - params to reroute incoming traffic to backend cluster
+                                - subsections:     
+                                    - default - optional for all proxies 
+                                              - e.g. mode http              //mode either http/tcp
+                                                                            //tcp has limited options - transport layer only
+                                                     timeout connect 10s
+                                                     timeout client 50s
+                                                     timeout server 50s
+                                    - frontend - handle income traffic
+                                               - e.g. bind *:80 
+                                    - backend - servers to proxy incoming traffic
+                                              - can have namespace/cluster name - that allows define multiple clusters
+                                              - e.g. balance roundrobin             //load balancing strategy 
+                                                     server server1 localhost:9001  //server endpoint
+                                                     -----
+                                                     balance roundrobin                    //load balancing strategy
+                                                     server server1 localhost:9001 wight 2 //server endpoint with weight
+                                                     -----
+                                                     balance roundrobin                    //load balancing strategy
+                                                     option httpchk GET /status            //sends check for server health
+                                                     server server1 localhost:9001  check  //server endpoint with periodic health check
+                                                     
+                                    - listen - optional frontend + backend 
+- start: haproxy -f haproxy.cfg
+       
+Features:
+-High Availability - can keep choose only health servers - based on periodic check 
+-Monitoring - all statistics of nodes
+            - example: listen stat_namespace
+                 bind *:83         //listen on port 83
+                 stats enable      //enable statistic html report
+                 stats uri /stats  //relative path 
+-Advanced Routing - with access control list (ACL) can evaluate request and decided about dedicated cluster (for example: video stream/search/user data) 
+                  - example:
+                      frontend
+                         acl one path_end -i /one     //define access control list to redirect based on relative path
+                         acl two path_end -i /two     //define access control list 
+                         
+                         use_backend cluster1 if one  //use cluster1 if acl one 
+                         use_backend cluster2 it two  //use cluster2 if acl two 
+                         
+                      backend cluster1
+                         server server10 localhost:9001
+                         server server11 localhost:9002 
+                                   
+                      backend cluster2
+                         server server10 localhost:9003
+                         server server11 localhost:9004  
+
+-HTTTP/TCP - http offers more options
+           - tcp reroutes just byte stream - won't trigger rerouting to new server on refresh/path change 
+                                           - new connection for example on when restart browser    
+                                           
+Message Brokers
+problem with direct communication:
+- synchronous messaging - i.e. TCP connection maintain
+                        - might introduce service dependencies 
+                        - can lead long waiting time
+- broadcast - if having to many servers to listen - it needs to maintain many connections - not scalable
+- peaks & valleys - if overloaded by sudden peak - server can get overloaded and crash
+
+- solution: message brokers - middleware to pass messages between senders & receivers
+                            - event driven communication 
+                            - can provide also: data transformation
+                                                validation
+                                                queueing
+                                                routing
+                            - provides full decoupling sender-receiver => receiver does not need to be present when message is sent                    
+                                                                       => message can be received even when sender is not available anymore
+                            - can also provide basic load balancer function for queue  
+                            
+                            - synchronous messaging can turn into async 
+                            - broadcast can solve with: publish events does not need to preserve connection, even does not need to know who subscribers are                                                                      
+                                                        subscribe to many topics/queues without knowing anything about publishers 
+                            - publisher push to broker, receiver pulls from broker => more control to the receiver about message consumption
+
+- must not be bottleneck and single point of failure -> must be scalable and fault tolerant =>  distributed system
+- adds some latency for communication (comparing to direct communication)
+- most use-cases: distributed queue - for single consumer
+                  publish/subscribe - for group of consumers          
+                  
+- Apache Kafka
+  - distributed streaming platform to exchange messages between servers
+  - like message broker on high level = internally it is a distributed system which can use multiple brokers                                                   
+  - provides: distributed queueing                                         
+              publish / subscribe
+              high scalability
+              fault tolerance  
+  - message in Kafka passed as 'record' with : key
+                                               value
+                                               timestamp
+  - topics ~ category of messages/events
+           - publishers send records to the topic
+           - subscribers consume records from subscribed topic                                              
+  
+  - allows partitioned topics 
+      - like multiple queues, each record in queue gets sequence number ~ offset (order in the partition)
+                                                                       - in scope of partition, no global offset is maintained                                                    
+      - which partition will be used in the topic decided on hash of the key of the record (~ kinda hashed multipmap in java) 
+      - partitions allows Kafka scale topics horizontally 
+      - more partitions -> higher parallelism
+      - sometimes order matter - need to use one partition on dependent messages: select proper key for hashing - like userId in case of payment- refund -> should have ensured order
+      - can be just one partition per topic, depends on use case
+
+  - consumers are assigned to consumer groups
+      - when record published - topic distribute to all  groups
+                              - group assign ONLY ONE member of the group to consume
+                              - this might simulate loadbalancing per group
+      - for typical pub-sub system - just use group with one member
+                                   - each group gets the record ~ each subscriber/consumer                                
+                                               
+Kafka Scalability
+- thanks to topic partitions
+- single topic is limited by number of cores for parallelism  and memory for size of the topic/queue                                            
+- partitions allows to run topics on multiple devices and behave like one
+   - can be even different brokers
+   - that leads to losing of overview of global order(~sequence number) - price to pay for scaling 
+- number of partitions ~ max unit of parallelism for Kafka topic   
+                       - can be estimated upfront from the expected peak message rate//volume                        
+                       - adding more brokers is visible to publishers/subscribers
+Kafka Fault tolerance
+- losing broker = losing records ~ messages
+- Kafka allows to configure 'replication factor'
+- replication factor = each partition is replicated to the defined number of brokers
+    - e.g. factor 2 - one leader - 1 follower in other broker
+- for each partition only one broker has a leader status, other partitions are followers
+- leader process all reads and writes
+- followers replicate partition data to stay in sync with leader
+- higher replication factor can handle more failures, but consume more memory
+- replication defined PER TOPIC
+- uses Zookeeper for coordination logic - registry for brokers
+                                        - failure detection
+- even more Kafka persist messages on disk 
+   => still available for configurable time to read even after consumed
+   => new consumers can start processing older messages
+   => consumers which failed to read/process can retry again
+   => fast recovery for failed brokers                                           
+
+Run Kafka
+- bootstrap servers - servers from cluster to which are publishers/subscribers connecting - then it will be available whole cluster                                         
+                    - good practice to have more bootstrap servers than one                                        
+- /conf/zookeeper.properties - setting of zookeeper                                        
+       /server.properties - config of Kafka server
+                          - broker ID
+                          - port, 
+                          - log directory - where it will store messages
+                          - log retention hours - how long it will keep messages
+                          - zookeeper url                        
+example:
+1) run zookeeper (as before, can pass config file as argument)
+2) run Kafka: 
+    /bin/kafka-start-server.sh /config/server.properties                                                              
+3) create topic: 
+    /bin/kafka-topics.sh --create 
+                         --bootstrap-server localhost:9092 //url of kafka server                                        
+                         --replication-factor 1            //= no replication to another kafka server
+                         --partitions 1                    //number of partitions in the topic
+                         --topic topic-name                //select a good topic name 
+
+[optional] check created topics: /bin/kafka-topics.sh --list --bootstrap-server localhost:9092                        //prints existing topics
+[optional] check created topics: /bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic topic-name //prints topic details - partitions, leader, replacement etc
+
+4) publish message: 
+    /bin/kafka-console-producer.sh --broker-list localhost:9092 --topic topic-name 
+       - write messages
+5) create consumers to receive the messages
+    /bin/kafka-console-producer.sh --bootstrap-server localhost:9092
+                                   --topic topic-name
+                                   --from-beginning                    //load all unconsumed messages      
+note: remember! if more partitions - order of messages is not guaranteed
+
+-for java impl:
+- see https://www.udemy.com/course/distributed-systems-cloud-computing-with-java/learn/lecture/15710932
+- pom dependency:
+   <groupId>org.apache.kafka</groupId>
+   <artifactId>kafka-clients</artifactId>
+   
+- creating Kafka producer - need to configure, set bootstrap servers and set serializers for configuration
+                          - create Kafka record - topic, partition, key, value, timestamp
+                              - if not partition explicitly defined - uses hash of key
+                              - if no partition and key specified - round robin
+                          - sending Kafka record returns RecordMetadata - info about topic/partition
+- creating Kafka consumer - need to configure, set bootstrap servers, deserializers and consumer groups    
+                          - auto-enable commits - can handle automatically notifying about consumed record, but mostly better to handle explicitly                     
+                          - consumer can register to collection of topics
+                          - consumer.poll(timeOut) - tries to read batch of records from the topic
+                                                   - read batches to optimize network traffic
+                          - consumer.commitAsycnc() - notifying Kafka that record(s) was successfully consumed 
+                          
+- note to remember: publish/subscribe pattern in Kafka - one consumer per one subscribe group
+
+
+Distributed storage
+A) file system
+- lower level abstraction - no strict structure or relations of data
+- any type, format, size or structure
+- video, images, text, logs
+
+B) database
+- higher level abstraction - strict structure of data, might have relations
+- provides features such as caching, querying engine, relations
+- ACID - atomicity, consistency, isolation, durability
+- 1) relation DB - SQL
+                 - structured data - table, row, column
+  2) non-relational DB - NoSQL             
+                       - less structure data, e.g. key-value
+                                                   key-document (e.g. JSON)
+                                                   graph   
+                       - easier to scale - more independent data, less restrictions
+                       
+Databases in distributed systems
+- availability, scalability and fault tolerance on the table (yay, distributed systems :P)
+- it tries avoid: 
+1) single point of failure 
+- easier to restart, but losing data can be fatal
+2) performance bottleneck
+- scaling to break limits of number of connections, memory issues, number of cores, etc...
+
+Database sharding
+- partitioning dataset into multiple smaller chunks - shards
+- slitting a large DB into smaller pieces on different machines
+- allows easy horizontal scaling on data grows
+- allows improve availability in failure of some shard, others are still up and working
+- usually based on key
+
+- SQL sharding 
+  - vertical - splitting tables to smaller chunks ~ less columns
+  - horizontal - splitting tables by rows 
+
+- NoSql
+  - just create groups and assign data there
+
+Strategies
+1. Hash Based
+- hasing record key and assigning value (~shard number/index) to the hash
+- we can expect even distribution of data on monotonically increasing ID and proper hash function
+- but that can distribute data with 'close' ID (maybe somehow related) to different shards - bad for range queries
+
+2. Range based sharding
+- divide keyspace into contiguous ranges - better for range searches
+- if keys are clustered in ranges - cannot get closer to even distribution of data 
+- ranges might need some optimizing to achieve better distribution
+
+Drawbacks:
+- querying more complex (query more DB instances) 
+- has to handle racing conditions - concurrency/parallelism
+- DB transaction needs to by synchronized per multiple DBs with locks
+- hard for relation SQL DBs - some even do not support that
+- very good for NoSQL - Mongo, Redis, Cassandra,...
+                      - does not guarantee ACID :/
+                         - might be limited on shard only
+                         - can even drop consistency and atomicity completely
+                      - bigger challenge to design properly or to migrate from SQL
+                      - very easy to scale and shard   
+
+Hash based strategy:
+- when changing the number of shards (add/remove) 
+   - already assigned keys should be reassigned based on the new configuration                     
+- when shards run on different devices (on more performant) we should reflect the load of data
+   - no way to solve with simple hashing
+
+Consistent hashing algorithm   
+- hashing keys and nodes (shards) into the same 'space' - ring array
+  - stores hash of shards and hash of keys
+  - space between hash of nodes in the ring are for hashed keys of records of that node
+  - everything BEFORE OR EQUAL the hash of node until the hash of the other node EXCLUDED are hashes of keys belonging to that node 
+  
+  - example:
+      letter - hash of node
+      number - hash of key
+      array:       
+          A,          B,   C,       //hash of the node - index where the nodes' keys starts/ends
+          0, 1, 2, 3, 4 5, 6, .. 99 //ring array -> so the next is A and it goes in the loop form A again   
+      can be read as: 
+          shard B contains records with keys 1, 2 3, 4
+          shard C contains records with keys 6, 5 
+          shard A contains records with keys [7, 99], 0
+       
+      removed node B -> all its keys will belong to the to C
+                     - no need to reassign keys from other nodes, only affected
+                       
+      re-adding node B (similar with other nodes) 
+                       - part of C will be reassigned to B
+                       - only affected keys are reassigned
+
+- can assign weight with introducing virtual nodes - simulate weight for more performant nodes
+    - assigned key area to virtual nodes - more powerful node is mapped to multiple virtual nodes range
+    - example: 
+         A,    B,    C,    D,          //A-B - least powerful node; B-C-D - more powerful node, etc  
+         0, 1, 2, 3, 4, 5, 6, .. 99
+                                                                                                        
+    - in theory it can lead to bottleneck on big node (overloaded, while smaller nodes not used)
+      -> using multiple has functions on each node
+          - bigger node will not cover continuous area but will be in chunks
+      - example:
+         two hash functions
+         - hash1 sets some ranges (as previous example, letters with index = 1)
+         - hash2 break into smaller ranges (letters with index = 2)
+          
+         A1,    B1,    C1, A2  D1,   D2      //A1+A2 - least powerful node; [A1-B1] + [B1-C1] + [D1-D2]... - more powerful node, etc  
+         0,  1, 2,  3, 4,  5,  6, .. 99    
+
+Database replication
+- create identical copies of all data where each copy is on different machine
+=> creates redundancy
+- improves - availability - if routing to one copy failed, can be redirected
+           - fault tolerance - if the whole DB crash (disk failure) - we have backup to restore
+           - performance - distribute load or requests and number of connections
+- but needs to synchronize updates/inserts
+
+- Master-Slave architecture
+   - all writes to master
+   - all reads from slave
+   - if master goes down - slave becomes master
+  Master-Master architecture
+   - all nodes do writes and reads
+   - all propagate changes to each other
+   
+DB Consistency Models     
+- Eventual consistency - can read temporarily obsolete value - until the updated is propagated
+                       - used e.g. social media posts - can have delay to make visible post after sending
+                                   reviews/rating posts
+- Strict Consistency - forcing reader to wait until the update/insert is finished
+                     - slow down operations and limits availability (if some replica not reachable)                  
+                     - e.g. user account info
+                            booking systems (hotels/concerts)
+                            
+Quorum consensus
+- strict consistency on master-master architecture
+   - we have to wait until changes propagated to every node - can get timeout on some node - fail/hanging
+- each record in DB enhanced with version: key
+                                           value
+                                           VERSION //shows if new or obsolete record                            
+- set: 
+  R min number of nodes to read from
+  W min number of nodes to write on
+  N total number of nodes
+
+- if we select R + W > N - we guarantee the strict consistency
+- idea to have overlap/intersection on set of nodes that there will be always at least one with correct version of record
+- playing with R or W can also ensure availability on some node failure ~ fault tolerance
+   
+MongoDB
+- intro to the Mongo, see: https://www.udemy.com/course/distributed-systems-cloud-computing-with-java/learn/lecture/16302918
+
+Mongo replication
+- usually similar to leader-workers: primary node-secondary nodes 
+- if primary goes down - election of new leader (handled within mongo itself)
+ 
+- writeConcern (send acknowledge from master after defined number of nodes wrote the change - considered successful write operation)
+   - can be number, or 'majority' (> half) - recommended to have odd number of nodes for replica
+- readPreferences
+   - primary node
+   - secondary node    
+   - nearest - if geological distance is long - reduce latency 
+   
+Mongo Sharding
+- select key on which we want to shard - cannot be changed in the future, choose wisely!
+                                       - should be chosen based on strategy we want to apply (hash/range)
+                                       - should guarantee horizontal scaling and efficient queries
+- based on selected strategy - data divided to the 'chunks'
+                             - chunks are send to their assigned nodes    
+                             - chunks grow with more data - configurable threshold to split to more smaller chunks if threshold reached
+- if mongo finds 'uneven distribution' - may move chunks to balance the load    
+- distribution of chunks is not directly to shards but through mongo router (can be pool/cluster)
+- mongo router is managed by configuration server (important part - mongo enforces to run as replication set) = mongod 
+- configuration server decides which shard will be used and re-balancing chunks on shards
+- shards can have its replicas too to ensure better availability & fault tolerance 
+- use index on the column which is used for sharding (~ creating chunks fo shards) 
+
+- adaption of setup: more user requests - more shards
+                     big demand on all data - add shards
+                     big demand on specific data - increase replicas in shard and switch to prefer secondary nodes for reading (distribute load on replicas) 
+                       
+
+Cloud
+- datacenteres across the globe
+- sharing data and configuration between regions is limited - isolation: + fault tolerance and stability in case of natural disaster
+                                                                         + better compliance with local rules and regulations
+                                                                         + security isolation (if one location is attacked, others might be OK)
+                                                                         + low latency if deployed on multiple locations (long distance - longer latency)
+                                                                         - data replication between regions slow, and complex => higher cost
+- each region divided into zones - divided in cooling , power and networking 
+                                 - but connected with high speed internet connection (in that region)
+                                 - zones are simpler for replicas and servers for fault tolerance and availability in that region (region is for example: east US, pacific asia, etc)
+
+- usually each zone have pre-prepared building block to deploy on click from cloud providers
+    - e.g. compute nodes (VMs) - aws - elastic compute cloud (ec2)
+                                 gcp - compute engine
+                                 azure - virtual machine   
+                               - usually VMs with different config and size
+           autoscaling - aws - autoscaling groups
+                         gcp - instance group autoscaling
+                         azure - virtual machine scale set                     
+                       - automatically adjusts compute capacity - run more nodes only when needed - paid only when running  
+                                                                - steady performance with 'lower cost'
+           load balancers - aws - elastic load balancer (elb)                          
+                            gcb - google cloud load balancer (gclb)
+                            azure - azure load balancer
+                          - provides: unified IP
+                                      load balancing :D
+                                      failure detection
+                                      monitoring  
+           cloud storage - aws - amazon simple storage solution (s3)
+                           gcp - google cloud storage
+                           azure - azure storage
+                         - cheap and slow for backups
+                         - expensive low latency for video, audio, etc
+           DB - sql - aws - amazon relation database service
+                      gcp - spanner / cloud sql
+                      azure - azure sql database
+              - nosql & caching - aws - dynamoDb, elasticcache
+                                  gcp - bigtable / memorystore
+                                  azure - azure cosmos db  
+                                  
+          other services - DNS and routing (based on region), logging, monitoring, analytics, distributed queues, serverless, blockchain etc                                                                                                                    
+                                                                
+Cloud deployment
+- for gcp (google cloud), see example in course video: https://www.udemy.com/course/distributed-systems-cloud-computing-with-java/learn/lecture/16712112 
+- note: probably looks different than in 2019
+- can create automatic template to auto install the app - set machine
+                                                        - insert commands to set up environment
+                                                        - insert command to run the app  
+                                                        -> then use the template for regions I want
+                                                        -> can take time before it will run up (minutes)
+
+Instance groups - managing cluster, monitoring health
+                - adding instances on peak of resource usage 
+                    - autoscale up if configured threshold reached, e.g CPU usage
+                    - set min and max value (how many CPUs)
+                    - set cooldown period waiting time for autoscaler to start up after VM boot up
+                    - sudo apt install stress -> simulates CPU overload to test
+                - healing on failure
+                    - autohealer - sets period for heartbeat checks
+                                 - set threshold for failed checks (not running)
+                                 - when reached tries to re-run                                                                                      
+Load balancer 
+- in cloud is distributed system but appears as a single entity
+- provides unified IP address (needs to set static IP - extra cost) and reroute request to the closest region to user
+- can be set for internet but also for internal structures                                                                                                          
+- health check - if find some region overloaded - remove from rerouting to until it will get to better shape (finishes its overload) and then add back                                                                         
+
+
+
+                                                                
+                                                                                                                                                                                                                                                         

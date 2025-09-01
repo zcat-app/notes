@@ -1,0 +1,1315 @@
+Rust
+- video: https://www.udemy.com/course/rust-lang
+
+
+* Basics:
+  - main function start on startup
+    - fn main() { println!("Hello, world!"); }
+  - compile cmd: rustc main.rs 
+  
+  - building/packaging tool Cargo
+     - Cargo.toml file
+        - cargo conf file ~ (package.json nodejs like)
+            - in main dir
+            - compile src folder
+            - sample:
+                [package]
+                name = "package_name"
+                version = "1.0.0"
+                authors = [ "name, surname, <email>"] 
+       - build as: 
+           cargo build
+              - do not need specify Cargo.toml
+              - build target folder
+       - run with:
+           cargo run
+              - run the exe file
+              - if not compiled, it will compile  
+       
+       - to start new project:
+           cargo new project_name [--bin]
+              - creates folder project_name
+                  - inside creates .gitignore
+                  - inside creates Cargo.toml file
+                  - inside creates src folder
+                     - creates main.rs
+
+* VS Code
+   - extensions:
+      - rust - rust developing
+      - codelldb - debuging  (Linux/Mac)
+      - C/C++    - debuging  (Windows)
+      - better toml - syntax highlight
+   - build task  
+      -> trigger 'cargo build'
+          -> debug
+          -> rls [release]
+          
+* Intelij
+   - Rust + Toml plugin
+                             
+* Data representation
+   - booleans, numbers (integers + decimals), characters and strings, structured data (XMLs), binary data (image,video)           
+   - bits, Bytes, Short (2B), Integer (4B)
+   - signed, unsigned, sing bit, 
+   - floating point 32b, double precision 64b, +/-inf, NaN 
+   
+   - application entry point: fn main() {} ~ c/java like 
+   - suppress some warnings: #![allow(warning)] :
+         #[allow(dead_code)]
+         #[allow(unused_imports)]
+         #[allow(unused_variables)]
+         
+         fn main(){
+            let a: u8 = 123;
+            println!("a = {}", a);     // print simple value
+            //println!("a = {:?}", a); //debugging print, print the collection, array, etc
+            
+         } 
+         
+   - data types
+      - default declaration makes immutable variables (~ final)
+          let a: u8 = 123;    //u-unsigned int, 8 bits, 0-255
+      - mutable:
+          let mut b: i8 = 0;  //i-signed int, 8 bits, -128-127
+          b = 1; 
+      - rust feature type inference - detecting data type, no need to specify
+          use std:mem;
+          ...       
+          let c = 123456879; // compiler decide based on assignment -> i32
+          //need to use std lib
+          //need to use pointer to c
+          println!("c = {}, takes {} bytes", c, mem::size_of_val(&c);
+      
+      - ints: 
+         - u/i 8,16,32,64
+         - platform native/specific int (i.e. app on 64bit CPU -> 64bit int)
+            - isize, usize
+            - let z:isize = 1;
+      - charter
+         - let ch: char = 'x'; // 32bit unicode character       
+      
+      - floating point (IEEE754)
+         - floats: f32, f64 (64 is default)
+         - not signed or unsigned, all signed
+         
+         let f: f32 = 2.5;
+      
+      - boolean
+         let flag: bool = false;  
+         
+    - operators
+      - arithmetic +,-,*,/,%
+         let f: f32 = 2+3*4;  
+      - does not support ++ or --     
+      - supports -=,+=,*=,/=,%= operators 
+          - pow - special function:
+                - integer/float pow
+                    - let pow = i32::pow(base, power);
+                    - let pow = f64::powi(base, power integer);
+                    - let pow = f64::powf(base, power float);
+          - arithmetic constants:
+                - PI: std::f64::consts::PI
+      - bit operators 
+          - only for integers
+          - & AND 
+            | OR 
+            ^ XOR 
+            ! NOR  
+            
+            let c = 1 | 2; // 01 | 10 = 11 => 3    
+            
+          - logical shifts >>, <<
+            let two_pow_ten = 1 << 10;
+            println!(2^10 = {}, two_pow_ten);   
+      - logical
+          - < > == != <= >=  
+          
+    - scope and shadowing                     
+      - local :
+          fn function() {
+            let a;
+            { // new local scope
+              let b;
+              // a accessible
+              println!("{}",a);
+            }
+          } 
+      - global: 
+           // need to declare type!
+           // const does not have fixed address, replaces var name per value
+           const MY_CONST:u8 = 1;
+           // get address in mem
+           static MY_STATIC:i32 = 2;
+           //access to mutable global needs to be in unsafe block (like threads)
+           static mut MY_STATIC_MUT:i32 = 4; 
+      
+           fn printMtableGLobal() {
+              unsafe {
+                  println!("{}", MY_STATIC_MUT);
+              }
+           }
+      
+      
+      - shadowing 
+        fn function() {
+          let a = 1;
+          let a = 2; // allowed! overrides previous declaration
+        } 
+        
+        fn function() {
+          let a = 1;
+          println!("{}",a); //1
+          {
+            let a = 2;  
+            println!("{}",a); //2 
+          }
+          println!("{}",);  //1
+        }         
+        
+      - stack and heap
+         - stack - local vars, short term, fast but limited
+           let a = 4;
+         - heap - bigger chunks of memory, long term, new operator  
+                - variable is pointer to the heap
+                - to access value it is need do dereference it *variable (~ C-like) 
+           
+                 struct Point {
+                    x: i32,
+                    y: i32
+                 }
+                 
+                 let p = Box::new(Point{x:0, y:0});  //p as pointer
+                 let p_1 = *p;                       //copy object ?? shallow
+                  
+* Control flow
+   - IF statement, similar to other languages
+      - sample
+            let variable = 1;
+            
+            if variable == 0 
+            {
+               println!("Variabe is 0");
+            }
+            else if variable == 1 {
+               println!("Variable is 1");
+            }
+            else {
+               println!("Variable is bigger than 1"); 
+            }
+            
+      - if as ternary op, can use else if also
+           let a = if variable > 0 { "above 0" } 
+                   else if variable == 0 {"equal to 0"} 
+                   else { "below 0" };   
+      - inner ifs
+          if a < d {
+              if a < b {
+                 // do something
+              }
+          }               
+            
+   - Loops
+       - while 
+           - usual while with condition
+           - while x < 1000
+             {
+                x *= 2;
+                if x == 64 { continue; }
+                println!("x : {}", x);
+             }
+       - loop 
+           - while true, needs to be stopped from code  
+           - loop // while true  
+             {
+                x *= 2;
+                if x == 64 { continue; }
+                println!("x : {}", x);
+                
+                if something_is_true {
+                   break;
+                }
+             } 
+        -for 
+            - onlywith fixed step +1
+            - defined by range
+            - for i in 1 ..11 { // from 1 to 10 , no definition of step
+                println!("i : {}", i);
+              }  
+              
+              // position and value pair 
+              for (pos, y) in (30..41).enumerate() {
+              
+              }          
+    - Match
+       - switch like 
+       - let var = 44;
+         let name = match var {
+              44       => "Joe",       // case value: break;
+              1..=1000 => "unknown",   // case range: break;
+              _        => "invalid"    // default
+         }; 
+         
+         - range exclusive 1..1000    1->999
+                 inclusive 1..=1000   1->1000
+                 to inf    1..        1->inf (should have break)
+                 
+* Data Structures
+    - Structs ~ clike
+        struct Point {
+            x: i32,
+            y: i32
+        }
+        
+        struct Line {
+            p1: Point,
+            p2: Point
+        }
+        
+        fn struts_fn() {
+            let p1 = Point {x: -7, y : 2} ;
+            println!("point1 x: {} y: {}", p1.x, p1.y);
+            let p2 = Point {x: -7, y : 2} ;
+            println!("point1 x: {} y: {}", p2.x, p2.y);
+            let l = Line {p1: p1, p2: p2 } ;  // constructor like
+            println!("line1 p1.x: {} p1.y: {}, p2.x: {} p2.y: {}", l.p1.x, l.p1.y, l.p2.x, l.p2.y);
+        }
+
+   - Enums ~ clike
+        enum Color {
+            // simple
+            RED,
+            GREEN,
+            // can mix with params
+            RGB(u8, u8, u8),  // tuple  constr
+            CMYK {            // struct constr
+                cyan: u8,
+                magenta: u8,
+                yellow: u8,
+                black: u8
+            }
+        }
+        
+        fn enums_fn() {
+            //let color = Color::CMYK{cyan:0,magenta:0,yellow:0,black:255};
+            let color = Color::RGB(0,255,0);
+        
+            let d = match color {
+                Color::RED => "Red",                             // simple
+                Color::GREEN | Color::RGB(0, 255, 0) => "Green", // OR
+                Color::RGB(0, 0, 0) => "Black",                  // constructs
+                Color::CMYK{cyan:_, magenta:_, yellow:_, black:255} => "CMYK with black",
+                _ => "Unknown"                                   // default
+            };
+            println!("color : {}", d);
+        }
+        
+   - Unions ~ clike  
+       - takes part of memory with either vars
+       
+       - //32 bits in memory
+         union IntOrFloat{
+            i: i32,
+            f: f32
+         }
+         
+         fn_union() {
+            let mut iof = IntOrFloat {i:1};
+            iof.i = 4; 
+            
+            //getting value is unsafe, we are not sure if we have int or float, needs special handle
+            let val = unsafe { iof.i };
+         }
+       
+   - Option <T>
+      - compares if value is valid or None:
+         if let some(x) = some_variable {
+            println!("valid shit");
+         }
+         
+         while let some(x) = some_variable {  // one iteration
+            println!("valid shit");
+            some_variable = None
+         }
+         
+   - Arrays ! clike
+     - fn array_fn() {
+          let mut my_array1: [i32; 5] = [1,2,3,4,5];
+          let mut my_array2 = [1,2,3,4,7];
+          //arrays with 10 elements with value 1 
+          let mut my_array3 = [1; 10]; 
+          
+          my_array2.len(); // length
+          my_array2[0];    // first element
+          
+          my_array2[0] = 1;
+          
+          println!("{:?}", my_array1); // print all elements
+          
+          // can compare elements of arrays with THE SAME LENGTH
+          if my_array1 != my_array2 {
+              println!("not matching elements")
+          }
+          
+          //2D
+          let mtx: [[i32; 3];2];  //empty
+          let mtx: [[i32; 3];2] = 
+                [
+                  [0,0],
+                  [1,1],
+                ];
+          // iteration      
+          for i = 0..mtx.len() {
+            for j = 0..mtx[i].len() {
+                mtx[i][j];
+            }
+          }      
+          
+       }    
+    
+   - Slices  ~ subarrays with unknown length
+      - let mut my_array = [1,2,3,4,7];
+      - let mut my_slice = my_array[1..3];  //[2,3] 
+      
+      - if as argument:
+        fn use_slice(slice: &mut[i32]) {
+          //use as array
+        }
+        
+   - Tuples - collection of values
+      - i.e. (i32, f32)
+      - let tuple = (10, 4.2);
+        println!("{0}, {1}, repeat {0}, {1}", tuple.0, tuple.1);
+        
+      - destrcturing -> decomposition to vars 
+        let (a,b) = tuple;
+        println!("{0}, {1}, repeat {0}, {1}", a, b);
+        
+      - tuple of tuples
+        let tuple2 = (tuple, tuple); 
+        // access nee brackets!
+        (tuple2.0).0 
+        
+      - single element tuple needs comma, otherwise as single value:
+        let tuple = (42i8,)   //8bit integer value
+        
+   - Pattern Matching
+      - value:
+             match x {
+                0 => "no",                          //value
+                1|2 => "one or two",                //value or value
+                9..=11 => "nine to twelve",         //range inclusive
+                _ if (x % 2 == 0) => "even number", //condition
+                12 => "dozen",                      //value
+                z @ 13..=14 => "13-14",        //named range
+                _ => "a few"                        //default
+            }  
+      - tuple:
+            match p {
+                (0, 0) => println!("origin"),                         // value
+                //(0, y) => println!("x:0, y:{}", y.to_string()),  // some Y
+                //(x, 0) => println!("x: {}, y: 0", x),            // some X
+                //(x, y) => println!("x: {}, y: {}", x, y),    // some X,Y
+                (ref x, 0) => println!("x: {}, y: 0", x),        // passing reference of X
+                //(ref mut x, 0) => println!("x: {}, y: 0", x), // passing editable reference of X
+                (_, y) => println!("x: some, y: {}", y)          // uninteresting X,Y
+            } 
+      - struct:
+            match color {
+                Color::RED => "Red",                             // simple
+                Color::GREEN | Color::RGB(0, 255, 0) => "Green", // OR
+                Color::RGB(0, 0, 0) => "Black",                  // constructs
+                Color::CMYK{cyan:_, magenta:_, yellow:_, black:255} => "CMYK with black",
+                Color::CMYK{black:255, ..} => "CMYK with black",
+                _ => "Unknown"                                   // default
+            };
+                          
+    - Generics
+       - java/clike
+       - struct Point<T, V> {
+              x: T,
+              y: V
+         }
+         let p2 = tvPoint {x:1.2 ,y:2.0};
+         let p3:tvPoint<u16, i32>  = tvPoint {x:2 ,y:14};
+         
+* Standard collection
+    - Vec,        ~ arrayList
+      VecDeque,   ~ arrayDeque
+      LinkedList, ~ linkedList
+      BinaryHeap, ~ priorityQueue
+      HasMap,     ~ hashMap
+      BTreeMap,   ~ TreeMap
+      HashSet,    ~ HashSet
+      BTreeSet    ~ TreeSet
+      
+   - Vec
+       - vector, dynamic array
+       - let mut vec = Vec::new();
+         vec.push(1);
+         vec.push(2);
+
+         vec[0];      //access to element through index, index is usize datatype!
+         vec[0] = 0;  //change the value   
+         
+       - possible get out of bounds when access index out of length -> use .get()
+         vec.get(111) // returns Option type -> can match
+         match vec.get(111) {
+            Some(x) -> do smth,
+            None -> "error, overflow"
+         }
+          
+       - iteration in for:
+            for element in &vec { println!("{}", element); }
+            
+       - remove element
+            - pop from end
+              vec.pop() // return Option T
+              match a {
+                  Some(x) -> do smth,
+                  None -> "error, overflow"
+              }   
+              
+            - reverse iteration with pop:
+              while let Some(x) = a.pop() {
+                  //do something with x
+              }     
+    
+    - HashMap
+        - use std::collections::HashMap
+          
+          let mut map = HashMap::new();
+          map.insert(String::from("key1"), 1);  // ~ java put, insert or update the value
+          
+        - access
+          map["key1"]  
+        
+        - iterate through for
+          for (key, value) in &map {
+               // do smth with key or value or both  
+          }  
+    
+        - insert if not exist
+          map.entry("key".into()).or_insert(new_value);
+          
+        - value access returns reference
+          let refValue = map.entry("key".into());  //return ref to the value 
+          *refValue = newValue;                    //dereference and assign
+    
+    - HashSet
+        - unique values, random order
+        - use std::collections::HashMap
+        
+          let mut set = HashSet::new();
+          set.insert("a");
+          set.insert("b");
+          
+          let insertedA = set.insert("a"); //false
+          let insertedC = set.insert("c"); //true
+          
+          let hasD = set.contains("d");    //false
+          let removedB = set.remove("b");  //true - if exist and removed 
+          
+          let set s1_5: HashSet<_> = (1..=5).collect();
+          let set s1_10: HashSet<_> = (1..=10).collect();    
+          let set s2_8: HashSet<_> = (2..=8).collect(); 
+          let set s6_10: HashSet<_> = (6..=10).collect(); 
+          
+          //set operations
+          //SUBSET
+          s2_8.is_subset(&s1_10);    //true|false
+          //DISJOINT - no common element
+          s1_5.is_disjoint(&s6_10);  //true|false
+          //UNION - elements from both
+          s1_5.union(&s6_10);  //1..=10
+          //INTERSECTION elements resent in both
+          s1_5.intersection(&s2_8);  //2..=5
+          //difference - which s1 has but s2 does not
+          s1_5.intersection(&s2_8);  //1
+          //symmetric difference = union - intersection
+          s1_5.intersection(&s2_8);  //1, 6, 7, 8
+          
+    - Iterators
+       - iteration through collections
+       - i.e.:
+           let mut vec = vec![3, 1 , 2];
+           
+           for element in vec {  //this manipulate (move) the iterator the vec?! -> use ref
+              //do smth with 'element'
+           }  
+           
+           // use ref         
+           for element in &vec {
+              //do smth with '*element'
+           } 
+           
+           for iter in vec.iter() {
+              println!("element: {}", *iter);   //not needed to deref in println!
+           }
+           
+           //vec.iter() - immutable iterator
+           //vec.iter_mut() - mutable iterator, can change the value of element
+           
+           //vec.iter().rev() -> iterator from end to start ~ backward iterating
+           for iter in vec.iter().rev() {
+              println!("element: {}", *iter);
+           }
+           
+        - into_iter 
+            let it = vec.into_iter();
+            - moves the collection, can not use the original variable (like the for each above) later
+            - used in extend method
+            vec2.extend(vec); //fill vec2 with vec elements 
+            
+* Characters and Strings
+    - default string type is &'static str (~ vec of characters) 
+        - &str - string slice, static - static present, not assigned to dynamic memory
+    - &str as sequence of chars, utf-8
+        - iterate string per chars:
+            for c in str.chars() {     //str.chars().rev()
+                //print c
+            } 
+        - access characters:
+            if let Some(n_character) = str.chars().nth(0) {
+               //do something with 0th char 
+            }
+    - String type
+        - heap based, ~ vector of chars
+        - better manipulation, edit, access
+        let mut letters = String::new();
+        let b = 'a' as u8;      // char as byte
+        letters.push('a');      // add char
+        letters.push(b as char);// add byte code of char as char
+        letters.push_str(",");  // add String
+        
+        letters.remove(0);      // removes first char
+        letters.replace("a,", "bb"); //replaces the subsequence
+        
+                   
+    - Conversions
+       - &str from String
+           let converted:&str = &letters;
+           let converted:&str = letters.as_ref();
+       - String from &str
+           let converted:String = String::from("&str string");
+                                = "&str string".toString();
+               
+       - concatenation String + &str
+           let con = letters + "&str string";  // works out of the box 
+       - concatenation String + String
+           let con = letters + &letters;       //adding ref 
+           
+    - Formatting 
+       - macro format!();
+       - similar to println!
+       - parameters as {} in text:
+            //simple use
+            format!("Hi, my name is {}, and I am {}", "Name", 30);
+            //repeating
+            format!("{0}, {0}, {0}!", "Go"); //"Go, Go, Go!"
+            //naming params
+            format!("Hi, my name is {name}, and I am {age}", name = "Name", age = 30);
+            //mixing
+            format!("{1} {} {0} {} {data}", "alpha", "beta", data = "delta"); // beta alpha alpha beta  delta 
+                                                                             i=0  {1} {i++}  {0}  {i++} {data}                   
+       - number of params is checked by compiler 
+    
+    - reading input
+       - use std::io::stdin
+               
+         loop {
+            let mut buffer = String::new(); 
+            match stdin().read_line(&mut buffer) {
+                Ok(_) => {
+                   let parsed = buffer.trim_end()      // get rid on line break char
+                                      .parse::<i64>(); // parse as int64
+                   match parsed {
+                      Ok(number) => {
+                         println!("Inserted number: {}", number);
+                         break;
+                      },
+                      Err(e) => {
+                         println!("Found error: {}", e);
+                      }
+                   }                   
+                                      
+                }
+                Err(_) => {
+                  continue;
+                }
+            
+            }
+         
+         }  
+          
+* Functions
+    - repetitive code, readability
+    - fn function_name(arg:type) -> returnType //NOT LIKE IN MATCH =>, BUT ->
+      
+      // input argument - value
+      fn print_int_fn(x:i32) {
+         println!("int val = {}", x);
+      }
+      // input argument - mutable value
+      fn print_int_fn(mut x:i32) {
+         x = x + 1;                     // only locally, original var is not changed
+         println!("int val = {}", x);   // prints x+1 result
+      }
+      // modify the value - mutable ref
+      fn increase_value_fn(x:&mut i32) {
+         *x += 1;
+      }
+      // return value
+      fn product_fn(x: i32, y:i32) -> i32 {
+         x* y
+      }
+      
+      fn functions() {
+         let mut x = 1;
+         print_int_fn(x);
+         increase_value_fn(&mut x); // passing mutable reference
+         print_int_fn(x);
+         x = product_fn(x, x);
+         print_int_fn(x);
+      }
+
+    - Methods
+       - functions connected to struct/object
+         // clike struct/class
+         struct MyStruct {
+             value : i32;
+         }
+           
+         // impl keyword to invoke fn 
+         impl MyStruct {
+            
+            fn get(&self) -> i32 {
+               self.value
+            }
+         } 
+         
+         // call method
+         fn simple_method_fn() {
+              let my_struct = MyStruct {value: 1};
+              println!("get on struct: {}", my_struct.get());
+         }     
+         
+         //generic factory method
+         impl MyStruct<T> {
+            val1: T,
+            val2: T
+         }
+         
+         impl <T> MyStruct<T> {
+            fn new(val1 T, val2: T) -> MyStruct<T> {
+               MyStruct::<T> { val1, val2 }
+            }
+         }      
+    
+    - Closure
+       ~ java lambda
+       - function can be store as variable
+         fn foo () {
+         
+         }
+         
+         fn test() {
+            let foo_var = foo;  // store the fn into the var
+            foo_var();          // call the fn through the var                             
+         }
+         
+       - can define 'anonymous fn':
+         let plus_one = |x:i32| -> i32    { x + 1 };  //exists only as local var
+                         input    return    body
+         let val1 = 1;
+         let val2 = plus_one(val1);
+         
+         //can rely on compiler to solve data type - SEEMS OBSOLETE, NEED TO SPECIFY
+         let plus_two = |x| { 
+                let mut temp = x; //
+                temp += 2;        //increase
+                temp              //return
+         }
+         let val3 = plus_one(val1);
+    
+         //passing by ref
+         let mut x = 2;
+         let plus_two = |y: &mut i32| *y += 2;  //increase
+         plus_two(&mut x);                      //pass as mutable ref
+         println!("bla bla {}", x);             //see updated val
+
+    - Higher-Order Function
+        - Function as param
+            let val:i32 = (0..).map(|x| -> i32 {x*x})
+                    .take_while(|&x| x < limit)         //include vals up to some condition
+                    .filter(|x:&i32| is_even(*x))       //filter vals
+                    .fold(0, |sum, x| sum + x); 
+    
+        - Function as return val
+           fn multiply_by_factor (factor: i32) 
+             -> impl Fn(i32) -> i32                 // signature of function trait
+           {
+              move |val:i32| -> i32 { val*factor }  // extend lifetime of factor, borrowed var
+           }
+           
+           fn foo() {
+              let multi = multiply_by_factor(2);
+              let res = multi(2);
+              println!("result = {}", res);
+           }
+     
+* Traits
+   - relationships between structs
+   - kinda java interface
+   - polymorphismus
+   - example:
+   
+      trait Trait {
+        fn name(&self) -> &'static str; //only definition, need to be implemented
+      
+        fn introduce(&self) {
+           println!("Trait text of {}", self.name);
+        }
+        
+        fn create(name: &'static str) -> Self     // STATIC FUNCTION if not taking self as param
+                                                  // Self = Type of implementor (Object1/Object2) 
+        
+      }
+      
+      struct Object1 {
+         name: &'static str 
+      }
+      
+      struct Object2 {
+         name: &'static str 
+      }
+      
+      impl Trait for Object1 {
+         fn trait_fn1(&self) -> &'static str {
+            self.name
+         }
+         
+         fn create(name: &'static str) -> Object1 {
+            Objejct1 {name: name}
+         }
+      }
+      
+      impl Trait for Object2  {
+         fn trait_fn1(&self) -> &'static str {
+            self.name
+         }
+         
+         //overrides
+         fn introduce(&self) {
+           println!("Trait text of Object2 struct: {}", self.name);
+        }
+        
+        fn create(name: &'static str) -> Object2 {
+            Objejct2 {name: name}
+         }
+      }
+      
+      fn traits() {
+         let o1 = Objejct1 {name: "Object1 Name"};
+         o1.introduce();
+         //let o2 = Objejct2 {name: "Object2 Name"};
+         let o2 = Objejct2::create("Object2 Name");
+         o2.introduce();
+         
+         let t::Object1 = Trait::create("Name"); // Compiler decide about type
+         t.introduce();
+      }
+     
+    - trait can be attache to any 'object', not created by me, even std::lib like vector 
+      trait Summable<T> {
+        fn sum(&self) -> T
+      }
+      
+      impl Summable<i32> for vec<i32> {
+        fn sum(&self) -> i32 {
+            let mut res = 0;
+            for x in self { res += x; }
+            return res;
+        }  
+      }
+      
+      fn test_fn() {
+          let v = vec![3, 1 , 2];
+          println!("sum of {?:} is {}", v, v.sum());
+      }
+    
+    - passing traits as param (polymorph)
+    
+      fn foo_function(my_trait: impl MyTrait) {             
+         println!("Some text: {}", trait.trait_method());
+      }
+         
+    - parameter with more traits
+      
+      //1st way: define anonymous with interfaces
+      fn foo_function(object_with_traits: impl MyTrait + MyOtherTrait) {
+         println!("Some text from my trait: {}", object_with_traits.trait_method());
+         println!("Some text from other trait: {}", object_with_traits.other_trait_method());
+      } 
+      
+      //2nd way: trait bound syntax, generic with define interfaces -> easier reusability
+      fn foo_function<T: MyTrait + MyOtherTrait>(my_trait1: T, my_trait2: T) {
+         //..
+      }
+      
+      //3rd way: using where clause, similar to 2nd approach 
+      fn foo_function<T>(my_trait1: T, my_trait2: T) 
+         where : T : MyTrait + MyOtherTrait 
+      {
+         //..
+      }
+      
+    - option to use precompiled traits, like for Debug trait
+      use std::fmt::Debug
+      
+      #[derive (Debug)]
+      struct MyStruct {
+          // some properties
+      }
+      
+      fn some_function() {
+         let m = MyStruct {};
+         println!("{:?}", m); //now compilable with derived trait
+      }
+    
+    - Into trait
+       - invoke automatic conversion where possible, i.e. &str -> String
+       
+       impl Object1 {
+          fn new<T: Into<String>(text: T) -> Object1 {
+             Object1 { name: name.into() }                          //CALLING the Into trait
+          }
+          
+          //or
+          fn new<T>(text: T) -> Object1 
+            where T: Into<String>
+          {
+             Object1 { name: name.into() }                          //CALLING the Into trait
+          }
+       }
+       
+    - Drop
+      ~ destructor, moves variable, cannot be used after drop                  
+         impl Object1 {
+            fn drop(&mut self) {
+            
+            }
+         }
+      - called by default at the end of lifetime, i.e. end of function when local var
+      - can be triggered by public drop function
+           drop(myObject); 
+      - compiler does not allow to call on object itself: myObject.drop(); // error             
+    
+    - Operator overloading
+      - through traits
+      - from std lib:
+           use std::ops::{Add, AddAssign} //+ operator, += operator
+           use std::cmp::{PartialEq}// == operator   
+           
+           // for generic T
+           impl<T> Add for MyStruct<T> // impl for T
+              where T: Add<Output = T> // for Ts which support Add trait and returns the same type T
+           {
+               type Output = MyStruct<T>; //output type, i.e. adding complex numbers
+               
+               // self - ref, Self - type
+               fn add(self, rhs: Self) -> Self::Output {
+                  MyStruct {
+                      val1: self.val1 + rhs.val1,
+                      val2: self.val2 + rhs.val2
+                  }
+               }                       
+           } 
+           
+           impl<T> AddAssign for MyStruct<T> // impl for T
+              where T: AddAssign<T> // for Ts which support AddAssign trait
+           {              
+               // self - ref, Self - type
+               fn add(self, rhs: Self) {
+                  self.val1 += rhs.val1;
+                  self.val2 += rhs.val2;
+               }                       
+           } 
+           
+      - comparing operator - eq - tricky for floats
+                                   - troubles with NaN, NaN == anything => false
+                                   - thus not full eq, but partial eq          
+                                        
+           // for generic T
+           impl<T> PartialEq for MyStruct<T> // impl for T
+              where T: PartialEq             // for Ts which supports PartialEq
+           {
+               fn eq(&self, other: &Self) -> bool {
+                  self.val1 == rhs.val1
+               }  
+               
+               fn ne(&self, other: &Self) -> bool {
+                  // not equal 
+               }                     
+           } 
+           
+      - comparing operators can be derived
+          #[derive(Debug, PartialEq, Eq, Ord, PartialOrd)] 
+          struct MyStruct {}   
+          
+   - Static Dispatch  
+      - in compilation time generics traits are prepared for each supporting type - monomorphism  
+        trait Trait<T> { fn trait_fn() {} }
+        impt Trait for Obj1 { fn trait_fn() }
+        impt Trait for Obj2 { fn trait_fn() }
+        
+        fn my_fn<T: Trait>(param: T) { param.trait_fn(); } //-> compiler creates this fn for every type with Trait (fn my_fn(param: Obj1), fn my_fn(param: Obj2))     
+   
+   - Dynamic Dispatch 
+      - decided dynamically on runtime, more expensive call (need to find right data type)
+        fn my_fn(param: &Trait) { param.trait_fn(); }      //-> passing reference, decided dynamically on runtime
+        
+   - Collection of different objects
+      - two approaches: 
+         a) enum - enum can take as input argument whatever -> passing the object 
+                 - need pattern matching to manipulate data - need to determine the type
+              
+              enum MyEnum {
+                  Enum1(Mystruct1),
+                  Enum2(Mystruct2)
+               }
+               
+               fn fill_vec() {
+                  let mut vec = Vec::new();
+                  vec.push(MyEnum(MyStruct1));
+                  vec.push(MyEnum(MyStruct2));
+               }
+               
+         b) using traits - needs to know size of type (trait Sized) -> using Box 
+                         - can access directly with iteration 
+              fn fill_vec() {
+                  let mut vec:Vec<Box<MyTrait>> = Vec::new();
+                  vec.push(Box::new(MyStruct1));
+                  vec.push(Box::new(MyStruct2));
+               } 
+               
+* Lifetime and memory
+  - Ownership
+      - secures safeness of code
+      - owning and moving
+         - moving set new ownership of memory to another pointer
+         - let v = vec![1,2,3];
+               // variable 'v' - on stack
+               // vector[1,2,3] - on heap
+               // variable 'v' owns memory allocated on heap
+               
+           let v2 = v; //assigning the pointer to the memory to the v2 ~ shallow copy
+                       //only one owner is allowed in rust
+                       //we move ownership to the 'v2', thus 'v' cannot access the memory then   
+           print("{:?}", v); //tried to read moved variable, exception! 
+                       
+         - similar with closures
+           let closure1 = |v:Vec<i32>| ();
+           closure1(v);       //closure now claim the ownership of vector                
+           print("{:?}", v);  //tried to read moved variable, exception! 
+           
+           let closure2 = |v:Vec<i32>| { println!("{:?}", v; v)};  //workaround -> return the vector and move the ptr back, but borrowing is here to solve the issue 
+           print("{:?}", closure2(v);
+                             
+        - basic datatypes are rather copied than moved, thus we can access them with new memory allocated
+          let a = 1;
+          let b = a;          // ~ 'deep copy'
+          print("{:?}", a);   // not moved pointer, copied as new value
+        - note: if basic data type is boxed -> the same issue with moving
+          let val1 = Box::new(1);  // created on heap
+          let val2 = val1l         //~shallow -> moved
+  
+  - Borrowing
+     - passing a reference, ownership is not changed
+     - can be to variables or functions -> assigning/passing ref
+     - can pass immutable or mutable with mut keyword
+     - call closure with ref. and can access the value later on
+          let closure3 = |v:&Vec<i32>| { println!("{:?}", v;)};    // borrowed with ref, no need to return as in closure2
+          closure3(&v);        // passing refference -> borrowing          
+          print("{:?}", v);    // OK!
+     - mutable ref:
+          let a = 2;
+          let b = &mut a;
+          *b = 2;             // change the value
+          print("{:?}", a);   // fail, b borrowed but did not "unborrow" 
+          
+          // borrow and unborrow through scoping
+          {
+              let b = &mut a;     // borrow
+              *b = 2;             // change the value
+          }                       // unborrow at end of the scope
+          print("{:?}", a);       // OK!   
+     - preserving the "mutability" -> borrowed var cannot be mutable if var is immutable and vice versa
+     - note editing collection (liek vector in for loop - push/remove is not allowed due to borrowing)
+  
+  - Lifetime 
+     - 'static - lives as long as program lives ~ clike
+     -  we can set our own 'scopes'
+        - i.e.
+          struct Person {
+             name: String
+          } 
+          
+          struct Company<'z>  {  //specifying lifetime scope
+             name : String.
+             ceo: &'z String   //binding lifetime of the property to the scope
+          }
+          
+          fn foo() {
+            ler person = Person {name: String::from("name") };
+            let comp = Company {name: String::from("comp name"), ceo: &person}
+          }   
+          
+     - lifetime elision -> no need to write lifetime scopes in functions/traits -> resolved by compiler to keep readability 
+  
+  - Lifetime in structs 
+     - struct Person<'a> {
+          name: &'a str
+       }
+  
+       impl<'a2> Person <'a2> {                 //could be named 'a' also, it is not connected to Person 'a'
+           fn foo(&self) {                      //lifetime elision
+              println!("Name: {}", self.name)
+           } 
+       }
+       
+       fn foo() {
+           let p = Person { name: "Name" };
+           p.foo();                           //if not 'a2 -> compilation error 
+       }
+       
+  - Reference counted variables
+     - allows reference counting -> adding obj(in memory) to multiple pointers
+     - not thread safe
+     - sample: 
+          use std::rc::Rc                             // special class allowing reference counting
+          
+          struct Person {
+             name: Rc<String>                         // need to wrap property which should be ref. counted
+          } 
+     
+          impl Person {
+             fn new(name: Rc<String>) -> Person {
+                Person { name: name}
+             }
+          
+             fn greet(&self) {
+                println!("Hi, I am {}", self.name);
+             }
+          }
+          
+          fn foo () {
+             let name = Rc::new("Name".to_string());   //creating ref counted var
+             let p = Person::new(name.clone();         //passing as argument with clone -> ref count increased as passed (otherwise it will move it -> unaccessable)
+             
+             person.greet();                           //access to ref counted value
+             println!("Name={}", name);                //with Rc we can access name, otherwise it would be moved 
+          }
+     - get amount of reference pointers to the variable (strong pointer): 
+          Rc::strong_count(&ref_to_variable);          //passing ref -> returns number of 'strong' pointers to the var
+          
+  - Atomic reference - atomic variable
+      - use std::sync::Arc    // atomic reference counting - allows passing between threads  use instead of Rc
+      - thread safe -> read only   
+      - thread 
+         - std::thread
+           
+           foo() {
+              let name = Arc::new("Name".to_string()); 
+              let p = Person { name: name.clone() };       //increase counter for atomic ref counting 
+              let t = thread::spawn(move || {
+                  person.greet();
+              });
+              println!("Name={}", name);                    //OK, atomic RC
+              t.join().unwrap() // syncing threads
+           }
+  
+  - Mutex
+      = mutual exclusion - threads are mutually excluded from modifying, until one of them is allowed to do so 
+      - accessing variable from multiple threads -> read and write
+      - use std::sync::Mutex
+          struct Person {
+             name: Arc<String> 
+             state: Arc<Mutex<String>>
+          }
+  
+          Impl Person {
+             fn greet(&self) {
+                let mut state = self.state.lock().unwrap(); //lock mutex
+                state.clear();
+                state.push_str("new state");
+                println!("Thread: Name={}, state {}", name, self.state.lock().unwrap().as_str();
+             } 
+          }
+          
+          foo() {
+             let name = Arc::new("Name".to_string());
+             let state = Arc::new(Mutex::new("Init state".to_string()));
+             let p = Person { name: name.clone(), state: state.clone() };
+             let t = thread::spawn(move || {
+                  person.greet();
+              });
+              println!("Name={}, state {}", name, self.state.lock().unwrap().as_str();
+          }
+  
+* Circular references
+   - borrowing issue - if we have two structs referencing each other, but 'self' is immutable by def
+                     - solution: RefCell
+   - life time issue - need to keep references alive
+                     - solution: Rc -> Reference counting     
+   - better to avoid and redesign -> normalization, like relations in DB -> M-N relations table -> struct with relations 
+   
+* Concurrency
+   - use std::thread;
+   
+     to make thread sleep, we need time lib also:
+     use std::time
+     
+     
+     fn foo () {    
+       thread::sleep(time::Duration::from_millis(300)); // make a main thread sleep for 300 ms 
+       
+       let handle = thread.spawn(|| {  // creates a new thread, with closure as param and return handle
+           // ... do some shit
+       });
+       
+       handle.join(); //syncing with main thread   
+     }
+     
+* Crates
+  - external libraries repo: crates.io
+  - adding dependencies into Cargo.toml
+  - toml:
+       [package]
+       name = "package_name"
+       version = "1.0.0"
+       authors = [ "name, surname, <email>"]
+       
+       [dependencies]
+       rand = "0.3.12"
+  - cmd line (ind dir with toml file):
+       cargo build     
+  - start updating registry (~ .m2 folder) 
+  - source code:
+       extern crate rand;
+       use rand::Rng;
+       safeness
+       fn main() {
+          let mut rng = rand::thread_rng();
+          let b:bool = rng.gen();
+       }
+       
+   - creating crates    
+       - create rs file lib.rs
+         pub mod modul_name {                                                 // module must be public to access from outside
+            pub mod submodule1_name {                                         // submodule must be public to access from outside  
+                pub fn some_fn() -> String { "text submodule1".to_string() }  // function must be public to access from outside
+            }
+            
+            pub mod submodule2_name {
+                pub fn some_fn() -> String { "text submodule2".to_string() }  
+            }
+         } 
+         
+       - toml file for crate
+         [package]
+         name = "crate_name"
+         version = "1.0.0"
+         authors = [ "name, surname, <email>"]
+         
+       - add as dependency to project toml file 
+         [package]
+         name = "project_name"
+         version = "1.0.0"
+         authors = [ "name, surname, <email>"]   
+         [dependencies]
+         crate_name = {path = "./path"}
+         
+       - use it in code
+         extern crate crate_name;
+         use crate_name::modul_name::submodule2_name; // use to not be forced write full path in 'namespaces'
+         
+         fn main() {
+            println!("submodule 1 text is: {}", crate_name::modul_name::submodule1_name::some_fn());
+            println!("submodule 1 text is: {}", submodule1_name::some_fn());
+         }
+       - can modularize submodules into separated files
+           - src/module_name/submodule1_name.rs 
+             src/module_name/submodule2_name.rs
+             
+             src/module_name/submodule1_name.rs:
+                pub fn some_fn() -> String { "text submodule1".to_string() } 
+             src/lib.rs:
+                pub mod modul_name {   
+                    pub mod submodule1_name;  //rust will look up file submodule1_name.rs in module_name directory in src folder
+                    pub mod submodule2_name;
+                }  
+                
+* Testing
+  - builtin support for unit testing in rusts
+  - can be in the same file:
+      // ... prod code
+      
+      #[test]                    //test attr for fn
+      fn test_function1() {
+         assert_eq!("hello", getHello());
+      }
+      
+      #[test]                   //test attr for fn
+      #[should_panic]           //mark as expected to fail 
+      fn test_function2() {
+         assert_eq!("hi", getHello());
+      }
+      
+      #[test]                   //test attr for fn
+      #[ignore]                 //disabled, not performed 
+      fn test_function3() {
+         assert_eq!("hi", getHello());
+      }
+         
+  - can have dedicated test folder with dedicated modules
+      - src
+         - file.rs
+      - test
+         - file.rs:
+             #[cfg(test)]
+             mod tests
+             {   
+               extern crate crate_name; //crate with prod code to test
+                       
+               #[test]                    
+               fn test_function1() {  
+                  //...
+               }
+               //.. more tests
+             }
+  - cargo build //compile
+  - cargo test  //test, runs all fns marked with test attribute          
+        
+* Comments and documentation
+  - comments ignored by compiler 
+    - java, clike  
+    - one line  - //
+    - multiline - /**/  
+  
+  - documentation comments
+    - C doxygen like
+    - //! Documentation comment - Module doc, start of the file
+      //! if want multi line, need to do like this
+      //! #Example
+      //! ```
+      //! //example code between ``` ... ``` needs to have valid compilable rust code!
+      //!         
+      //! ```
+    
+    - /// Documentation comment - Description of fn, var
+      /// if want multi line, need to do like this
+      
+    - cmd line:
+        rustdoc filename.rs
+          -> generates doc folder  

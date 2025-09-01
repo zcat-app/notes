@@ -1,0 +1,677 @@
+Java multithreading
+- video: https://www.udemy.com/course/java-multithreading-concurrency-performance-optimization
+
+Threads usage
+- responsiveness
+   -e.g. serving http request on server with a dedicated thread - app wont stuck for other users
+         video player showing video with one thread, responsiveness of user interaction on other thread
+   - multitasking ~ concurrency
+       - serving/managing multiple threads
+       - illusing of running tasks in parallel (each tasks gets dedicated resource at then released for other task)        
+- performance
+   - with multiple cores - real parallelization (not like concurrency)
+   - complete complex tasks faster
+     - more work done in 'the same amount of time' (than with concurrency) 
+
+Software workflow
+- OS - abstraction for interaction with hardware
+- applications - stored files on HDD
+- executing application - load the application into memory
+                        - creating process ~ context of the application
+                        - each process isolates the context from other processes
+                           - process ID
+                           - files for read/write operation
+                           - own heap
+                           - code to execute
+                           - main thread with own: stack - local variables and function execution
+                                                   instruction pointer - next instruction to execute
+                           - can have more thread - each has own stack and instruction pointer     
+                           
+Context switch
+- reassigning threads for CPU usage 
+    - assign - prepare resources for thread - memory, cache, etc 
+    - execute - run instruction
+    - interrupt - store current thread state
+    
+    - assign another thread - reload other thread state if exists
+    
+- not cheap in case of many threads, but price for responsiveness
+- too many threads - 'trashing' - more time to prepare and clean up than to execute the thread
+- threads share process resources - context switching between threads in the same process is much cheaper
+
+Thread scheduling 
+- strategies to plan threads for CPU usage
+- starvation - too long waiting time for thread to get assigned resource (CPU)
+             - we want to avoid this
+- OS sets epochs - time periods into which it assign chunks from each task 
+- uses dynamic priorities = static priority + bonus
+    - static priority set by developers before execution 
+    - bonus can be negative - set by OS for every epoch
+       - OS prioritize: UI threads to ensure responsiveness 
+                        tasks which did not finished in previous epoch or did not have enough time assigned - prevents starvation
+                        
+Threads vs Processes
+Threads pros
+- threads share resources in process
+- switching context of threads from the same process is more efficient
+- if tasks share lot of data - threads looks like better option
+- threads are faster to create and destroy
+
+Process pros
+- if we want higher security and stability rather than performance
+- processes are isolated from each other - failure of on thread can kill the app/process, but other processes can continue to run
+- unrelated tasks should not be in the same process (in theory)
+
+Threads in Java
+
+Create thread
+  - generic Thread with anonymous Runnable implementation
+      - every thread is encapsulated object from Thread class
+      - new Thread() - creates thread object
+                     - empty by default - needs to pass Runnable object for task execution
+                     - Runnable is executed when scheduled on CPU
+                     
+      - example:
+          var thread = new Thread(() -> { 
+              //do something
+          });    
+          
+    - create custom class that extends Thread
+      - no need to add Runnable (extended already by Thread)
+      - just override the run method
+      - access to the thread attributes via 'this' keyword
+      - example:
+          MyThread extends Thread {
+              public void run() {
+                 this.getThreadName()
+              }
+          }                     
+
+- thread attributes
+  thread.setName("My Thread Name") // sets name instead of generic thread-X name
+  thread.setPriority(myPriority) // set priority [1-10] for scheduling, const Thread.MAX_PRIORITY (10), Thread.MIN_PRIORITY (1)
+  
+- execute the thread  
+  thread.start(); //JVM creates a new thread and pass it to the OS
+
+- get current thread and its info:
+  Thread.currentThread() // gets currently executed thread
+  Thread.currentThread().getName() //prints a name of the current thread
+  Thread.currentThread().getName() // prints priority of the current thread [1-10]
+  Thread.sleep(INT_IN_MS) //make thread sleep - it will not get scheduled for the set amount of time - it is not active waiting in loop!
+
+- uncaught exception brings down the whole app - uncaughtExceptionHandler
+  - does not crash the app (if not thrown another exception from that)
+  - example: 
+      thread.setUncaughtExceptionHandler((thread, throwable)->{
+          // cleanup resources
+          // +
+          // do proper logging with info to have an idea what went wrong
+      });
+
+- debugging in intellij:
+    Debug tab/Threads section   
+  
+Thread termination
+- thread consumes resources:
+    - when not running consumes memory and kernel resources
+    - when running it consumes CPU & cache
+- needed when:    
+  - when thread finishes its task, but app still running - we need to clean up (release resources)
+  - if thread misbehave - desirable to stop it
+  - if we want to stop/close the whole app - cannot when there is at least one thread of the app still running
+  
+- Thread.interrupt()
+  - if executing thread throws InterruptedException
+      - e.g. Thread.sleep(500000)
+      - thread sleeps for long time
+      - calling thread.interrupt()
+          - triggers InterruptedException in sleeping thread
+          - can be handled via try-catch blocks to clean up resources
+      - example:
+           //inside of long running thread
+           try {
+              Thread.sleep(5000000);
+           } catch (InterruptedException e) {
+              // if interrupt() called from outside, it will end up in here
+              return; //needed to have return to jump off the thread
+           }
+                    
+  - if thread code is handeling interupt signal explicitly 
+      - can be a complex calculation which, e.g. 'infinite' for-loop
+      - exception is not triggered - we need to check signal directly
+      - example:
+           //inside of long running thread
+           while (true) {
+              if (Thread.isInterrupted()) {
+                // in interrupt was called from outside it will be caught in here
+              }
+           }
+                                                                                         
+Daemon threads 
+- running in background
+- does not prevent the app from existing when the main thread is finished
+   - i.e. save text-file periodically on background, if exit, then exit without finishing the task
+- thread.setDaemon(true)  
+
+Thread joining
+- threads runs independently, 
+- can start in random order
+- thread.join() 
+    - put the dependent threads to 'sleep' (wait until dependent thread finishes its work)
+    - can set max threshold for waiting on finished threads
+       - threads that still run after the threshold might need to get interrupted if we want to close the app, or being set as daemon threads   
+    - join()
+    - join(ms ns)
+    - join(ms)         
+    
+- allows to collect results from 'depending' threads -> gives more control over the execution flow
+- can use max time threshold for wait - good practice to use to avoid hanging + cleanup
+
+
+Performance
+- performance criteria might differ based on app type (latency - trading, precision - movie/image, throughput - processing of bigger amount of data, etc.)
+- latency
+   - measured in time unit
+   - time to complete the task
+- throughput
+   - tasks/time unit
+   - amount of tasks completed in given period of time
+    
+Latency 
+- idea is breaking the task into N subtasks -> in perfect world get T/N time to complete
+- BUT! - orchestrating might be costly - know what parts can be divided / are independent
+                                       - preprocess data
+                                       - collect data to put together final result     
+- how many subtasks do we want? 
+   - in general close to number of cores
+      - optimal if all threads can run without interruption (like I/O block, sleep etc.)
+      - if nothing CPU demanding is running on the system/PC
+- hyperthreading
+   - most of the modern computers
+   - using virtual cores
+   - hardware core can run 2 threads in parallel thanks to architecture  
+     - some HW units duplicated some are shared
+     - not 100% parallel, but it is close         
+- parallelization cost 
+   - preprocessing
+      - splitting task into smaller tasks
+      - creating threads, passing data 
+      - time between start and getting scheduled
+   - executing
+      - calculation itself
+   - postprocessing    
+      - waiting for last thread to finish   
+      - collecting data 
+      - putting together
+      
+- sometimes sequential processing is faster
+- with growing complexity parallelization MIGHT help (not always, if not parallelizable task)
+
+Throughput
+- number of tasks completed per time unit
+- two approaches
+   - divide task into subtasks - like with latency   
+                               - the same drawbacks (orchestrating)
+   - run multiple tasks in parallel
+       - not divided into subtasks
+       - executed as the whole task                              
+       - usually getting closer to the perfect T/N improvements (T- time to finish, N number of threads ~ ideally cores too) 
+         than dividing into subtasks - because they are mostly unrelated, no preprocessing, etc.
+       - threadpooling - cash-friendly non blocking queues gets us to almost optimal improvements
+
+- threadpooling
+   - creating threads only once and then reusing them instead of creation a new one each time
+   - threads wait int the pool until some tasks come 
+      - if available assigned to the task
+      - tasks can wait in the queue before assigned available thread
+      - when thread finishes task, available for another task from the queue
+   - might be challenging to implement right
+   - JDK offers a few implementations of threadpools
+      - e.g. fixed thread pool executor - fix size of thread                                      
+
+- Jmeter - one of the tools for measuring the throughput
+         - automated test without need to add any code
+         - send many requests and measure #processed_request/time                               
+         - can generate report                      
+                         
+- best performance gain when # threads close physical cores
+- slightly improves when getting to # of logical cores (unlike with latency when can slightly decrease due to orchestrating)
+
+Memory
+- Stack - memory region where: 
+    - methods are called
+    - arguments passed
+    - local variables stored    
+    - stack and instruction pointer is defines state of each thread execution
+    - each method creates stack frame in stack
+        - allocates memory for its data and method calls
+        - when method finishes the frame is invalidated
+        - in Intellij - Frames|Variables section in Debug panel
+    - stack belongs to the thread - variables from stack are no accessible to other threads
+    - statically allocated when the thread is created
+    - fixed size (based on platform) ~ small
+    - StackOverflow - if too deep calling hierarchy - e.g recursion
+    
+- Heap - shared memory belongs to the process
+    - every thread can access
+    - stores:
+        - objects ~ created with the 'new' operator
+            - String
+            - Object / CustomObjects
+            - Collection 
+        - member of classes (= properties boxed/primitive)
+        - static variables (as it is member of the object class in which defined)
+    - governed by Garbage Collector
+    - objects stays until there is any reference to them, members of class has the same lifecycle as the object itself
+    - static variables stays 'forever' (~ until the app is running)
+    
+References
+  - reference to the object (object is always on the heap)
+  - can be allocated on the stack
+  - can be on the heap - if member of the class          
+    
+Resource sharing
+- resource
+    - variables / Objects, 
+    - file/db connection,
+    - messages/ work queues
+- what is on the heap can be shared between threads
+- note: everything outside of process is shared too
+
+- accessing shared resource might create chaos
+   - not ensured order of execution on the resource
+   - atomic operations
+      - operation(s) if it appears to the system it occurred only once
+      - no intermediate states
+        - single step ~ 'all or nothing' 
+
+Critical sections
+- part of code which we need to be taken care for concurrent execution
+   - to became atomic -> prevent other threads to mess with 'intermediate state' (such as i++, etc.)
+   
+Synchronized - Monitor/Lock
+- locks the critical section and suspend other threads - make them  wait until the current finishes
+- can be applied on:
+   - method 
+     - one lock for the whole class
+     - example: 
+         public synchronized void myMethod() {
+            //do something
+         }        
+       
+   - block of code and lock object
+     - can define multiple locks in the same class (unlike method lock that creates one lock for the whole class)
+     - does not hold whole method execution
+     - example:     
+         Object lock = new Object();
+         public void method() {
+             int a = 0;
+             synchronized () {
+             
+             }
+         } 
+         
+   - note: synchronized on method is equivalent of:
+         public void method() {
+            synchronize(this) {
+               //do somethign
+            }
+         }
+- synchronized block is Reentrant - thread cannot be prevent itself from entering 
+  another critical section with the same lock (which it holds already)
+- can lead to performance penalty (due to locking)
+  
+Atomic operations
+- all reference assignments
+   - objectA = objectB
+      -> getters and setters (returning/stting reference)   
+- all primitive assignments are atomic
+   - EXCEPT long and double (64bits, no guarantees from java even on 64bit OS)
+      - most likely 2 operations on upper 4bytes and lower 4 bytes 
+   - 'volatile' - no reordering optimizations for execution 
+                - flushes update immediately - consistent for all thread      
+                - ensures atomic assignment on longs and doubles
+- java.util.concurent.atomic - preprepared java atomic operations
+
+Race condition
+- multiple threads access the shared resource
+- at least one of the thread modifies the resource
+- might provide inconsistent result (access and modify inconsistent state) - synchronization (locks)
+
+Data race
+- compiler and CPU execute instructions 'out of order' to improve performance and utilization
+- the optimization preserve the correct result, but in case of threads it can lead to unpredictable behavior
+   - branch prediction (ifs, loop optimizations)
+   - vectorization (parallel instruction execution - SMID)
+   - prefetching instructions 
+- can be performed between lines of code which do not have dependency on each other
+- solution: synchronize
+              - only one thread can execute the chunk of the code, even reordered, but it is safe
+            volatile
+              - guarantees the order of execution
+              - all code written before volatile access (read/write) is executed before
+              - all code written after volatile access (read/write) will be executed after
+              ~ called memory fence/memory barrier
+              
+- rule of thumb: Shared variables should be most likely guarded by synchronized or volatile  
+                 
+Locking and deadlock
+Coarse-Grained locking
+- one lock for everything 
+- simple, no deadlock, but might limit parallelization (same lock for not dependent resources)
+ 
+Fine-Grained locking
+- different locks to different resources
+- better performance, but can bring deadlock on bad synchronization
+
+Deadlock
+- condition for deadlock:
+  - mutual exclusion - only one thread can have access to the resource
+  - hold and wait - at least one thread hold a resource and wait for another to release another resource
+  - non-preemtive allocation - resource is released only when thread finishes    
+  - circular wait - every one waits for another to release the resource
+
+- prevent any of condition can prevent deadlock
+  - always use the same order of locks
+     - prevent circular wait
+  - watchdog
+     - deadlock detection (update of register by threads - long time without update - possible deadlock)
+  - thread interruption with watchdog thread
+     - not possible with synchronized           
+  - tryLock - checks if lock acquired
+     - not possible with synchronized                   
+
+Reentrant locks
+- same function as synchronized on object
+- BUT needs explicit lock/unlock (~ POSIX mutex)
+- DO NOT FORGET TO UNLOCK even if:
+    - exception thrown
+    - returning value
+    -> solution:
+       lock();
+       try {
+          // work
+       }
+       finally {
+          unlock();
+       }
+- example:
+    Lock lock = new ReentrantLock();
+    ...
+    public void method() {
+       lock.lock()
+       //do something
+       lock.unlock();
+    }                 
+- methods:
+   - getQueuedThreads - list of threads waiting for the lock                 
+   - getOwner - return thread which currently holds the lock
+   - isHeldByCurrentThread - true if lock held by current thread
+   - isLocked - if it is held by any thread right now
+                  
+- can enforce fairness
+   - fairness ~ fair access of thread to the lock
+   - can happen that one thread locking the lock many times while other waits
+   - can enforce via true flag: 
+        new ReentrantLock(true)
+   - fairness might reduce the throughput of the application
+   - should be use carefully - when we know what we do                      
+                 
+- lock.lockInterruptibly()
+   - can be interrupted from outside
+   - should be wrapped with try-catch to clean up and free resource
+   - example:
+       try {
+          lock.lockInterruptibly();
+          //do something
+       } catch (InterruptedException) {
+         //clean up and exit 
+       } 
+        
+       //called from somewhere: thread.interrupt()
+
+   - used in: thread watchdog - deadlock detection - can recover the deadlock
+              closing app when there are running threads that are not daemon threads - get interrupted, no need to wait for finishing the task
+
+- lock.tryLock()/.tryLock(long timeout, Timeunit timeunit)
+   - if available - locks and returns true
+        not - return false, but not getting suspended!!!
+            -> continues to run - can execute another work meanwhile and can try to acquire the lock later
+   - useful for: image/video processing
+                 high speed/low latency trading
+                 UI apps
+                 
+  - pros over synchronized: test state
+                            interruption
+                            conditional lock (tryLock)
+    cons: bad design = deadlock
+    
+ReentrantReadWriteLock
+- locking for reading might be separated from modifying in general
+- use when reading is dominant - e.g. cache
+                               - read from many variables or complex datastructure
+- var readWriteLcok = new ReentrantReadWriteLcok()
+   - wrapper for 2 locks
+     - readWriteLock.readLock()
+       readWriteLock.writeLock()
+   
+   - readLock counts how many threads are reading at the moment
+      - keeping the counter
+   - writeLock only for single thread
+   - mutual exclusion between read-write: if any number reads - cannot write
+                                          if someone write - no one can read
+- note: smells like semaphore in POSIX (but not exactly)
+- use with care, not always better than conventional lock
+
+Semaphores
+- restricts number of users from resource/group of resources
+- unlike lock which allows 1 user/resource, semaphore allows given number of users per resource
+- example:
+    var semaphore = new Semaphore(NUMBER_OF_PERMITS);
+    semaphore.acquire();  //acquires 1 permit
+    //do some shit
+    semaphore.release();  //releases 1 permit
+    
+    //can acquire more than 1 permit
+    semaphore.acquire(5);
+    // use it
+    semaphore.release(5); 
+
+- when all permits acquired - thread is blocked  
+- lock like semaphore with 1 permit only
+  - BUT
+    - semaphore does not have owner thread since many threads can acquire permit
+    - same thread can acquire semaphore multiple times!!!
+    - binary semaphore is not reentrant! 
+       - thread acquire semaphore and ask to acquire again - stuck, waits for another thread to release!!!
+    - semaphore can be released by any thread, even thread which did not acquired it!!    
+
+- good for producer-consumer tasks
+
+Inter thread communication
+- interrupt()
+- join()  
+- semaphore - acquire/release
+- conditional variable
+
+Conditional variable
+- semaphore is special conditional variable
+- thread check the variable - not met - sleep
+- some other thread modify the variable - signal for sleeping threads to recheck
+- if condition is met - execute the critical section
+- always associated with lock - atomic check and modification
+- example:
+    Reentrantock lock = new ReentrantLock();
+    Condition condition = lock.newCondition();
+    
+    Thread 1
+    lock.lock();
+    try {
+       condition.await() //thread sleeps
+    }         
+    finally {
+       lock.unlock(); //and unlock for Thread 2
+    }                          
+    
+    Thread 2
+    try {
+       condition.signal() //wake up Thread 1
+    }         
+    finally {
+       lock.unlock(); //and unlock for Thread 1
+    }  
+    
+- void await()
+  long await(long nanoSec)
+  boolean await(long time, TimeUnit unit)
+  boolean awaitUntil(Date deadline)
+  
+- signal()
+   - wakes up only one of the thread in wait
+   - awake thread acquire the lock and test
+   - only waiting threads get signal (if none wait, state is not stored - unlike semaphore)
+- signalAll()
+   - broadcast to all threads which are waiting
+   - signaling thread does not know anything about waiting threads, no need to update any state (like semaphore must) 
+   
+- Object as conditional variable
+   - final void wait()
+       - current thread wait until another thread wake it up
+       - thread is not consuming CPU in the wait state 
+   - final void notify()
+       - wake up only one thread waiting on that object
+   - final void notifyAll()
+       - wake up all threads waiting on that object
+   - to call wait/notify/notifyAll we have to acquire lock on that object
+    
+   -> can be used as conditional variable 
+   -> can be used as lock with synchronized (s= synchronized(this) {...})
+   - example - back pressure to limit memory usage
+      - producer-consumer
+         - producer fill queue faster 
+         - it can blow up memory -> limit the size of the queue
+         - wait() if full, notifyAll() when reduced
+   
+- java.util.concurent
+   - CountDownLatch, CyclicBarrier, Phaser, Exchanger, ...
+   - wrappers build on top of locks, conditional variables   
+             
+Lock free algorithms
+
+Lock issues
+- lock are great tool, but it might lead to deadlocks
+   - need to detect/recover if we want to prevent halting
+- if use the same lock - slowing the execution to the slowest thread
+- priority inversion - low priority thread got lock but got scheduled out by OS (scheduled out)
+                     - high priority thread cannot acquire the lock, since low priority did not release the lock      
+- kill tolerance - thread dies/gets interrupted/forget to release the lock (solves -> try-finally, lock with timeouts, etc)      
+- performance - if thread is blocked
+    - switch context - thread scheduled out
+                     - then thread scheduled back
+
+Lock free solution
+- use operation which uses only one hardware operation
+   - e.g. i++ -> 3 operations - read, update, write
+                 not atomic
+- read and assignment on: primitives (excluding long/double)
+                          references
+                          volatile long doubles
+                          
+- to avoid the data race - all shared variables as volatile                          
+- or use java.util.concurrent.atomic classes
+    - internally unsafe - provide access to low level native methods
+    - utilize platform specific implementation of atomic operations
+    - atomic operation is OK, but more atomic operations still faces race condition! 
+        - example: ai.incrementAndGet(); //single operation is fine
+                   ai.addAndGet()        //two atomic operations might demand lock to avoid race 
+
+AtomicInteger ai = new AtomicInteger(INITIAL_VALUE)
+  ai.incrementAndGet() //++i
+  ai.getAndIncrement() // i++   
+  ai.getAndAdd(delta)
+  ai.addAndGet(delta)                    
+
+AtomicReference
+  - new AtomicReference(myObject)
+  - get()/set()
+  - compareAndSet(expectedValue, newValue) - CAS
+    - if currentValue == expectedValue then sets newValue
+    - compiles into single operation
+    - available for all atomic classes
+    - powerful tool for possible performance improvements (when used as lock free approach)                   
+        - example lock free stack - get current value compare if value was not changed and change
+
+Blocking I/O
+- I/O bound application - threads blocked by earlier thread waiting to the result
+                        - CPU might be used, but waits 
+                             - not involved in long operations e.g. via DMA
+                             - common for websites to load webpage                     
+- # threads ~ # cores might not work here (if repetitively called blocking I/O)
+    -> more threads than cores
+    -> if only part of app can slow the app - it can actually slow the whole app (stacking blocking I/O operations)
+
+Thread-Per-Task approach
+- if thread per core - wasting CPU resource with waiting I/O operation
+- improves throughput comparing to thread per core
+- should be limited to not blew up memory (threshold of allowed threads - to be reused) - every thread demands its own stack memory
+- to many context switching - slowing the performance by a lot = Threadshing - CPU spends more time for managing threads than on threads computation itself - like frequent context switching
+- bad design can lead to inversion of control - if we fetch part of data from external service - when it slow down significantly, our thread pool can get exhausted on that service -> halt the app for users
+                                                                                               - external app has control over our app, bad
+  - solution - not blocking I/O, alias asynchronous calls with callbacks - will get executed when 'something we waited for is ready' 
+             - thread per core + non blocking I/O
+                - almost optimal (minimizes context switches) and more stable 
+                - BUT: can lead to callback hell if I/O results dependent on each other
+                       java is not good in support of this still - hard to deal with, 3rd party libs
+                       hard to write, read, test, debug
+          
+Virtual threads
+- 'platform' thread - JVM wrapper for OS thread
+                      - run() - code to be executed 
+                      - start() - when triggered - JVM creates stack for the thread
+                                - asks OS to get scheduled, OS take over responsibility 
+                    - maps 1-1 with: OS thread
+                    - creates fixed sized stack memory in JVM
+                    - 'heavy'                  
+                    
+- virtual thread - with JDK 21
+                 - JVM completly in control, OS is not aware of them nor managing them (on heap, OS manages platform threads)                                                                  
+                 - does not have fix sized stack
+                 -> allocated on the heap -> Object
+                                          -> collected by garbage collector if needed
+                                          -> cheap to create
+                 - has run() and start() - the same as platform threads  
+                 - always created as daemon thread! (cannot change - exception)
+                 - always have default priority = 5 (cannot change - ignored)                     
+                 - JVM has pool of platform threads
+                    - tries to assign virtual thread to platform thread
+                    - if platform thread executes - it is called carrier
+                    - when virtual thread cannot continue - it is returned to the heap with current state of stack and instruction pointer
+                    - once the thread is ready to run again - it waits for some of platform thread from pool to become available
+                    - then mapped nad sets its stack to continue
+                    - very little control over managing of virtual thread for devs, managed by JVM 
+
+                 - if used only for CPU operations - no gain, just abstraction for platform
+                 - if used for blocking I/O - performance improvement!
+                                            - can be treated like async without callback hell
+                                            - when blocking operation - unscheduled by JVM and available for another task
+                                            - when blocking task finished, can reschedule for finishing
+                 - avoiding context switching on OS level - controlled by JVM
+                 - mounting/unmounting has some overhead, but way smaller than context switch
+                 - benefits not only to I/O blocking operations
+                   - also for: Sleep
+                               Reentrant locks
+                               Semaphores
+                               Networking API - Socket/Datagram (TCP/UDP)
+                 - no effect on latency performance
+                 - improves throughput performance (when frequent blocking calls - prevents context switching)
+                    - short blocking operations inefficient - better to batch to gain more performance benefit
+                 
+                 - we should not create fix sized pool for virtual threads - JVM take care of them, fix sized only for platform threads               
+                   - Executors.newVirtualThredsPerTaskExecutor()
+                       - runs on limited platform threads (limited to # of cores), but can execute many virtual threads (thousands and more, limited by heap)   
+                 - can be challenging to debug (since we can have now thousands of them) - important to follow best practices to have easy life
+                   
+- Thread.ofPlatform().unstarted(runnable);
+- Thread.ofVirtual().unstarted(runnable);
+                          

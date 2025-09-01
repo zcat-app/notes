@@ -1,0 +1,962 @@
+Kotlin
+- video: https://www.udemy.com/course/kotlin-java/
+
+  - JetBrains - Intellij team
+  - statically typed
+  - compiles to JVM, Bytecode, JS and native
+  - open-source
+  
+  - interoperability ~ Java, mixing Java with Kotlin
+  - performant as Java with extra features
+  - good 'toolability'
+  
+  - sample:
+      Hello.kt file:
+        // no need of package def
+        // no need of class {}
+        fun main(args: Array<String>) {
+            println("Hello World!");
+        }
+        
+* Types and Variables
+  - Declarations:
+    val/var    varName :  Int      =  5;
+    keyword      name   dataType    value
+    
+      - cannot declare more vars in line like in Java: int a = 1, b = 2; //not valid
+      - val ~ final, can assign only once
+      - var - variable
+    
+      - dataType
+          Int, Long, Float,    Double    Boolean
+           1     2    3.1f   5.2 5.2e5  true/false
+          
+      - check if variable is Type of Datatype
+         boolean result = variable is Int  //returns true/false    
+           
+      - printing:
+         val a:Int = 1
+         var b:Long = 2L
+         val c:Float = 3f
+         var d:Double = 4.2e5
+         println("$a $b $c $d");  
+     
+      - type inference 
+         -> Kotlin set datatype itself, if it can
+         //no need to define type with declaration
+         val e = 5;
+         //needed for later assignment
+         val f:Int;
+         //... some code
+         f = 5;   
+      
+      - value comparing: ==    
+      - reference comparing: ===
+         
+      - ranges:
+         val a : IntRange = 1..10 //ranges are inclusive <1,10> -> 1,2,3,4,5,6,7,8,9,10    
+         val b = 1.rangeTo(10)    //same shit, but with method 
+         
+         - ranges are expected to be increasing
+            - range 10..1 will not work, empty 
+            
+         val c = 1.rangeTo(10).revesrse() // not IntRange but IntProgression, contain reverse order of ints
+         c.sum()                          // returns sum
+         val d = 10.downTo(1)             // decreasing 'range', can iterate
+         val d = 10 downTo 1              // same shit, different syntax  
+         
+         - we can set the step
+            - val d = 100 downTo 1 step 3 
+            
+      - arrays:
+         - val array : Array<T> = arrayOf(Tvalue, Tvalue)
+         - sample:
+                var names = arrayOf("Adam", "Eva");     //init
+                names[0] = "Boris";                     //access and change
+                println ("address in memory ${names}"); //print memory address
+                println ("elements: ${names.toList()}");//get list of elemnts
+         
+         - special array for ints IntArray
+               var intArray = intArrayOf(1,2,3);
+               
+         - 
+               var values = Array<Type>   (size, {function});             //<Type> not needed if Kotlin can find out
+                          = Array<Double> (10,   {2.0});                  //array of 10 elements, each with 2.0 value -> lambda returning 2.0
+                          = Array         (10,   {(it * it).toString()}); //array of 10 elements, returning pow2 of index, Kotlin recognizes array of Strings
+                                                                          //it -> index/iterator
+                                                                          
+     - note: Maps: var map = mapOf("key1" to "value1", "key2" to "value2");                                                                          
+                                         
+     - characters and strings
+        - chars - single chars
+            - sample :
+                val ch1 = '\u0041';   //unicode
+                val ch2 = 'a';        //single char
+                //val ch3:Char = 65;  //NOT ALLOWED      
+            
+                //get char code
+                'a'.toInt();          //deprecated
+                'a'.code; 
+        
+        - strings - array of chars
+                  - immutable
+             - sample : 
+                val b = "Hello World"  
+                
+        - raw strings
+             - can contain anything, reserves special chars like line breakers, tabs
+             - between """ some text """
+             - sample:
+                 val raw = """ Some BS text   "quote inside" 
+                           ~~~ | """
+                         
+        - interpolation
+             - we can supply variable into text as parameters with $ sign
+             - for 'expressioning' we need to use ${expression}
+                   - can handle complex expressions
+             - to print dollar sign -> expression that returns dollar char ${'$'}
+             - sample : 
+                 val myText = "some text $var1, another text ${var1/10}"  
+    - visibility
+        - public
+        - private
+        - protected // in classes
+        - internal  // in whole module
+         
+* Control flow                                
+   - nullability
+       - 'primitive' datatypes are by default non nullable!
+       - we can enforce nullability by ?
+           //var y:String = null     //illegal
+           var y:String? = null 
+           //var len = y.length       //illegal -> we do not know if there is value
+           var len = y?.length        //legal -> finds 'option' value if it has value or null   
+           //println(y.length)        //illegal -> we do not know if there is value
+           println(len)               //legal -> nullable type, prints value or string "null" 
+           
+           //return default value on null
+           var len = y?.length ?: -1  //if null return -1, '?:' works as 'else' branch 
+           
+           //we can enforce kotlin to not check null during compilation -> turn off null check with '!!'
+           println(y!!)    
+           println(y!!.length)        //can throws runtime exception -> nullpointer    
+           
+   - if statement
+       - Kotlin does NOT SUPPORT ternary operator   
+         -> if statement return expression -> can return value  (kinda ternary/multinary operator)
+            val temp = if (firstCondition) {
+                          "first branch"
+                       }    
+                       else if (secondCondition) {
+                          "second branch"
+                       }   
+                       else {
+                          "default value"
+                       }
+       - can be used as usual if from java 
+   
+   - smart cast 
+       - flow based typing -> casting based on previous check for dedicated scope
+          - once variable pass check to non-null -> casted from nullable to nonnullable in that SCOPE
+          - type check passed -> using as that type 
+       - sample :
+            val s:String? = "hello"
+            //println(s.length)       //illegal, can not be sure if s is not null
+            if (s != null) {
+               println(s.length)      //legal, passed null check, nonnullabe in the if block/scope
+            }   
+            var x : Cloneable = intArrayOf(1,2)
+            //println(x.size())       //illegal, no size method in Cloneable
+            if (x is IntArray) {
+               println(x.size)      //now can access size method from IntArray, knows it is IntArray
+            } 
+            
+            //normal cast
+            var x : Cloneable = intArrayOf(1,2)
+            var i  = x as IntArray 
+     
+   - for loop
+       - using sequences, similar to rust
+       - sample 
+          for (a in (10 donwTo 1)) {
+              //do smth
+              println("smth smth $a")
+          }                            
+       - can access position/index the same as rust
+          val ints = intArrayOf(1,2,3); 
+          for ((index, value) in ints.withIndex()) {
+              println("pos: $index, value: $value")
+          }     
+           
+           
+   - when statement
+       ~ switch in java, match in rust
+       - sample:
+           var a = getNumber();
+           val res = when(a) {
+              10 -> println("10")
+              11 -> println("11")
+              12,13 -> println("12 or 13")
+              in 1..99 -> println("in 1..99")
+              !in 200..300-> println("not in 200..300")
+              getSecretNumber() -> println("secret")
+              else -> println("invalid")
+           }
+           println(res);
+       - can decide base on datatype 
+           var b:Any = 4;
+           println(when(b) { 
+                is Int -> "int" 
+                else -> "not Int"
+           });
+       - do not need to define argument, can work in current scope ~ replace if
+           var c = 4;
+           println(when {
+                a > c  -> "a>b"
+                a == c -> "a=b"
+                else   -> "a, b fucked up"
+           }) 
+           
+* Functions
+   - top level functions
+       - conflicts with functions can be prevented by defining packages per file
+       - file1.kt:
+           package KotlinProject.File1
+           
+           fun functionName() {}
+           
+       - file2.kt
+           package Kotlinproject.File2          
+           import KotlinProject.File1.*
+                             
+           fun main(args: Array<String>) { 
+               fun functionName(); //function from file1  
+           }    
+
+   - return types and arguments
+       - fun foo() : Unit {}  //~ foo returns void
+         fun foo()  {}        //~ foo returns void   
+          
+         fun triple(x:Int)  { return x*3}  //~ triple accept x as int and returns tripled x as int  
+         fun triple(x:Int) = x*3           //~ simplified  
+         
+       - plsql like we can specify default values on fun call
+         fun foo(x: Int, y: Double = 10.0, z: Double = 1) : Double {  // default values on none, all or some
+             return x * y *z 
+         }
+         
+         fun main() {
+             foo(100, 5.0);     //all values entered
+             foo(100);          //y,z will use default
+             foo(100, z = 2.0); //name parameter to set -> y will use default
+         }
+          
+   - variable argument functions
+       - vararg - unknown/variable number of arguments
+                - 'vypustka' in czech  
+       - sample:
+           fun sum_up(vararg values:Int): Int {}  
+       - posibility combine with lists and arrays   
+           sum_up(1,2,3,4);
+           let list = intArrayOf(4,5,6)
+           sum_up(1,2,3,*list,7,8)  
+           
+   - nested/inner function 
+       - function in function, limited to the scope
+       - sample
+           fun foo1(): Int {
+               fun foo2() : Int {
+                  return 1
+               }
+               return foo2() * 2            
+           }                 
+       - inherits args of parent function -> has access to them 
+       - sample
+           fun foo1(a : Int): Int {
+               fun foo2() : Int {
+                  return a // access to arg of a 'parent' func
+               }
+               return foo2() * 2            
+           }   
+           
+    - infix functions
+        - allows special syntax with left and right args
+        - x donwTo y -> x.downTo(y)  
+        - keyword infix
+        - sample
+           infix fun Double.giveMeAvg(other: Double) : Double {
+              return this + other/2.0
+           }
+           
+           fun foo() {
+              println(1.0 giveMeAvg 2.0)
+           }
+           
+    - adding extension functions with receiver 
+       - function added to class via Class. extension
+       - sample:
+              fun Int.printShit() : Unit {
+                  println("print shit: $this")
+              };
+              val value = 5;
+              println(value.printShit());       
+    
+* Lambdas  
+   - lambdas in {}, not only body but even args 
+   
+   - sample 
+       val lambda = {x:Int, y:Int -> x+y }     
+       val lambda:(Int, Int) -> Int = {x, y -> x+y } 
+          
+   - lambda as arg - no need for ()
+       - sample
+           intOfArrays(1,2,3,4).count({x -> x > 2})
+           intOfArrays(1,2,3,4).count{x -> x > 2} 
+           //one input argument -> alias it
+           intOfArrays(1,2,3,4).count{it > 2} 
+            
+   - can access variable outside of lambda
+       - sample
+           Int sum = 0
+           intOfArrays(1,2,3,4).forEach{sum += it} 
+           
+   - high order functions 
+       - functions which takes other functions as parameter 
+         fun foo(value:Int, paramFn: (Int, Int) -> Int) {
+            return paramFn(value) 
+         } 
+       - note: parametrized sample
+         fun <T> foo(value:T, paramFn: (T, T) -> T) {
+            return paramFn(value) 
+         }
+         
+   - function types with receiver
+       - extending class with method, but only in scope of variable, not persisted
+         - sample:
+           val increasedBy = fun Int.(value:Int) = this + value
+           var x = 1
+           x.increasedBy(1) // method only in scope of variable lifetime 
+                       
+   - functors 
+       - C++ like construct
+       - class with default function
+       - sample
+            class FooClass {
+               public fun invoke(value1:Int, value2:Int): Int { //method name invoke
+                  //do some shit and return int
+               }
+            }
+                 
+            fun foo() {
+                val functor = FooClass()
+                val result = functor(1,2)
+            }     
+            
+       - can be invoked to any class, via the "Class." extension i.e.:
+           String.invoke(): String {
+              return "My cool shit: " + this //adds prefix in front of the string
+           }  
+           
+           val text = "my text";
+           println(text()) // prints: My cool shit: my text   
+                 
+* Classes
+   - properties
+       - default value is mandatory (if not specified as nullable or lateinit)
+          - as var to allow changing value, val as const
+       - lateinit let us set value later, but access to noninit val leads to exception   
+       - sample: 
+             class Class {
+                var prop1:String = ""   
+                       
+                val canDoSomething:Boolean
+                    get() = !prop1.empty()
+                    
+                var prop2:String = "default"
+                    get() = field // returns 'backing' field
+                    set(arg:String) {
+                      //do some shit
+                      field = arg
+                    }
+                    
+                lateinit var age:Int // can be init later 
+                                     // access only after init, otherwise exception         
+             }
+       
+             fun main(args: Array<String>) {
+                val obj = MyClass();
+                println("I can do something: ${obj.canDoSomething}")
+                obj.prop1 = "You can"
+                println("I can do something: ${obj.canDoSomething}")
+             }
+             
+   - extension functions
+       - extends classes via Class. extension
+       - sample
+           fun Int.negate() {  //Int is receiver class
+               return -1*this
+           }
+           
+           val a = 1;
+           a = a + a.negate();
+           
+       - can be attached to nullable type/class
+          - sample: 
+             Any?.print() {
+                if (this == null)
+                   println("obj is null")
+                else
+                   printn("obj is ${this.toString()}")    
+             } 
+             
+   - extension properties
+       - similar to functions
+       - cannot have default value
+       - sample:
+            String?.empty(): Boolean 
+               get() {
+                  this == null || this.length == 0
+               }          
+    
+   - primary constructor an initialization  
+       - defined in head of class   
+          class MyClass(var prop1:Int, val prop2: String) { //args as var/val are defined as properties
+              init {                                        //init block
+                  //do some shit
+              }
+          } 
+          
+          fun foo() {
+              val obj = MyClass(1, "text");                 
+              println("Prop1: ${obj.prop1}")                //props are accessible
+              println("Prop2: ${obj.prop2}")
+          }    
+   - delegated properties 
+       - can attach common behavior on properties
+       - can be custom delegate class
+         class  MyClass {
+              var prop1:String by lazy {
+                  //some magic sets value
+                  value  // return the value
+              }  
+              var prop2:String by Delegates.observable {
+                  prop, old, new -> println("changing value of $prop: $old -> $new")
+              } 
+              var prop3:String by MyDelegate()
+         }
+    
+   - data classes
+       - provides default implementation of:
+          - equals
+          - hashCode
+          - toString
+          - de-strutcturing
+          - copy - deep copy 
+          
+          data class MyClass(var prop1:Int, val prop2: String) { 
+              //we can override def impls
+              override fun toString() : String {
+                  return "Nesteruk je kunda"
+              }
+          } 
+          
+          fun foo() {
+              var obj1 = MyClass (1, "text1")
+              var obj2 = MyClass (2, "text2")
+              
+              println(obj1)             //toString
+              println(obj1.hashCode())  //hashCode
+              
+              println(obj1 == obj2)     //equals
+              var obj3 = obj1.copy()    //copy
+              println(obj1 == obj2)     //equals
+              (number, text) = obj2     //de-structurization
+              println($number and $text)
+          }
+          
+    - singleton    
+        - implemented by keyword 'object' instead of class
+        - 'virtual instantiation' - no need to create the object of that class
+        - sample:
+            object SingletonFactoryClass {
+                fun foo(param: Int): Int {
+                    return param * param
+                }
+            } 
+            
+            fun foo () {
+                let a = SingletonFactoryClass.foo(1);
+            }
+       
+    - companion class
+        - kotlin does not support static member of classes
+        - companion class replaces it 
+            class MyClass { 
+                companion object NameIsNotImportant {  // can implement interface also
+                    fun foo1() : Int = 1
+                    fun foo2() : Int { return 2 }
+                }
+            }
+            
+            foo () {
+                let a = MyClass.foo1()
+                let b = MyClass.Companion.foo2()
+                let c = MyClass.NameIsNotImportant.foo1()
+            }    
+               
+    - inheritance 
+        - parent class and subclasses, class cannot inherit multiple classes, same as java
+        - parent class must be open if we want to access it
+        - methods of parent class must be open if we want to override them
+        
+        open class ParentClass (var name: String) {
+           open fun foo1 () {     //subclass can access, can override
+              //parent impl
+           }
+           fun foo2 () {}         //subclass can access, cannot override
+        } 
+        
+        class SubClass(name: String, var detail:String) : ParentClass(name) {
+           override fun foo1() {
+              //subclass impl
+           }
+        }
+        
+    - interfaces
+        - java like, can contain properties, class can implement more interfaces
+        
+          interface ISomething {
+              fun doSomething()
+              
+              val name:String get() = "name"  //property with default value
+              
+              val age:Int                     //abstract, implementors must define
+              var var1:Int                    //var can be implementer in more ways
+              var var2:Int
+              var var3:Int
+          }    
+          
+          class SomeClass(var var1:Int)     //1st of impl of var
+              : ISomething {                //implement interface
+              override fun doSomething() {  //implement fun of interface
+                 //some shit
+              }
+              
+              override val age: Int = 69;   //implements the property
+              override var var2: Int = 69;  //2nd way of impl of var
+              override var var3: Int        //3rd way of impl of var
+                  get() = field
+                  set(value) {
+                      field = value
+                  }
+          }
+            
+          fun foo() {
+              var c:ISomething = SomeClass();
+              c.doSomething();
+          } 
+          
+          - functional interfaces - SAM
+             - similar to typealias, but can create new types with multiple non abstract members, inherit or extend other SAM
+             - more costly then typealias
+             - experimental feature from 1.60
+           
+    - class delegation
+       - if we need more interfaces, but do now want to implement again, when some objects solve it
+         interface I1{
+            fun f1()
+         }
+         interface I2{
+            fun f2()
+         }
+         class C1: I1 {
+            override fun f1(){}
+         }
+         class C2: I2 {
+            override fun f2(){}
+         }
+         
+         class Comb(o1:I1 , o2:I2)
+             : I1 by o1, I2 by o2 
+         {
+            //override just some 
+         }
+         
+    (out of the course scope)    
+    - anonymous object
+       - can create temp anon object in local scope
+         //collection of strings 
+         collection.map{
+            object{
+               val word = it
+               val length = it.length
+            }
+         }
+         //iterate over collection with anon objects
+         for x in collection {
+             x.word
+             x.lenth
+         }
+         
+    - inner class - can access members of outer class (no need to open)
+                  - anonymous inner class via object expression: 
+                       object {
+                          var name: String
+                       }
+    - annotation class 
+         - for annotations 
+    - inline class 
+         - class annotated with @JvmInline
+         - have no identity, only hold values
+         - can have methods, init block and inheritance
+         - similar to type aliases, but aliases are assignment-compatible with their underlying type, inline class not 
+    - sealed class/interface 
+         - not possible to extend from third party classes, which were not known at compilation time     
+    
+    - enum class
+         - java like
+         - can declare anonymous its own class abstract function
+         - can implement interfaces  
+         - sample:
+               enum class MyEnum { ONE, TWO, THREE} //simple
+               enum class Colors(val rgb) {         //with extra data
+                   RED(0xFF0000), 
+                   GREEN(0x00FF00)
+               } 
+               enum class Colors(val rgb) {         //with anonymous fun
+                   RED(0xFF0000) {
+                      override fun foo() {
+                         //impl
+                      }
+                   }, 
+                   GREEN(0x00FF00){
+                      override fun foo() {
+                         //impl
+                      }
+                   };                               //need ';'
+                   
+                   abstract fun foo(): Unit 
+                   
+                   fun hello() {
+                      //println("hello!")
+                   }              
+              } 
+         
+         - MyEnum.values //return all enums as array
+         - MyEnum.valueOf("smt") // returns MyEnum.Element or exception           
+         
+* Collections
+   - Sequence
+      - tries to provide uniform interface for collections 
+          - (not completely possible to enforce java to add interface into it) 
+      - sequences do not impl toString()
+      - convertable to other collections, i.e. List: seq.toList()
+      - arrays can be converted to sequence: arrayOf(x,y,z).asSequence() 
+      - generating via generateSequence() method       
+         sample:
+            val seed = 1                                   //seed, init value
+            val nextValFun = {it + 1}                      //next number is increment by 1
+            val gen = generateSequence(seed, nextValFun);  //1,2,... inf
+            val seq1_10 = gen.take(10)                     //generates 10 elements
+            println(seq1_10.toList()                       //transform to list for print
+                                                           //sequences does not have toString() impl
+                                                           //we can use some of collection with that, such as list 
+            //random numbers
+            val rand = Random()
+            val gen = generateSequence{rand.nextInt(10)-5};//generates values between -5,4
+            val gen.take(10) 
+                                                                              
+      - qualifiers
+         - all - iterating through all elements with testing predicate
+               - seq.all{it > 0}  //returns true/false if all element > 0
+         - any - tries to find any value which meet testing predicate      
+               - seq.any{it > 0}  //returns true/false if any element > 0 
+                 seq.any()        //returns true, if collection not empty
+         - contains - tries to find if collection contain the exact element
+                    - seq.contains(0)  //returns true/false if contains element eq to 0 
+         - count - counts number of elements in collection
+                 - seq.count()     // returns number of all elements in collection 
+                   seq.count{it>3} // returns number of elements > 3 in collection
+                      
+      - projection
+         - map - transforms element (new element/adapted values)
+               - seq.map{ /*some function*/ } 
+                 seq.map{ it* it } 
+         - associate - create sequence of pairs (kinda Map)
+                     - //seq of Strings
+                       seq.associate{it to it.length} //creates pair of string and its lenght
+         - flatMap - flattening the structure
+                   - seq.flatMap{/*some func*/}
+                   - i.e. map would create collection of collection
+                           -> flatmap will flatten it to simple collection of elements
+                     // cartesian product of sequences wit projections:      
+                     seq1.flatMap{ o1 -> seq2.map{ o2 -> "$o1 - $o2"} } 
+                     
+      - aggregation
+         - compress the collection into single value
+         - joinToString("separator")
+              - seqOfNumbs.joinToString("-") //1-2-3...
+         - reduce
+              - seq.reduce{x, y -> x + y} 
+              //1 iter     1, 2 -> 1 + 2 
+              //2 iter     3, 3 -> 3 + 3
+              - y as temp result, x as next value from seq 
+         - reduceRight
+              - similar to reduce, but goes from end to start 
+              - y as temp result, x as previous value from seq   
+         - sum - simple sum 
+               - seq.sum()
+         - sumBy - works as seq.map{}.sum()
+                 - seq.sumBy{/*expression*/} //i.e.: sumBy{it*it}
+         - sumByDouble - if complex Double calculus needed above ints -> i.e. sqrt
+                       - seq.sumByDouble{ Math.sqrt(it.toDouble()} //some of roots -> Double type      
+         - average - simple avg 
+                   - seq.average()    
+         - fold - works as reduce, but need seed -> initial value 
+                - seq.fold(0, {x, y -> x + y}  // init value = 0 then adds with elements of sequence              
+                  seq.fold(0, {x, y -> x * y}  // 0*productOfSequence                                
+                  seq.fold(1, {x, y -> x * y}  // 1*productOfSequence 
+         - foldIndexed - similar to fold, but provide index of processed element 
+                       - seq.fold(0, {index, partialResult, currentValue -> /*do smthg*/}
+         - foldRightIndexed - same but go from backward
+         
+      - filtering
+         - create filtered sequence
+         - filter - pick up elements based on predicate 
+                  - seq.filter{ /*predicate*/ }   
+         - filterNot - select elements which fail on predicate
+                     - seq.filterNot{ /*predicate*/ } 
+         - filterNotNull - selects not null elements
+      
+      - partitioning
+         - partition - splits sequence basaed on predicate
+                     - returns 2 sequences, first fulfill predicate, and the rest
+                     - seq.partition{/*expression*/} 
+                       {positive, others} = seq.partition{it > 0}
+         - drop - creates subsequence by skipping first n elements
+                - seq.drop(2) //seq(1,2,3,4) -> seq(3,4) 
+         - take - creates subsequnece with first n elements of sequence
+                - seq.take(2) //seq(1,2,3,4) -> seq(1,2)
+                - overflow is handled by kotlin -> no exception, takes what it can 
+              can combine seq.drop(2).take(1) //seq(1,2,3,4) -> seq(3) 
+              
+         - takeWhile/dropWhile
+                - while predicate is valid, do take/drop  
+                - take/drop stops on first fail, do not process further
+                - seq.takeWhile{it < 3}  //seq(1,2,3,4,1) -> seq(1,2)    
+                  seq.dropWhile{it < 3}  //seq(1,2,3,4,1) -> seq(3,4,1) 
+         - dropLast - drops last n elements
+                    - seq.dropLast(2) //seq(1,2,3,4) -> seq(1,2)                     
+      
+      - grouping                                
+          - groups elements based on some defined equality
+          - groupingBy - groups element by certain predicate 
+                       - returns map Map<groupingKey, List<elementType>                 
+                       - seq.groupBy{/*Class::property*/}
+                         seq.groupBy({key}, {value}) //seq.groupBy({it.age}, {it.name})
+                         
+      - sorting
+          - sorted - easy for numbers, ascending sort
+                   - seq.sorted()
+          - sortedDescending - descending sort
+                             - seq.sortedDescending()
+          - sortedBy - for objects, sort by property
+                     - seq.sortedBy{obj.fieldName}
+          - sortedWith - for complex sorting, combining more criterias
+                       - seq.sortedWith(compareBy(Class::property1, Class::property2))           
+                         seq.sortedWith(compareBy({it.property1}, {it.property2})               
+                       - thenBy - flexible on sorting by another property, i.e.: descending
+                         seq.sortedWith(compareBy<Type>({it.property1}.thenByDescending{it.property2}))                             
+      
+      - element operations
+          - get single element out of the collection
+          - first - return first element
+                  - seq.first()        //first element from collection
+                  - seq.first{it > 2}  //first element bigger than 2  
+                                       //if none fulfills predicate -> NoSuchElementException
+          - firstOrNull - returns first element which fulfill predicate or null
+                        - seq.firstOrNull{it > 1024}  //no exception if not present                                                                      
+          - last - return last element 
+                 - seq.first()        //last element from collection
+                 - seq.first{it > 2}  //last element bigger than 2 
+          - lastOrNull - exception safe, can return null       
+          - single - returns value, if there is only single element (only one), if more -> IllegalArgumentException
+                   - seq.single()          //test if whole collection has only one element
+                     seq.single{/*predicate*/} //test if collection filtered by predicate is only one element result and returns it
+                     arrayOf(1,2,3).asSequence().single()  // -> exception
+                     arrayOf(1,2,3).asSequence().single{3} // -> returns 3             
+          - singleOrNull - exception safe, can return null  
+          - elementAt - returns element on position entered
+                      - seq.elementAt(index)          // out of bounds return exception
+          - elementAtOrNull - exception safe, can return null 
+          - elementAtOrElse - can return default val
+                            - seq.elementAtOrElse(100, {it}) //it = failed index -> 100, 
+                              seq.elementAtOrElse(100, {-1}) //but we can return anything, such as -1   
+                              
+      - set operations
+          - set does not allow duplicates
+          - distinct - select unique values from sequence
+                     - seq.distinct() 
+          - distinctBy - select unique elements from sequence by property
+                       - seq.distinctBy{it.property1}       
+          - intersection - select elements of seq1 in seq2
+                         - seq1.intersect(seq2)   
+          - union - all unique elements from both sequences
+                  - seq1.union(seq2)    
+          - subtract - all sub1 elements which are not present in seq2
+                     - seq1.subtract(seq2)
+                                      
+* Reflection
+   - kotlin lib,  
+   - special reflections features on special objects - companion, singleton, which are not in Java
+   
+   - class reflection 
+        - qualifiedName - package name + class name
+        - members - members of class
+        - isCompanion - if class is companion class
+        - java reflection accessible from KClass.java
+        
+         
+        - sample:
+            open class MyClass(var name:String) 
+            class Derived(name:String) : MyClass(name)
+            
+            foo() {
+               val c:KClass = MyClass::class
+               c.qualifiedName                // package+Class
+               c.members.map{it.name}         // name of class members
+               c.isCompanion                  // if is companion class 
+               
+               val j:Class<MyClass> = c.java  // returns java reflection shit
+               j.simpleName
+               c.simpleName                   // equals
+               
+               val o:MyClass = Derived("name")
+               //inheritance - prints the correct class name, not parent
+               println(o::class.qualifiedName)// prints Derived 
+            }
+            
+   - function reference
+      - reference saves some memory than using lambda    
+      - we can store reference to variable, can pass as parameters
+      
+      - sample:
+          fun foo(i: Int) = i > 0
+          fun foo(s: String) = s.length > 0 
+          
+          fun foo() {
+             seq.filter(::foo).toList  //decide on dataType of sequence to use correct function
+             
+             val stored: (Int) -> Boolean = ::foo  //if same name, diff param dataType -> need to specify
+             seq.filter(stored).toList()             
+          } 
+          
+   - property references 
+      - similar to functions
+      - can access props of in classes (even builtin), i.e. String::length
+      - to get value in case of class, needs receiver ~ object on which it can access the prop
+      - works on extension property also
+      
+      - sample:
+          var x = 1
+          val y = 0 
+          
+          class MyClass(var name:String)
+          
+          fun foo() {
+             //global field
+             val a = ::x;   //assign reference
+             a.get()        //get value
+             a.set(2)       //set value
+             val b = ::y
+             //b.set()      //exception, set on const
+             
+             //object field
+             val myObject = MyClass::name      //get property reference
+             name.get(myObject)                //need to pass receiver ~ object with data
+          }  
+          
+       - java reflection API
+            val javaGetter = Class::fieldName.javaGetter 
+            val field = Class::fieldName.javaField
+    
+    - constructor reference
+       - with ::ClassName
+       - sample: 
+           class MyClass
+           
+           fun foo(){
+              //some sequence
+              seq.map(::MyClass).toList();
+           }
+           
+    - bound references
+       - reference bound to the instantiated object
+       - advantage - no need for receiver
+       - for methods, properties
+       - can be used for filtering, calls, etc as general reference
+       - sample
+           var r:Regex = "\\d+".toRegex()
+           //bound reference
+           var boundMatches = r::matches
+           boundMatches("123")
+           //general reference
+           var generalMatches = Regex::matches
+           generalMatches(r, "123") 
+           
+*Extras
+    - type aliases
+       - aliases data types, functions, predicates
+       - keyword typealias
+           - typealias FloatSet = Set<Float> 
+             var f:FloatSet = setOf(1f,2f)
+             typealias MapWithStringKey<T> = Map<String, T>
+             var m:MapWithStringKey<Float> = mapOf("key1" to 2.2f)
+             typealias Predicate<T> = (T) -> Boolean
+             val p:Predicate(Int) = {it > 0}
+             seq.filter(p).toList()
+             
+    - exceptions
+       - java like
+       - try - catch - finally
+       - it is expression return value - optional
+       - sample:
+          val optional:Int? = 
+          try {
+              val a:Int = "12rr".toInt()
+          }
+          catch (e:Exception) {
+            //handle
+            null
+          }
+          finally {
+            //something
+          }
+          
+          //safe to print
+          println(optional)
+          
+    - operator overload       
+       - only standard operators can be overridden in Kotlin
+       - operator keyword for function
+       - unary: + unaryPlus() , - unaryMinus() , ! not(), ++ inc(), -- dec() 
+       - binary: +, -, *, /, %, ..
+       - in: in !in
+       - access: [i], [i,j], [i]= etc
+       - invoke: (), (i), (i,j) etc
+       - assign: +=, -=, *=, /=, %=
+       - compare: ==, !=, >, < >=, <=
+       
+       - sample: 
+         class MyVal(x: Int) {
+            operator fun plus (other:MyVal): MyVal {
+               return MyVal(x+other.x)
+            }
+         }
+         
+         fun foo() {
+            val v1 = MyVal(1)
+            val v2 = MyVal(2)
+            v1 + v2
+            
+         }    

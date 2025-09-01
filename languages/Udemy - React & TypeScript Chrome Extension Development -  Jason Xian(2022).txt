@@ -1,0 +1,177 @@
+Extension
+- video: https://www.udemy.com/course/chrome-extension/
+
+- reload plugin only if manifet is changed
+
+- options - special 
+    - manifest: "option_page" : "option.html"
+     can ad styles or js
+
+- storage - needs permission
+    - manifest: "permissions": ["storage"]
+    
+    - chrome.storage.sync - synce through devices
+    - chrome.storage.local - only on current device
+      
+    chrome.storage.sync.set(
+       {key: value}, 
+       ()=> {
+          console.log('I am callback')
+        }
+    )
+    
+    chrome.storage.sync.get(
+       [key1ToSearch, key2ToSearch], 
+       (res)=> {
+          console.log(`I am callback with res: ${res}`)
+       }
+    )
+    
+- background servies
+   - goes idle after some time - restarting with init values
+        => alarms - needs permission
+           - manifest: "permissions": ["alarms"]
+        
+           chrome.alarms.create("alarmName", {
+              periodInMinutes: 1      //minutes - optional
+              when : Date.now() + x   //when should alram start - optional
+              delayInMinutes: 5       //how many minutes before first trigger - optional
+           })
+             
+           chrome.alarams.onAlarm.addListener((alarm) => {
+              if (alarm === "alarmName") {
+                  //do something 
+              }
+           })
+        
+- notifications - needs permission 
+   - manifest: "permissions": ["notifications"]  
+   - in background script
+       - this.registration.ServiceorkerRegistration.showNotification(
+            "Title", 
+            {
+               body: "text in notification" ,
+               icon: "path/url"
+            }
+         )
+- context menus - needs permission 
+   - manifest: "permissions": ["contextMenus"] 
+   - right clik menu on extension
+   - chrom.contexMenus.create({
+        title: "Title"
+        id : id,         //mandatory for event pages 
+        enabled: true,
+        context: ["page", "selection"]     //more in doc-contextTypes: "all", "image",..
+     })
+     
+     //add sub menu items
+     chrom.contexMenus.create({
+        title: "Sub Menu Item Title"
+        id : sub_id,         //mandatory for event pages 
+        enabled: true,
+        parentId: id
+        context: ["page", "selection"]     
+     })     
+     
+     //handle click
+     chrom.contextMenus.onClicked.addListener((event) => {
+        if (event.menuItemId === "id1") {
+            //do something
+        }
+     })
+     
+- content scripts
+   - manifest: "content_scripts": [
+                   {
+                      "matches": ["https://*seznam.cz"],
+                      "css": ["myStylesForSeznam.css"]
+                      "js" : ["myJsForSeznam.js"]
+                   },
+                   {
+                      "matches": ["<all_urls>"],
+                      "excludeMatches" : "https://google.com"
+                      "css": ["myStylesForSeznam.css"]
+                      "js" : ["myJsForSeznam.js"]
+                   }
+                ]
+                ]
+   - script in extension - popup/background, isolated from webpage/other extensions
+   -
+
+- search - needs permission
+   - manifest: "permissions": ["search"]
+   - query google for the earched term
+   - chrom.search.query({
+        disposition: "CURRENT_TAB", //or NEW_TAB / NEW_WINDOW 
+                                    //or use tabId-> viz doc, tabId cannot be used with disposition
+        text: queryText,                            
+     })
+   
+- tabs - needs permission 
+   - manifest: "permissions": ["tab"]
+   - manipulates with tabs 
+   - chrom.tabs.create({
+        active : true,      //default 
+        url: urlString,
+     })
+   
+     //queries tabs
+     chrom.tabs.query({
+        currentWindow: true,       //tabs only from currenty window
+     },
+     (tabs) => {                   //callback
+     
+     });
+     
+     //send message to content scripts
+     chrome.tabs.sendMessage(tabId, message)  -> impl receiver for it
+     
+- runtime
+   - onInstalled - trigered when extension is installede
+   
+   - message sending
+        - chrome.runtime.sendMessage(  //sends mesage to all popups and background scrit of the extension
+           extensionId,
+           messagetoPass,
+           options,
+           callback)
+
+   - message receiving
+        - chrome.runtime.onMessage.addListener(
+               (message, sender, responseCallBack) => {
+                  //do smthg
+               }
+          )
+
+- tts
+   - synthetic reader
+   - chrome.tts.speak("Hello World", {
+          lang: "zh-CN",           //set language
+          rate: 0.5                //set talk speed
+     })
+   - chrome.tts.stop()
+   
+- js note: 
+     //set default value
+     variable = variable ?? defaultValieInsteadOfUndefined;  
+     
+     //bind listener for event
+     htmlElement.addEventListener("click", ()=>{ //some logic }
+     
+     //create html element
+     const element = document.createElement("input")
+     //set element attributes
+     element.type = "input"
+     element.placeholder = "Enter your name"
+     //insert into parent element at the end
+     parentElement.appendChild(element) 
+     
+     //good to have -> preset init/stored values for popup 
+     
+     fetch for REST APIs
+     fetch(url).then(res => res.json()).then(data => console.log(data))
+                                                   
+- possible to use typescript + react with webpack+webpack-plugin -> generates single resul js file
+   - using npm
+   - need to config TS
+   - need to config webpack      

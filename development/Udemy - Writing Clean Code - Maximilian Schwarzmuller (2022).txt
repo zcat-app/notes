@@ -1,0 +1,87 @@
+Clean Code
+- video: https://www.udemy.com/course/writing-clean-code/
+
+- easy to read, understand, adapt
+- code structure
+    - vertical - group dependent logic, separate blocks, functions
+    - horizontal - keep small on line
+                 - express blocks/scopes
+- comments - noise, try to minimize
+           - exception - library methods
+                       - warnings
+                       - todos
+                       - license
+                       - explanation of some complex logic - equations 
+                 
+- variables - nouns + adjectives
+            - clear and descriptive variable names without redundant info
+            - booleans with isSomething
+            
+- functions - verbs + phrases with adjectives
+            - clear naming, keep consistency --get/fetch/retrieve
+            - optimize number of input arguments - i.e. help variable, dynamic argument with ...
+            - should focus on one thing only - could aggregate more for complex 'one thing'
+            - keep the level of abstraction together
+                - if 1 then 
+                     createUser()   //not: if !userId.contains('.') then user = new User(userId);
+                  else
+                     deleteUser()   //not: if exists(userId) then ... 
+            - extract code if: it performs the same functionality - DRY
+                               more stuff to do
+                               diff level of abstraction      
+            - pure -> same input gives the same output
+                        - sometimes needed non pure - rand(), http.get()
+                   -> no side effects - i.e. changing the state of program (outer vars, session, request, etc)
+                       -> avoid UNEXPECTED side effects      
+            - using default value for function argument can help also 
+                   
+- control structure - avoid arrow code - nesting 
+                    - ifs, fors
+                    - focus on:
+                        a) avoid nesting:
+                           - guard ifs -> fail fast: 
+                                 if (false) return
+                                 ... 
+                           - extract the logic to functions      
+                        b) use factories and polymorfism
+                        c) positive checks (do not use NOT check)
+                        d) use errors/exceptions
+                           - if something is error -> make it error an handle it on proper place
+                                      
+- objects - real object     vs     data container
+          hidden logic+API     all public and accessible    
+          
+          - similar logic - polyforfism, interface
+          - defined by classes - should stay small
+                               - single responsibility principle        
+          - cohesion - how much do methods use properties/fields 
+                     - more methods touch field - high cohesion
+                     - data container -> no cohesion  
+                     -> try to maximize the cohesion        
+                     
+          - Law of Demeter - least knowledge, do not depend on other objects you do not know directly
+                              - i.e. avoid: var := this.obj.property.childProperty.grandChildProperty
+                                                                     ^ problem starts here
+                                -> internal changes can break the current logic  
+                           - code should access only: object it belongs to (this)
+                                                      properties
+                                                      input arguments of methods
+                                                      variables created in methods 
+                           ~ tell, don't ask principle -> do not load, use directly with method call 
+                                i.e.: doSmthg(obj, getValue(obj)) -> doSmth(obj) //doSmth will get value itself
+                                
+          - SOLID principle - S - Single responsibility 
+                                   - focuses on single 'business logic' - i.e. user - login, sing-up, addRight
+                              O - Open-Closed 
+                                   - open for extension, closed for modification, should help with DRY
+                                   - more for correct class design than clean code           
+                              L - Liskov Substitution
+                                   - object replaceable with subclass instance without altering the behavior
+                                      -> child should not override parents methods, but can add new methods      
+                              I - Interface segregation
+                                   - more client specific interfaces are better then one general
+                                      -> can lead to some empty methods, if no impl needed -> split interface into more focused ones
+                              D - dependency inversion
+                                   - you should dependent on abstraction, not concretion
+                                      -> class itself use abstract/interface, while the conrete impl (already set) is passed to the class
+                                      -> smaller class, dependecy extracted out of the class                                                                                              

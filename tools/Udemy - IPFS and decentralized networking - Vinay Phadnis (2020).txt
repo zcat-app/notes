@@ -1,0 +1,129 @@
+IPFS
+- video: https://www.udemy.com/course/ipfs-networking/
+
+- http problems - https://www.w3.org/Protocols/HTTP-NG/http-prob.html
+- in short
+    - peer-to-peer
+    - resistant to server crash, if files are multiplied over network
+    - finding best way to get file (closest/fastest)
+    - optimize bandwidth - sending 100x times 10MB -> 1000MB send from one server?
+- aka bittorent + git
+- merkel trees 
+   - https://en.wikipedia.org/wiki/Merkle_tree, 
+   - https://people.eecs.berkeley.edu/~raluca/cs261-f15/readings/merkleodb.pdf
+   - trees with hashes of files and folders in nodes
+   - leafs with file, nodes with hashes of previous levels
+   - the same content of file -> the same hash
+   
+- official tutorials:
+   - https://docs.ipfs.io/how-to/
+   
+- run: ipfs daemon   
+- webinterface: localhost:5001/webui/
+
+- commands: (unix like) - https://docs.ipfs.io/reference/cli/
+   - ipfs add -> adds local file to the IPFS
+      - ipfs add -r directory
+      - pin file by default - keep locally (if IPFS restarted, it clears the memory)  
+      
+   - ipfs pin 
+      - gets file/dir from network to local storage
+      
+   - ipfs pin -rm -r <directory_hash> 
+      - unpin selected directory from local storage
+      
+   - ipfs repo gc
+      - garbage collects all unpinned objects   
+      
+   (- ipfs files -> access virtual folder with ipfs folder as root dir) 
+   - ipfs files cp original copy
+       - copies file to the IPFS (ctrl+c, ctrl+v)
+       
+   - ipfs files mv original copy
+       - moves file to another destination (ctrl+x, ctrl+v)  
+         
+   - ipfs files ls /selected_destination
+       - lists items from selected destination
+       
+   - ipfs files stat 
+       - status, returns hash, size, cumulative size, no of blocks, type: file/directory
+       
+   - ipfs cat file | write --create /destination/new_file   
+       - diff with add: https://discuss.ipfs.io/t/issue-ipfs-add-and-ipfs-files-write-the-difference-between-the-two/5147/3
+       - add:
+            creates balanced tree, 
+       - write: 
+            optimaized for writig (appending)
+            puts the file into a virtual filesystem we call MFS (mutable file system)
+                    
+   - ipfs cat hash_of_file 
+       - prints content of the file ~ similar to get -> gets the file and print
+       
+   - ipfs files mkdir absolute_path    
+       - creates new folder
+       - -p flag, if needed created parent dirs when not exist i.e. mkdir d1/d2/d3, 
+         when d2 does not exists, it creates it too 
+         
+   - ipfs get
+       - downloads object from IPFS into cache - can be garbage collected, to preserve 
+         it locally, use pin 
+       - ipfs get -o destinantion_file_path hash_of_the_file  
+       
+   - ipfs bitswap  
+       - Bitswap  
+         - exchanging block (part of files) of data, identified by Content IDentifier = CID 
+         - getting requested data/providing data to other peers
+         - want-list - list of blocks node wants -> want-have query
+                     - if connected peers have it, they send  have-block
+                     - requesting node sends want-block
+                     - peer sending the block with CID
+                     
+                     - if not having, getting dont-have
+                     - if all peers returned dont-have -> quering Distributed Has Table to find peers with block
+         - ipfs biswap ledger (peer_hash) - shows ledger (number of exchanged data) by peer         
+         - ipfs biswap stat - stats about my node - send/received data, peers connected, etc
+         - used together with blockchain projects such as Filecoin or Sia Coin...
+         - did i really paid 9.99 usd for this shit?
+                               
+- website on IPFS
+    - IPNS - interplanetary namse system
+       - knida DNS for IPFS hashes - if file is changed - hash is changed -> different URL
+       - ipfs name publish hash_of_main_directory
+       - will shouw latest changes after publishing
+    - add dir into: ipfs with ipfs add -r dirname 
+    - set ipns :    ipfs name publish hash_of_main_directory
+    - check on public gateway
+    
+- IPFS.js
+    - nodejs
+    - npm install ipfs --save
+    - simple code:
+        const ipfs =require('ipfs');
+        const node = new ipfs();
+        
+        node.on('ready', async () => {
+           console.log('IPFS node started!');
+           // JSON
+           cons version = await node.vesion();
+           console.log('IPFSversion:' + version.version);
+           
+           //add file into IPFS
+           const added = await node.files.add(
+              // JSON
+              { 
+                 path   : 'file.txt',
+                 content: Buffer.from('Hello Bitch!') 
+              }
+           );
+           
+           console.log('Added File:' + added[0].path + ', hash: ' + added[0].hash);
+           
+           // read file into IPFS
+           const fileBuffer = await node.files.cat(added[0].hash);
+           console.log('Retrieved file content:' + fileBuffer,toString());           
+        });                                             
+        
+    - browserify - nodejs javasript usable in browser  
+                 - npm install browserify --save -dev
+    - stream-buffer
+                 - npm install stream-buffer --save               

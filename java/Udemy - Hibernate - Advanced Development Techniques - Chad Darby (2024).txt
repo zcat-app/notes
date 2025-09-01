@@ -1,0 +1,400 @@
+Hibernate 
+- video: https://www.udemy.com/course/hibernate-tutorial-advanced/
+
+- JPA - Jakarta/Java Persistence API
+          - legal issues to keep java after going open-source
+      - specification (not implementation)
+      - how to implement persistence layer      
+- Object-Relational Mapping (ORM)
+
+- Hibernate is implementation of JPA and ORM
+- JDBC - java database connection - vanilla imple to interact with DB ~ sending queries
+- SQL - structured query language       
+- DBMS - database management system (Postgres, Oracle, MySql)
+       - executes queries
+       
+- Context - context in the framework where are executed DB operations, can shield 
+            real DB execution from what we think is happening - depends on config
+            (batching the inserts, insert + update -> simplification to one insert)         
+                    
+Annotations:
+@Entity
+- class is Entity - CRUD support
+- objects that are persistent in a database
+- instances of these entities are mapped to records in the table
+
+@Table(name = "table_name")
+- maps on the table by table name
+- attributes: name
+              schema
+              uniqueConstraints
+              ?catalog
+              indexes 
+
+@Id
+- marks id column
+
+@GeneratedValue(strategy=GenerationType.IDENTITY)
+- marks generated field ~ e.g. autoincrement in SQL
+- IDENTITY - unique on TABLE level,  auto-increment mechanisms provided by the database
+           - @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+- AUTO - unique on DB level,  leaves the choice of identifier generation to Hibernate (sequence, autoincrement, ...)
+       -  may lead to different behaviors on different database  .
+       - @GeneratedValue(strategy = GenerationType.AUTO)
+
+- SEQUENCE - equence provided by the database, created with @SequenceGenerator
+           - @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "airplane_seq")
+             @SequenceGenerator(name = "airplane_seq", sequenceName = "airplane_sequence", allocationSize = 1)
+           - allocationSize how many should be allocated at once (pre-generate?)   
+
+- TABLE - using a special table in the database to store and manage identifiers
+        - typically less efficient than sequences or auto-incrementation
+        - @GeneratedValue(strategy = GenerationType.TABLE, generator = "airplane_gen")
+          @TableGenerator(name = "airplane_gen", table = "id_generator", pkColumnName = "gen_name", valueColumnName = "gen_value", allocationSize = 1)
+- UUID - UUID values are 128-bit numbers
+       - @GeneratedValue(generator = "uuid2")
+         @GenericGenerator(name = "uuid2", strategy = "uuid2")
+
+@Column(name="column_name")
+- maps field on column
+
+example:
+
+@Entity
+@Table(name="table_name")
+class MyEntity {
+  @Id
+  @GeneratedValue
+  public int id;
+  
+  @Column(name="column_name1")
+  public String description;
+  
+}
+
+
+JPA configuration
+- persistence.xml
+- 
+
+Hibernate
+
+Development process
+  0) Dependency in maven + refresh
+  1) set hibernate config (for session factory)
+  2) create table (either in SQL or let hibernate creates it)
+      - Hibernate configuration file
+         <property name="hibernate.hbm2ddl.auto">create</property>
+             - !!! not for production, mainly dev and testing, production always with scripts (we do not want to lose data)
+             - create - creates the schema necessary for your entities, destroying any previous data
+             - create-drop - drop the schema and recreate it on SessionFactory startup. Additionally, drop the schema on SessionFactory shutdown.
+                           - early development or for testing
+             - update - update the schema to reflect the entities being persisted, won't create a table that does not exists
+             - validate - validate that the schema matches, make no changes to the schema of the database
+             - none - dont do nothing to the schema
+             - create-only - database creation will be generated
+             - drop - database dropping will be generated
+          
+          - creation based on JPA annotations (table, columns, etc)
+           
+  3) create java entity
+  4) map the element collection 
+  5) develop the main application :)
+      - create session factory
+      - create session
+      - create objects
+      - start transactions
+      - save objects
+      - commit transactions
+      - clean up
+
+
+- two basic types: values   - no identifier
+                            - no lifecycle
+                       * basic- int, Integer, String, Date, etc.
+                       * embedded - Address, Phone (custom objects)
+                                  - i.e. part of the table Student: name, surname, address :[street, city, postal code]
+                                         address is embedded value type
+                       * collections (set, list, map, sortedset, sortedmap)
+                            
+                                                       
+                   entities - has identifier
+                            - has lifecycle
+                            - custom classes
+
+      
+Mapping Collections:  
+- collections
+  Set - if want to know if something is present, 
+      - order does not matter, 
+      - no duplicity
+      
+  List - fast read/manipulate element (with index) 
+       - order matters 
+       - collection with duplicates
+       
+  Map - key-value relation
+      - unique keys, 
+      - possible duplicates in value
+      - i.e. dictionary search - errorCode ~ errorMessage
+
+- annotations for collections
+- set
+  @ElementCollection
+    - on element collection mapping
+    - data for collection in separate table
+    - for relationship one-to-many
+        - on @Embeddable
+        - on 'basic objects'
+           - primitives- int, Integer, ...
+           - Date , String,..
+    - similar to @OneToMany but not limited to entities
+    - limitations (comparing @OneToMany): 
+        - cannot query/perist/merge target object independently of their parent object!
+        - does not support cascade option - target object always persisted/removed/merged with parent object
+           
+  @CollectionTable 
+    - params: 
+          name : of the other table which holds collection
+                 default value is name of the field in entity, if not defined
+          joinColumns : defines join column in the other table
+                        by default joined with PK of the entity, here Student.id  
+  @Column 
+    - name of the column in the collection table  
+    - optional - if not defined it maps on data type with field name with default attributes
+               - probably better to define to have full control 
+    - many attributes
+        - name
+          unique
+          nullable
+          insertable
+          updatable
+          length
+             - default 255
+          precision
+          scale
+          columnDefinition 
+             - sql definition
+             - i.e. columnDefinition="CLOB NOT NULL"
+          table
+          
+    - example 
+        class Student {
+        
+        
+          @ElementCollection //i want to map collection from other table
+          @CollectionTable { 
+             name="files_table" //from which other table i want to get data
+             joinColumns=@JoinColumn(name="student_id") //what is FK(reference) into the current table (student) from other table (files)
+                                                   //on current PK
+          }
+          @Column("file_name") //column in other table i want to get data from other table
+          Set<String> files = new HashSet();
+        }   
+        
+        table in DB:
+        files+table { student_id: int, file_name: string}
+        
+  @OneToMany
+    - similar to ElementCollection
+    - BUT target object must be entity!  
+    - @ElementCollection maps even simple objects   
+    
+- lists
+  @OrderColumn(name="column_which_tracks_position")
+    - keeps order/position of the element (applied on collection = list)    
+    - adds a new colun into the DB  
+    
+- map
+  @MapKeyColumn(name="key_colummn")
+    - name of the column for the key   
+    
+- sorted set
+  - no duplicates and sorted by given field
+  @OrderBy("column_name DESC")
+     - column name
+     - ASC or DESC option, ASC as default
+     
+  - note! loading of entities -> expects empty constructor
+  
+- sorted map
+  - mix of map and sorted set
+         @ElementCollection
+         @CollectionTable (name="other_table")
+         @MapKeyColumn(name="key_in_other_table")
+         @Column(name="value_in_other_table")
+         @OrderBy //by default ordering on mapKeyColumn in ASC     
+         
+  @SortComparator(MySortComparator.class) //my own impl of some comparing      
+    - sort in java (in memory)
+    - impl has to extend Comparator class  
+    
+Embedded values
+  - custom classes which are reusable across entities
+  
+  @Embeddable
+  - use on the embedded class which should serve as ebmedded value
+  
+  @Embeddable
+  - marks entity field which represents Embedded value
+  - optional - hibernate internally map these values
+  
+  - example
+   @Embeddable
+   class Address {
+     //!!! no id for embeddable
+      private String street;
+      private String city;
+   } 
+   
+   @Entity
+   class Student {
+      @Id
+      @GeneratedValue
+      private long id;
+      private String name;
+      @Embedded
+      private Address address;
+   }
+     
+  -reusing embbeded inside of the same entity/table - need to override column names
+      @AttributesOverrides({
+         @AttributeOverride(name="street",  column=@Column(name="billingStreet")),
+         @AttributeOverride(name="city",    column=@Column(name=billingCity")),
+         @AttributeOverride(name="zipcode", column=@Column(name="billingZipCode"))
+      })  
+      private Address billingAddress;
+      
+Mapping Enums
+  - EnumType: STRING
+              ORDINAL
+  - example
+    @Enumerated(EnumType.STRING)
+    @Column
+    private MyEnum myEnum;    
+    
+Mapping Inheritance
+  - mapping inheritance with ORM increases complexity of the application
+    -> it may decrease performance of the application
+  - 4 strategies:
+     * Single table 
+     * Table Per Class
+     * Joined Table
+     * Mapped Superclass
+      
+   @Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+     - defines inheritance strategy
+     - SINGLE_TABLE, TABLE_PER_CLASS, JOINED    
+     - default is SINGLE_TABLE   
+     
+   * Single table
+      - maps all entities in inheritance into the single table
+      - discriminator column indicates type/class data in the DB row
+      - table has all fields from the inheritance tree as columns
+          - each row uses only subset of fields
+          - unused fields~columns are set to null       
+      -pros
+         - simple, all in one table
+         - best query performance - all in one table (? questionable) 
+      -cons
+         - unused columns
+         - null columns might cause issue with data integrity 
+           
+      @DiscriminatorColumn
+        - optional default DTYPE
+        - holds discriminator values
+        
+      @DiscriminatorValue
+        - unique value defines to type of the subclass
+        - default the name of the subclass
+        
+      - example:
+          @Entity
+          @Table("user")
+          @Inheritance(strategy=InheritanceType.SINGLE_TABLE)    //@Inheritance is optional
+          @DiscriminatorColumn(name="user_type", discriminatorType=DiscriminatorTYpe.STRING) //@DiscriminatorColumn optional
+          class User {
+          
+          }  
+          
+          @Entity
+          @DiscriminatorValue(value="STUDENT")
+          class Student extends User {
+          
+          }    
+     
+   * Table Per Class
+      - every concrete class (non-abstract class) is mapped into its table
+      - each table includes fields/columns from the inherited class
+      
+      - each table will get own ID, need to adapt ID generating strategy -> strategy= GenerationType.TABLE
+      - hibernate on the background create sequence table which will be used for all tables inherited tables
+        - hibernate provided sequence - thread safe, sequence shared between child tables  
+      
+      @Id
+      @GeneratedValue(strategy= GenerationType.TABLE) //we want to make it unique per table
+      private int id;
+      
+      - pros
+         - simple implementation
+         - queries on concrete subclasses perform generally OK
+      - cons
+         - slow performance on superclasses (many joins)
+         - queries slow down for deep inheritance trees
+         - ID generation with high-volume multi-thread environment is slow   
+      
+   * Joined Table
+      - all classes from inheritance are mapped to the dedicated table (even abstract classes)
+      - super class has only common field to all subclasses
+      - subclass tables contains only fields of the subclass
+      - inheritance is modeled vie Foreign Key (ensured by hibernate)
+      - hibernate will perform joins based on PKs and FKs
+      
+      @Id
+      @GeneratedValue(strategy= GenerationType.TABLE) //we want to make it unique per table
+      private int id;
+      
+      - pros
+         - normalized DB model
+         - no duplicate mapping of inherited fields
+      - cons
+         - slow performance on subclasses (many joins)
+         - performance decrease on deep inheritance trees   
+        
+   * Mapped Super class
+      - only subclasses are mapped into tables
+      - each tables inherits fields from super class
+      - superclass is not separate table, not marked as @Entity
+      - only subclasses use @Entity
+      - similar to Table per class, but:
+         - no table for superclass (not entity)
+         - no sequence table to maintain IDs between subclasses
+         - no joins or inheritance on DB level
+         - inheritance only in Java 
+      
+      - pros
+         - simple implementation
+         - queries on subclasses are fast - no joins
+      - cons
+         - for polymorfic queries needs HQL (~ get all super class records)
+           - all Users extensions - manual HQL on joins
+                                  - slower performance (if many joins) 
+             
+    @MappedSuperclass
+    class User {
+      @Id
+      @GeneratedValue(strategy= GenerationType.IDENTITY)
+      private int id;
+    } 
+    
+    @Entity
+    class Student extends User {
+    }
+    
+Which Strategy to use?
+  - best performance (query/write) - SINGLE_TABLE
+  - OK performance + data integrity - TABLE_PER_CLASS or MAPPED_SUPERCLASS
+  - normalized design - JOINED
+  
+  - may vary based on amount of data, depth of inheritance tree, DB tuning etc...         

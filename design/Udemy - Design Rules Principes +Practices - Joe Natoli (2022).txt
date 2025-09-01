@@ -1,0 +1,104 @@
+design rules: principles + practices
+- video: https://www.udemy.com/course/design-rules
+
+- reason why, when what
+- usage with thumbs on mobile - bottom menus
+                               - 48px as min clickable square
+- not just decoration
+- balance = content space, group similar content together
+          - space between content creates channels of the flow
+- rythm - repeating in the same way - e.g. list view - same elements, same order of elements
+- harmony - reusing constructs = same padding, font color ~ echos 
+          - anomaly to increase focus (e.g. button in form)
+- directional flow - improved with harmony
+                   - controlled by dominance - set dominant element to get focus
+                                             - mainly by size and contrast
+                   - set flow with harmony
+- alignment improves fast readability = decrease different starts/ends of elements    
+- proximity - distance between visual elements ~ define relationship -> closer elements - closer relationship 
+            - distance is stronger than color/contrast  
+- colors - subjective, based on region
+         - choose based on associations, emotions, brand
+         - should highlight & guide not be used as sole differentiator (color blind people) -  
+                  - visual accents - bright & saturated - links/hashtag/like
+                  - dialogs - light + muted colors  
+         - app usage should not depend on colors - e.g. color + icon to highlight error (not only color)    
+         - "color theory" - quick sheet - as cheat sheet, complex topic
+                                        - black,white,red - most contrast usages 
+                          - black - cool, power/authority
+                          - white - clean pure, peace
+                          - red - alarm, urgency, danger, love
+                             
+                          - pink - admiration, romance, harmony
+                          - blue - innovation, tech, business
+                                 - light friend
+                                 - dark security
+                          - green - nature, calm, relax, success, money, growth
+                          - yellow - joy, happiness, positivity
+                          - purple - luxury, wealth
+                          - home, friendship, solidity, richness, nature 
+         - theme colors - e.g. from logo, keep low saturation - eye strain - keep low around 50%
+                        - shadow -darkest
+                        - midtone 
+                        - highlight
+                        - accent - i.e. links                                
+- contrast - beats colors
+           - improves
+              - readability - text color-background color
+              - attention - link, bold text
+              - focus - highlight dominant elements (buttons/links)
+           
+- typography - can rise emotion
+             - bold, uppercase - scream, intense, less space between (condensated text)                        
+             - pattern recognition - creative fonts harder to read for brain   
+             - kerning - spacing between letters - font property - same space -> better
+             - leading space between lines of text - line height
+             - 7 rules - 1) max 2 font families - should have similar properties ~ harmony - kerning, weight, letter widths
+                                                - should be visually different - to distinguish 
+                         2) line width - easier for brain : 60 characters (web)
+                                                            30-40 characters (mobile)      
+                         3) readability - diff sizes with resolutions
+                         4) legibility ~ distinguishable letter, e.g. I - L : Illuvium
+                                       - low kerning creates artificial letter from two letters rn -> m  
+                         5) space between paragraphs - brain rest - increase understanding/process cca 20% 
+                                                     - leading - half of character height     
+                         6) align text elements with baselines  - faster scanning
+                         7) styles to differentiate content  - regular , italic, bold 
+- imagery - should serve purpose - pass message, improve understanding, or  rise emotion 
+          - propagation with people, not just 'the thing', people not looking into camera ~ user is becoming them
+          - crop can change perspective - message    
+          - dont do cheap shot, objectify people - sexiest/demanding
+          - illustration can say more than photo - can provide emotional support    
+          
+- icons - use labels if no clear meaning - if context is clear then no need of label
+        - category - similar - info, helps understand (restriction, info)
+                   - symbolic - abstraction, action  (menu, print, delete)  
+                   - example - exemplify (click, swipe, cut)
+                   - arbitrary - need to be learned the meaning
+        - should leverage already existing and known icons from OS  
+        - recognizable and memorable
+        - keep: perceived size (feel size -width and height) of all icons  
+                detail level - more complex are more dominant - keep simple
+                 match styles - dont mix wire with fill style 
+                              - can mix for hover/highlighted items  
+- data - depends on context what should be used, should be understandable (less is readable)
+       - 3 types of visualization
+            - persuasive - change opinion, propaganda
+            - informative - neutral, educate, pass info
+            - visual art  - enjoyment as outcome 
+- simpler is better            
+- separate content from controls (clear difference from clickable and non-clickable content)
+- highlight primary actions might be good (e.g.: publish-save-cancel)                                 
+                              
+                              
+                                        
+          
+          
+          
+          
+          
+          
+          
+          
+          
+                                                                                              

@@ -1,0 +1,428 @@
+Ruby 
+- video: https://www.udemy.com/course/ruby-for-programmers/
+
+- retarded language o_O
+- Ruby -> language
+- on Rails - MVC web framework
+- interpreted, cross platform, OOP language
+- for repetitive scripts, interactive websites (can mixing with HTML)
+- pyhton like style, but idents does not matter
+- more versions: original MRI
+                 newer yarv - uses bytecode
+                 jruby - based on java
+                 may others  
+- web http://rubyinstaller.org/
+- doc http://ruby-doc.org/
+                 
+- comments with #
+- no type declaration, on fly, as js
+- can change type, following is executable: 
+    x = "hello"
+    puts x #prints hello 
+    x = 10
+    puts x  #prints 10
+    
+- metaprograming
+  - allows change of program during the run time
+     -> add/edit code when program already runs!
+     - powerful but dangerous
+        - good or AI, machine learning
+        - bad for i.e. changing parent class, but breaking children 
+        
+- strings
+  print "Enter name"
+  x = gets()              #reads from input
+  puts("Hello, #{name}")  #evaluates name var in string similar to JS, or Kotlin 
+  puts('Hello, #{name}')  #single quote does not evaluate, prints what it gets -> Hello, #{name}   
+  
+  name.length   # number of characters + /n  
+  name.inspect  # prints string per char
+  
+  - can use printf, C like formatting
+      - %d - decimal, %f - float, %o- octal, %p - inspect object, %s - string, %x - hexadec
+    printf("%0.2f\n", 10.2345) 
+    printf("%d\n", 10)
+  
+  - s1 = "Hello "
+    s2 = "world!"
+    s3 = s1 << s2 #concatenate/append to exiting text, s1 should be changed also
+      
+    p s3          # print inspected s3 variable (with quotas)
+    s3[0] = "J"   # replaces first character  
+    puts s3[0..4] # print value of substring: Jello  
+    
+    s1 = "Hello\n"
+    p s1.chop   #removes last character no matter what is it
+    p s1.chomp  #removes last character if it is new line or record separator only
+    
+    s1.length      #length of the string
+    s1.reverse     #reverse string
+    s1.upcase      #all char upper case
+    s1.capitalize  #first char upper case, rest to lower
+    s1.swapcase    #swap all lowers to uppers and uppers to lowers
+    s1.downcase    #all lowercase
+    
+- classes & objects
+     class ClassName                  # class definition
+     
+         @@counter = 0                # ~ static in java, class variable
+                  
+         ClassName.staticMethodName   # ~ static in java, class method
+            puts "numb of objects #{@@counter}"
+         end
+     
+         def methodName               # def function keyword followed by function name
+            puts 'hello,' + @name     # prints text on call, returns nothing, no need for return
+         end                          # end of function/method
+         
+         def initialize (aName)       # constructor
+            @name = aName             # @varname -> instance variable ~ field, no need to declare, private by design - needs accessors (get/set) 
+            counter += 1;             # update class variable -> counter
+         end                          # end of constructor
+         
+         def name                     # getter
+            return @name
+         end
+         
+         def name=(aName)             # setter
+            @name = aName
+         end   
+         
+     end                              # end of class
+     
+     
+      
+     #create object
+     obj = ClassName.new 'My Name' # parenthesis are optional
+     obj.methodName
+     puts obj.name           # print name field
+     
+     #inheritance
+     class ChildClass < ClassName
+     
+         def initialize (aName, aGreetings)
+            super(aName)
+            @greetings = aGreetings
+         end
+         
+         def childMethod
+            puts @greetings + " " + @name  
+         end
+         
+     end
+     
+     #create object
+     obj = ChildClass.new( 'My Name', 'howdy') 
+     obj.methodName
+     obj.childMethod
+     
+     # prints counter
+     ClassName.staticMethodName
+     
+- attributes (accessors)
+    - simplify accessors to instance fields, can be combined with accessor methods, i.e. if needed special logic for get
+    - can define multiple fields, i.e. attr_reader   :name, :value
+                                       attr_accessor (:value, :type)  #parenthesis optional
+                                      
+    - example:                                  
+     class ClassName                  # class definition
+     
+         attr_reader   : name         #attribute as getter & field creation if not exists
+         attr_writter  : name         #attribute as setter & field creation if not exists
+         attr_accessor : value        #attribute as getter & setter & field creation if not exists -> class contain value field
+         
+         def initialize (aName)       # constructor
+            @name = aName             # @varname -> instance variable ~ field, no need to declare, private by design - needs accessors (get/set) 
+         end                          # end of constructor
+                  
+     end                              # end of class       
+     
+     x = ClassName.new "Meda Beda"
+     puts x.name
+     puts x.value
+     
+- modules
+   ~ kinda Java interface maybe with C++ namespace
+      - usable without classes
+      - can be included into the class (inherit methods/fields)
+   - does not permit inheritance, can not create instance
+                   
+   module MyModule
+       VAL1 = "one"
+       VAL2 = "two"
+       
+       def foo
+          return VAL1 + " " + VAL2 
+       end     
+       
+       def MyModule.staticFoo
+          return "VAL1 is #{VAL1}"
+       end
+   end
+   
+   puts MyModule::VAL1
+   puts MyModule.staticFoo  
+   
+   # to access foo, we need to include the module
+   include MyMoule      #reminds me C++ 'using namespace std' or similar
+   puts foo
+   
+   - modularized code ~ scopes
+   - usually in separated classes
+      - to import into file:
+           require ("relativePath/filename.rb")
+           
+           ...
+           #if needed - include
+           include MyModule
+           puts foo
+   - used for Mixsins (modules included in classes, sharing the same logic)
+   
+- mixin
+   - mixed module with class
+   
+   class MyClass 
+     include MyModule
+     
+     def method
+     end
+     
+   end   
+   
+   x = MyClass.new
+   x.foo            #got from included module, so in this case more like interface  
+ 
+- arrays
+   - supports diff types in one array
+      a = [ 1, 2.2, "three", [4,5] ]  
+   - object, many methods to manipulate
+      .flatten - multi dim to 1 dim
+      .length 
+      
+      a[0]          # access first element
+      a[a.length-1] # last element     
+      a[a.length]   # nil (does not crash)
+      a[3][1]       # access nested array element - 2dim 
+      a[1..2]       # sub-array defined by range
+      a[0] = 0      # edit accesed element
+      
+- hashes
+   - hashmap like struture - key-value, key must be unique
+   - like array, can be asociative - both: keys and values
+   - unordered (as hashMap in java)
+   
+   h1 = Hash.new
+   h1[1] = 'one'
+   h1[2] = 'two' 
+   p h1[1]
+   p h1[2] 
+   p h1[3]                 #nil
+   
+   h = Hash.new("default") #default value - "default"
+   p h1[3]                 #did not find value, returns "default" - default value
+   
+   - shorthand def with hash literal
+   h = {1 => 'val', 'xxx' => 'val2'}
+   h.delete(key)     # delete by key
+   h.hasKey?(key)    # true/false
+   h.keys            # return array of keys
+   h.values          # return array of values
+   
+   - multihash - nested arrays or hashes as values
+               - convert to array: 
+                   m.to_a
+               - delete all 
+                   m.clear 
+                   
+- loops
+   - mainly iterating over collections
+   - for
+       # array
+       for i in [1,2,3] do         # 'do' is optional, mandatory for one line syntax
+          puts i 
+       end
+       
+       for i in 1..3               # can be used with range
+          puts i 
+       end
+    
+       # hash                   
+       for i in {0 => 1, 1 => 2}
+          p i 
+       end
+      
+      - can be written on single line with 'do' key word - must be, otherwise syntax error 
+       for i in [1,2,3] do puts i end
+  
+  - foreach      
+       [1,2,3].each do |iter|     # block variable, described next, another ruby's BS  
+          puts iter 
+       end
+       
+       (1..3).each do |iter|      # with range
+          puts iter 
+       end
+       
+       (1..3).each { |iter|       # with range
+          puts iter 
+       }
+       
+  - upto/downto
+       1.upto(10) do |iter|       # kotlin like also?
+          puts iter 
+       end
+       
+       10.downto(1) do |iter|     
+          puts iter 
+       end
+ 
+  - multiarray
+     for (a,b,c,d) in multi
+        #hopes it has 4 elements - kinda destructrialize (like go, js or rust), elements assigned to dedicated var a, b, c, d
+     end
+     
+     multi.each do |a,b,c,d|      
+        # do smthg
+     end
+     
+  - while
+      while x < 10 do   # x=0
+         x += 1 
+      end 
+      
+      # do-while, always at least one run, even on failed condition
+      begin
+        x += 1    
+      end while x < 10
+  
+  - until ~ while not   # i=0  
+      until i == 10 do
+        i +=1
+      end
+      
+      - two way of shorthand oneliner (wtf)
+        A) until i == 10 do puts(i) end
+        B) puts(i) i == 10 
+        
+      # do-while, always at least one run, even on failed condition
+      begin
+        i +=1
+      end until i == 10 
+  
+  - loop ~ while true
+      - break to stop the loop 
+      
+      loop do
+         i += 1
+         if (i == 10) then
+             break
+         end   
+      end 
+      
+      loop {
+         i += 1
+         if (i == 10) then
+             break
+         end   
+      }   
+
+- blocks   
+   - shit between 'do ... end' or '{ ... }'
+   - lambda like, anonymous method, params in |param|
+       - like in for loops current element passed to the do-end block as i/iter param
+   
+   - create - 3 possible syntax
+       A) foo = Proc.new{|x| x+=1; puts x}
+       B) foo =lambda{|x| x+=1; puts x}
+       C) foo =proc{|x| x+=1; puts x}
+       
+       p foo.call(10)  #prints result
+       
+       
+   - block can be passed to other method, but it doesn't need to be mentioned as follow
+   
+     def myFunction(arg)                          #myFunction accepts arg as param, but can get block with it even not defined = unnamed block
+        puts('entered aMethod with arg: ' + arg)
+        yield(arg)                                #executes passed block/lambda, expects input param for block
+     end       
+     
+     myFunction("Input arg"){|x| x='from block'; puts(x) }
+     
+   - blocks can be passed directly
+     def myFunction(a,b,c)
+        a.call
+        b.call
+        c.call
+        yield   # for unnamed block if passed (as before)
+     end
+     
+   - &arg => prog objec
+     def myFunction(&d)   # restricts input param to block only argument ~ type checked, other types lead to runtime error
+       d.call
+       #yield             # would call d.call second time
+     end 
+     
+     myFunction{puts 'Yeha'}
+   
+   - can check if block is passed to skip yield if not present
+     def myFunction(a)
+        if block_givel?           #test if block was passed
+           yield(a)
+        else
+           puts 'No block passed'
+        end
+     end
+     
+- files
+   - IO class
+     - reading file
+        IO.foreach("file.txt"){|line| print (line)}
+        
+        lines = IO.readlines("file.txt")
+        //process with for or otherwise
+        
+   - File class
+        - IO subclass, more flexible
+           
+        File.foreach("file.txt"){|line| print (line)}
+        
+        lines = File.readlines("file.txt")
+        #process with for or otherwise
+   
+        #write
+        f = File.new("file.txt", "w")   #second param is access mode:
+                                        #r - read,r+ -read/write, 
+                                        #w - write,w+ - write/read, 
+                                        #a - amend write, a+ - amend write/read, 
+                                        #b -binary file (MS only- Win/DOS), can be combined with r,r+,w,w+,a,a+
+        f.puts("abc", "bbc")
+        f.close
+        #read
+        f = File.new("file.txt", "r")
+        while !(f.eof) do  
+           #do some shit
+        end
+        
+        #check if file exists
+        if File.exist?("file.txt") then
+           if File.direcotry?("file.txt") then 
+               #it is dir
+           else
+               #it is file       
+           end
+        else
+           #do something else when no file found
+        end 
+        
+        - check if is directory
+   
+  - yaml lib
+     - require 'yaml'
+        YAML.dump(variable, file) #convert into yaml format
+        YAML.load(file)           #load yaml format  
+        
+        "hello".to_yaml            #convertsto yaml format 
+        
+   - Marshal ~ similar to yaml, different formatting (.sav)
+        Marshal.dump(variable, file)
+        Marshal.load(file)           

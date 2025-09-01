@@ -1,0 +1,284 @@
+(2015 content)
+- set identity 
+- own browser, browser setup -> whole environment better
+- fake data - fakenamegenerator.com
+- fake pictures
+
+- avoid google
+- contamination between identities
+- stream isolation 
+- waybackmachine - web.archive.org
+                 - internet archive
+                 https://www.cnet.com/deals/your-private-data-is-all-over-the-internet-heres-what-you-can-do-about-it/
+                 
+- opsec 
+  1) dont tell anyone about your practices (vpn/tor/...)
+  2) trust no one
+  3) dont contaminate identities (cross reference, browser, emails, password, etc)
+  4) be uninteresting (under the radar) - hide knowledge, no accounts on forums,... 
+  5) be actively paranoid - think carefully   
+  6) know limitations, use tech you understand
+  7) minimize info - no logs, browser history, less better; everything encrypted   
+  8) be professional - logical approach, make it business
+  9) avoid anti-profiling - never reveal real info like tattos, hobbies, gender, height, location,...
+                         - set misleading info - dialects, language
+ 10) protect your assets, encrypt everything  
+ 
+- writing style analysis 
+    - 80%+ accuracy to match -> authorship recognition evasion tools 
+      -> JSAN open source tool - analyze and annonymization tool
+         Anymouth - anti style tool https://github.com/psal/anonymouth/blob/master/README.md
+         reLang - anti style framework
+    - post text from other sources than yourself     
+    - leetspeak - replace letters with similar shape numbers 
+    
+- live OS - separate env
+          - bootable from USB/SD, can be used in virtual machine
+             - create e.g. via rufus https://rufus.ie   
+          - change boot order in BIOS - removable device     
+          - Tails - https://tails.boum.org/
+                  - https://tails.boum.org/doc/encryption_and_privacy/index.en.html    
+                  - https://tails.boum.org/doc/advanced_topics/virtualization/virtualbox/index.en.html
+                  - does not work against bios attacks/rootkits, hw corruption (keylogger). browser fingerprint
+                  - not encrypting docs by default nor removing metadata
+                  - dont use same session for diff identities
+                  - vm hides serial numbers of hw
+            puppy linux- looks dead :( 
+            jondo live - security focused, tor proxy, debian based - https://anonymous-proxy-servers.net/en/jondo-live-cd.html
+            knopixx - security focused, tor proxy, debian based - https://www.knopper.net/knoppix/index-en.html  
+            tiny core linux - not security focused, http://tinycorelinux.net/downloads.html 
+            windows to go - not for security, backup like, https://en.wikipedia.org/wiki/Windows_To_Go
+vpn - encrypted communication with vpn server
+    - directly from device
+      from router
+      from VM 
+    - protocols: pptp - point to point tunneling protocol - obsolete, flaws - dictionary + bitflip attack - easy to attack/decrypt - https://www.schneier.com/academic/archives/1999/09/cryptanalysis_of_mic_1.html
+                 l2tp/ipsec - layer two tunneling protocol/internet protocol security - combination, ipsec adds encryption privacy only 
+                            - uses fixed ports - less flexibility - can get blocked by firewalls - state org can exploit - key exchange, shared password, metadata
+                 openVPN - openSSL, SSL3, ports configurable ports - vpn obfucscation for tcp, faster over UDP
+                         - strong TSL - session keys periodical change - if hacked, only session info revealed 
+                 sstp - secure socket tunneling protocol - Microsoft standard, not open source, NSA rumor
+                 ikev2 - internet key  exchange - mobile, stable - if lost connection can reconnect automatically
+    - weakness - speed/latency (if different country) 
+               - alone not enough against state - nested or comb with tor
+               - can be detected by packet analysis and blocked by firewall
+               - paid - metadata - credit card
+               - must be trustful (have your IP when connecting, can log your activity)
+               - end to end correlation attack - data packet analysis (5mb send to vpn - vpn to the destination - respond goes back)
+                                               - more hops between vpn servers can obfuscate 
+               - ddos to analyze change in for user using vpn and behavior 
+               - website fingerprint - identify packets from known websites                                
+               - obvious usage - detectable - gets attention if used rarely
+               - smtp can be blocked by VPN providers  
+               - contamination identity via correlation 
+               - tcp timestamp attack
+               - some services can block VPN and close accounts 
+               - dns leaks - queries - text can be monitored and logged 
+                                     - udp/tcp port 53  
+                           - transparent proxy can log -> we can set 'trustful' dns directly, or use VPN with its own conf
+                           - poisoning/spoofing - banning access to e.g. youtube with fake website/info about ban etc.
+               - leaks - IPv6 - leaks with dropped connection - sending directly to the destination
+                              - suggested to disable in OS
+                       - vpn client can block everything outside of vpn communication - improved privacy  
+                           - can be done also on firewall level   
+                           - linux can set iptables   
+tor - https://www.torproject.org/download/#Warning 
+    - special .onion domain - does not leave the network, stay encrypted in the network
+    - no single node knows whole route, reset routes periodically (change)  ~ 10 mins
+    - layers like onion each hop new encryption -> unknown path to current node 
+    - entering through proxy6 - local proxy
+    - going out - decrypts the data
+    - 'session encryption' if node compromised, should not reveal 'whole history'
+    - access to 'darknet' and hidden services
+    - identifiable by data packet inspection you use tor - may rise interest
+                                                         - use bridges and nested vpns to avoid detection
+    - only browser uses tor network, not other apps! (download and execute downloaded file can reveal your identity)
+    - check connection status: https://check.torproject.org/
+    - browser - build on hardned firefox, enforced https, no script option
+              - new identity wipe out all trackable shit
+              - new circuit - reset the path only, keeps some data 
+              - protects data of transportation - internet provider/local network cannot see where I go 
+                                                - visited websites should not know who I am (login fuck up everything!) 
+                                                - visited websites can know you are tor user - known nodes , tor browser fingerprint
+              - does not prevent from runnable actions if allowed in browser - JS, Java, Flash, etc
+              - always use https, dont open files downloaded through tor while online (Tails with disabled networking), use bridges, no addons/plugins 
+    - directory authorities - hardcoded 
+                            - decide what relays are valid and which not
+    - relays - can be vetoed
+             - guard - entry, after run for some time, must be stable
+             - middle - transport obfuscation, exit relay should not know guard
+             - exit - send to final destination, decrypts and see full message 
+                    - can sniff, can inject malicious code!                                   
+    - bridges - unpublic relays - not possible to censor or block (unlike usual relays - i.e. guards can be blocked in your area)         
+              - usually less reliable and slower than guard relays 
+              - in theory, tor can be blocked by internet service provider, if get list of all bridges (guards are known already) 
+                   - can scan internet with ZMap - open source network scanner  
+              - can be monitored and share all traffic with autorities 
+    - https://atlas.torproject.org - can search relays with additional info
+    - can be blocked on certain ports - can change in browser, but might have problem to use 'exotic' ports (less relays supporting it)
+    - can be blocked through deep packet analysis (DPA) - byte analysis - e.g. great firewall of china                 
+    - can use pluggable transport obfuscation to make packet look more innocent - obfsproxy
+          - not enough, can be broken via DPA                                   - flashproxy               
+                                                                                - format transforming encryption (fte)
+                                                                                - obfs4
+                                                                                - meek
+                                                                                - scramblesuit
+    - config file - torrc
+                  - direct edit or through GUI in browser, need to restart to apply                                                                            
+                  - configure country for enter or exit nodes - not recommended to change circuit - selected automatically by load -> could get slower                                                             
+                  - can set socksport for another apps (do not forget to change DNS conf also, application must be forced to use proxy via its settings)
+                     - every browser using the same socksport will use different circuit - prevents the correlation attack - but better to have separated working stations 
+                     - could have leaks - best is analyze via wireshark or other analytic tool
+                     - can set firewall to kill all connection which does not go through tor
+                     -  whonix - protection from IP leaks
+    - weaknesses - interest of nation state agencies, constantly under attack
+                 - complex and to easy to fuck up conf
+                 - Tor browser is not sufficient isolated - easy to detect - disable JS (sending IP/MAC address) and other addons
+                 - do not use on main OS (especially win10) - VM, sandbox, cubes, devices
+                 - lack of browser non-persistence - browser can persist searaches, tokens, sessions, cache... after closing - you need to remove manually
+                       - can improve with Tails
+                 - browser finger print - obvious usage of tor browser
+                 - end-to-end correlation with sybil attacks and ddos (same as with VPNs)
+                    - if guard and exit controlled - got you
+                    - owning enough nodes to correlate - sybil attacks       
+                    - if circuit made in Autonomous system - whole trafic in the network/system (guard-relays-exit) - got you
+                 - ddos independent relays to force you using monitored relays 
+                 - website fingerprint - same as VPN 
+                                       - can mitigate via ssh/vpn/jondonym 
+                 - exit relay decrypt the message and can can inject malicious shit like executable code, tracking cookies etc 
+                     -> use end to end encryption tls/pgp
+                     -> use hidden services - stay in tor network, no need to exit                        
+                 - man in the middle attack - hijack the request (after leaving the tor network) and send malicious respond (NSA technique)
+                 - relays and bridges can be blocked, ports could be blocked by relays
+                 - if directory authorities compromised, whole network is fucked
+                 - protocol leaking - e.g. dns leaking, bittorent leaks IPs
+                 - service can detect tor and can block your account (do not use log in with tor) 
+                 - does not support UDP
+                 - slower than other annonymizing tools     
+         - mitigate via strong OPSEC, isolation, not maintain history - Tails, disk encryption, no addons in browser, chained anonymized systems       
+     - tor2web - access to hidden services from regular internet - non-anonymized for reader, just publisher (if set properly)                                                                                    
+
+- routers - can be configured for vpn/tor
+          - tor might get same circuit for multiple devices, can have leaks when connection dropped
+          - can be bought as pre-set device              
+          - whonix virtual gateway recommended on vm         
+
+- proxy - middle man to pass request, unlike vpn, it is not encrypted!
+        - http - only http and dns
+        - ssl - ssl & https - supports ssl/tls between proxy and destination only (not client-proxy)
+        - ftp - files
+        - socks - flexible (for any app), not protocol specific
+                - older v4 does not allows remote dns, does not support udp 
+                - v5 support authentication, ipv6, udp, remote dns  
+        - hidding IP address from destination, but observable the initial address
+        - not encrypted, but faster than VPN   
+        - 3 types: transparent - shows everything
+                               - anonymous - hide your IP, but it is obvious you use proxy
+                               - elite - hide IP address and that you use proxy 
+        - not good practice, can be chained to increased anonymity
+        - cgi proxy - proxy through website: webproxy.ca, anonymouse.org, hidemyass.com
+                    - can reveal real location, do not click on links on showed website (does not use proxy)
+                    - not good
+
+- secured shell - ssh, usually for logging, but offer more
+                - default port 22, can be changed, but configured with firewall
+                - communication protocol between client and server 
+                - connect: ssh -p 22 username@server.url   
+                - remote port forwarding - access from remote server to local station
+                     ssh -R 8080:localhost:9999 root@server
+                     remote server can access ocal server, tcp only, not udp  e.g. nodejs
+                     lsof -i  //shows running servers    
+                - local port forwarding
+                     ssh -L 8080:localhost:6666 root@server
+                     forbid access externally, through ssh can be accessed from localhost 
+                - allows create local socks proxy for ssh tunnel
+                - fingerprint attack on traffic is possible
+                - private-public key authentication - better than passwords -> pubkey on server
+                                                    - ssh-keygen -t ed25519 -C ""
+                                                                    algo       "username" //username does not need to match
+                                                    - encrypt with password                
+                - can be hardened in combination with 'multi authentication' process - google modeule for GA, YubiKey etc
+        
+- i2p - invisible internet project
+      - i2p node - running i2p router 
+      - messaging, browsing, torrenting, blogging
+      - eepsites - .i2p doimain: i2pwiki.i2p
+      - closed network, designed to not provide anonymous access into public network
+      - p2p, unknow receivert & sender
+      - more users - more anonymity (every node as middle relay in tor harder correlation attacks)
+      - decentralized distributed hash table - hold info about nodes and eepsites
+                                             - to find nodes you need to query it to get info
+                                             - shared between nodes
+      - out tunnel - send requests
+      - in tunnel - get responds
+      - never direct connection, multiple hops before reaching destination
+      - garlic encryption - multiple encryption technique - check doc
+      - recommended dembian, virtual machine   
+      - proxies fro browser: http port: 4444, 
+                             ssl port: 4445                                    
+      - good to use with tor browser (better to turn off browser)
+      - foxyproxy to proxy http/https to i2p
+      - UPnP - should considere the bridged port for UDP 
+      - setting Bandwidth - more bandwitdth, more secure (limited by your real bandwidth)
+      - https://thetinhat.com - tutorials - darknet  
+      - cons: not much academic research done, nor peer review, lack of doc, technically demanding, written in Java, low amount of users, slow
+      - pros: p2p traffic helps to anonymize (not clear if you use or you work as relay), support UDP, hard for correlation attack  
+
+- JonDoNYM - 3 parts: JonDoFox - hardened Firefox
+                      JonDo - IP changer - free open source Java program -> proxy
+                      [JoDo Console]
+                      JonDoNYM network - mixing service for web traffic
+           - mixers are closed set - must be trusted, verified by jondo company 
+           - closed since 2021
+                                   
+
+- Bullet Proof Hosting Service - bphs
+                               - find providers which are in area legal what is illegal elsewhere
+                               - libanon, china, iran, ukraine... in 2015/16
+- Botnets, Hacked boxes - zombies - hacked devices
+                                  - under influence
+                        - for spamming, ddos
+                        - illegal, hacked devices
+                        - anonymizing service, dangerous
+                        
+- bypass censorship: tunnel through censorship proxy - ssh tunneling http proxy to bypass censorship firewall  (dynamic port mapping from server to local)
+                                                     - can work for authentication, can set http headers (browser)
+                                                     - detectable if searched for (i.e. using port to get dns for redirecting traffic)
+                                                     - corkscrew, proxytunnel 
+                    
+                     portsharing to mislead mask usage - e.g. all traffic through 443
+                                                       - sslh    
+                        
+                     port knocking - sending special set of characters to server to open special services   
+                     
+                     cloacking the traffic - stunnel - wrapping the traffic (such as vpn) with tls/ssl    
+                                                     - need to be running on client and server (you need to operate the server)
+                                           - psiphon - even for android 
+                     
+                     obfuscation the traffic - obfsproxy - from tor, can make traffic look like usual surfing, can be broken with deep packet analysis
+                     
+                     remote login - use allowed port in firewall, use remote device for browsing
+                                  - vnc, rdp   
+                                  
+                     reverse shell - access firewalled network from outside 
+                                   - if firewalled device allow only outbound traffic, some magic with port mapping and middle server                                 
+
+- nesting - adding complexity and possible anonimity
+          - stunnel - vpn/ssh/jondonym - tor                         
+          - nested VPNs - can add multiple providers, observer might not see endpoint
+                        - can add tor for better anonymization 
+                        - i.e. host machine vpn1 (direct-revealed my ip to observer), 
+                               virtual machine/router vpn2 + kill switch/firewall to avoid leaks (indirect -> not obvious to observer, see just output of direct vpn)
+                        - psSense - multiple VPNs configuration in VM machines       
+          - nested ssh - more bounces through servers via ssh tunnels                               
+                        
+- on public - privacy screen                        
+            - mac address changing
+            - ssh/vpn (not tor directly) with kill switch   
+            - boost up wifi reach - wifi dongle
+                                  - up to 240 km with directional antenna                
+            - distant repeater in case of geolocating - locate antenna, not device 
+               - might set camera to observe, needs power supply            
+                        
+                                   
+                                                                                                                     

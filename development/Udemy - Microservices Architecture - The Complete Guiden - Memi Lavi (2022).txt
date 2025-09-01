@@ -1,0 +1,178 @@
+Microservices
+- video: https://www.udemy.com/course/microservices-architecture-the-complete-guide
+
+- monolit - no data share everything as one piece, same resources ~ inefficient, platform ! single technology, based on libraries, not flexible development
+          - on change - whole structure for testing, limitation with tech stack for dedicated parts, resources
+          - good for small systems
+  SOA - communication through ESB - complex communication channel connecting all components
+                                  - expensive to maintain 
+                                  - xml defining APIs  
+      - lack of tooling                            
+  microservices - independent modules, simple communication -http apis like, and have different tech stacks, fast update cycles
+                - avoid if: system is small, 
+                             not many services needed (2-3), 
+                            not possible data autonomy, 
+                            system is performance sensitive (delays on communication-transfer)
+                            when no planed updates (embedded systems)
+                - based on services, not libraries (? hmm... maybe just wording)
+                - 9 rules - componentization - possibility to split independent parts based on business logic
+                          - organized around business capabilities - find autonomous business rules, logic for dedicated module
+                                                                   - dedicated team focused on the module as whole 
+                                                                   - better in team communication than UI department, backend department, etc
+                          - product not project - focused on building actual working product (/piece of product), not abstract project 
+                          - smart endpoints, dump pipes - make communication easy, let services handle and validate requests/responses
+                                                        - based on http request /response   
+                          - decentralized governance - teams are independent to choose tech stack which fits the best for the module
+                          - decentralized management - each module should have independent DB, not always possible
+                          - infrastructure automatization - automatic builds, continuous integration/delivery = CI/CD
+                                                         - like Jenkins: build, unit test, integration test
+                                                                         + QA testing + delivery    
+                          - design of failures - plan and catch or possible failures to let system go down in predicted way
+                                              - good monitoring and logging system 
+                                              - i.e. kubernetes
+              - design - mapping components ~ services
+                           - business logic / requirements
+                           - functional autonomy - max set of requirements without need of other business requirements (can call from other service)
+                           - data entities - which data we will represent, store
+                           - data autonomy
+                                     a) data duplication - possible async when one service is down
+                                                         - good for read only - hard to keep sync with writes
+                                                         - good for small data
+                                                                       
+                                     b) service query - data shared between DBs by IDs (kinda foreign keys)
+                                     c) aggregation service - query all services necessary to get desired data
+                                     [d) DB shared]  
+                           - cross cutting services
+                              - logging, caching, user management         
+                       - communication patterns
+                           a) 1-1 sync - waits for response from other service to process further
+                           b) 1-1 async - calls and does not wait, can have callback/promise
+                           c) pub/sub - 1 to many, emit event, subscribers listen and process when event is emitted
+                                      - usually based on some queue 
+                           - if service with new IP, not good to connect directly to the endpoint but use helpers such as:
+                               a) service discovery - yellowpages - get url from dictionary and call  
+                               b) gateways - send request to gatewey and let it redirect to the right destination 
+                               d) direct connection 
+                       - select technology stack
+                           - platform
+                              - java
+                              - .net
+                              - nodejs
+                           - db
+                              - sql- oracle, postgres
+                                   - tables, relations, complex structures and dependencies
+                              - nosql - mongo
+                                      - if storing same kind of data 
+                                      - as json, no unifrom structure, no schema 
+                           - cache
+                              - redis
+                              - hazlecast
+                           - files storage
+                              - minio  
+                              - amazon s3
+                              
+          - deployment - CI/CD - is must - i.e. jenkins
+                               - fast development and delivery
+                               - automated
+                       - containers - same behavior on dev machine as production machine
+                                    - lighter version of virtual machine
+                                        - VM - s more complex, can have more VM with diff OS at one device 
+                                             - good if we want to have more isolated service
+                                        - containers - only one OS - simpler and lighter, easier to share data
+                                    - Docker - docker service - process handling all communication and work
+                                             - registry - repo of images
+                                             - image - definition from which we create container (image-> container ~ class -> object)
+                                             - container - instance of image 
+                                             - client - command-line cli, docker desktop 
+                                    - Kubernetes - monitoring tool for docker
+                                                 - monitoring service -> divide segments into pods -> pods have own IP -> pods can contain more containers
+          - testing - unit testing - code units - methods/interface
+                                   - only in process (simple, not integration test to test DB access/service communication)
+                                   - usually automated
+                                   - jUnit          
+                    - integration tests - test service functionality - can access external objects such as DB, other services
+                                        - other services -> test double: Fake - requires change into service to create in memory DB and fake methods for result 
+                                                                         Stub - hardcoded values as return, no change in original service
+                                                                         Mock - do not care about result just verifying accessibility, no change in original service
+                                                                              - can define desired return
+                                        - written by QA team, using service APIs
+                                        - should be automated                                                      
+                    - end-to-end - test whole flow, touch all services in the system (~ smoke test)
+                                 - test end state - i.e. call service1-service2-service3 - result in service3 even triggered from service1         
+                    
+         - service mesh - service to service communication - timeouts, security, retries (how many), monitoring, all handled by mesh, not devs??         
+                        - good if having lot of services with lot of communication, otherwise fuck it
+                            - protocol conversion - i.e. tcp -> http
+                            - security - encryption
+                            - authentication - active directory
+                            - reliability - healthchecks, retries, timeouts, circuit breakers
+                            - monitoring
+                            - service discovery
+                            - testing - like A/B testing 
+                            - loadbalancing
+                            ...
+                            - circuit breaker - prevent cascading failures when service fails 
+                                              - monitor service respond, if service down, or too many timeouts -> cut it off to prevent timeouts for services which called it
+                        - mesh is like gateway to the services
+                          - configured with Data plane for each service
+                               - security, circuit breakers, timeout handle, etc 
+                          - has central Control plane                
+                               - manages Data planes, monitor if Data planes works as intended, might set global variables
+                          - some implementation bundles Data plane and Control plane together                                                     
+                        - types: a) in process - part of the service
+                                                + good performance, single call
+                                            - DDS
+                                 b) sidecar - not part of the service, separated process, more used                 
+                                              + platform agnostic (can have different platform)
+                                              + code agnostic - not need to change when service code is changed
+                                         - Istio, Linkerd, Maesh     
+        - logging and monitoring - logging - record activity
+                                           - audit
+                                           - documenting errors
+                                           - should have as much data as possible, tags for filtering also
+                                           - good to have central logging service
+                                              - unified, aggregated, easy to analyze
+                                              - need to chose library, communication protocol, logging service
+                                              a) library - good to have one, if used diff platform for each services, can be diff libs per service
+                                                         - choose severity (DEBUG, INFO, WARN, ERROR)
+                                                         - timestamp, user, severity, service, message, stack trace (if error), correlation Id - correlates event between services - helps to connect
+                                                         - Winston NodeJs
+                                              b) transport - queue
+                                                             - good balance load
+                                                             - no performance hit to client
+                                                           - RabbitMq/Kafka  
+                                              c) service - can indes log formats, provides visualization
+                                                         - no development required, only configuration
+                                                         - ELK Stack, Splunk
+                                 - monitoring - monitor system metrics - perf, usage
+                                              - alerting problems
+                                              a) infrastructure
+                                                   - server status
+                                                   - cpu, ram, disk, network
+                                                   - data source - agent on the machine
+                                              b) application
+                                                   - app stats such as request/min
+                                                   - data source - app logs, event logs 
+                                              - Kibana, Elk stack, Nagios, New relic
+        
+        - tips - keep functionality! business boundaries per service, plan carefully
+               - if new are new business process needed to be added to extend -> maybe create new service
+               - implement cross-cutting shit firs - cache, user management, author+athen, logging
+               - set rules for API, responses, versioning                                               
+                                          
+- monolith to microservices - needs lot of planing, high fail rate due to bad planing
+    - good if: shorten update cycles
+               modularization
+               saving costs - reduce dev team
+                            - open source for microservices
+                            - upgradability
+               attractive to wider range of devs :D                                                           
+    - strategies: new modules as services
+                    - keep legacy monolith + new services
+                  separate existing modules into services
+                    - extract library into service
+                        - can have dependency issues, need to add proper API
+                  complete rewrite                                      
+                                          
+                                          
+                                                                                                                                                                               

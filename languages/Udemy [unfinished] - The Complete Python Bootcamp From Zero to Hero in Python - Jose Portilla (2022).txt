@@ -1,0 +1,34 @@
+Python
+- video: https://www.udemy.com/course/complete-python-bootcamp  
+
+- Anaconda distro: https://docs.anaconda.com/anaconda/user-guide/?utm_source=anaconda.com&utm_medium=individual-get-started
+- focus on easy to use, easy to read, tries to minimize developer time - nice marketing 
+- good for fast prototyping
+- usage: for scripting - file processing
+                       - automated emails, responses
+                       - parsing website info, searching/editing
+         data science - image processing
+                      - deep learning, AI
+         webdevelopment - Flask, Django for backend
+                        - interactive dashboards
+
+- notebook - Anaconda Navigator/Jupyter notebooks
+           - special enviroment to run chunks (cells) of python code
+               - even multilines
+               - shift + enter -> new cell
+                   - more n Help/Keyboard shortcuts   
+           - .ipynb files
+                
+- run from cmd:
+   python
+      - oneline python code env in cmd line
+      - type: quit() 
+                - closes cmd env
+   python filename.py
+      - executes whole 'script'              
+
+
+
+
+
+

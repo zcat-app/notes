@@ -1,0 +1,66 @@
+Don't Make Me Think
+- book review: https://www.goodreads.com/book/show/18197267-don-t-make-me-think-revisited 
+
+- make website simple, self-explanatory
+- make clear what is clickable, what is expects input etc
+- do not overload with information
+- 2-3 click limit (to reach anything) is good guide, not a religion
+
+- users do not read - user scans
+   - avoid noise (to many click me or too much data/info to show)
+   - use known conventions
+   - hierarchy 
+      - main section navigation - top page, always available  
+      - website logo + name - to make clear what page
+                            - tagline - should not be motto, but what you get, why you should come [and stay]
+      - breadcrumbs - easy to get back - e-shop subcategories: Main > sub> sub-sub 
+      - page title - for redirect from search/newsletter to make obvious where user is (subsection or section) 
+      - utility section - top right -search, faq, login, cart
+      - sub-navigation - make clear which subsection user is in (can combine with breadcrumbs)
+                       - usage of tabs (in 2025?) 
+      - main page should explain what it is/does
+         - avoid happy talk, use brief intro
+      
+   - text formatting h1, h2,... to separate sections on the page
+      - bottom margin better lower than top to not make titles 'float' - but stick to text it belongs to
+      
+- user does not go for the best option found, but for the FIRST GOOD ENOUGH
+   - if does not fit - goes back and search for another good enough
+
+   
+- user muddle through - tries to find own way how to use - UX should be stupid proof
+   - user reads instructions only when really have to        
+   
+- omit needless words - shorter paragraphs - supports scanning - comfortable to scan search
+                      - avoid happy talks   
+                      - instructions only when really needed
+                          - input can get preformatted/limitted to avoid extra instructions
+   
+- godfellas test - imagine being in trunk blindfolded then see website - you should orient yourself fast and understand what it offers/does
+
+- clash designer x developer x other useless roles (pm/marketing/hr)
+    - goal to deliver the best usability, open mind 
+      - usability testing - observe user using the website/app
+                          - note surprising behavior 
+                          - highlight he biggest issues - work on them first
+                          - if time fix smaller fast issues
+                          - test more people- 3 if not budget
+                                            - or only yourself
+                          - test continuosly
+                             - simple approach once per month 
+                             - testing at the end - expensive and too late  
+                          - dont guide - let them muddle through (if not in rage mode)
+                          - ask feedback at the end
+                             - do not rely much on their improvement suggestions
+                             - feeling could differ between people
+                             - cannot satisfy all
+                             
+- mobile - desining mobile first does not work much
+         - performance is important - loading big pictures (hello async?)
+         - should be learnable and memorable - clear how to use next time if special features
+         
+- user patience - can vary - might be crazy from previous website, wife argument
+- average user does not exist - do not optimize for average user
+- reflect disabled people (color blind, alt for pictures, etc)
+- stay away from dirty techniques - hiding pricing till the last step, predefined checkbox for personal data share etc 
+                                                          

@@ -1,0 +1,666 @@
+Linux
+- video: https://www.udemy.com/course/linux-administration-bootcamp-beginner-to-advanced
+
+Directory structure
+- follows filesystem hierarchy standard - FHS
+- root filesystem (/)
+   - everything starts at root (/)
+- /boot
+   - configuration used by boot loader
+   - kernel, boot support files, boot config - grub.conf
+- /root
+   - home directory of the root user
+- /dev
+   - folder for system devices - CD drive,, mouse, etc
+   - devices attached to the linux represented as file
+   - also info about hdd etc
+- /etc
+   - configuration of OS, or applications
+   - config if load command line only or GUI, config of DNS, NTP, etc
+   - if changing any, good practice to create backup copy of original file
+- /bin or /user/bin
+   - newer linuxes uses /user/bin or have link from /bin to /usr/bin
+   - stores executable binaries 
+       - common user commands - ls, pwd, rm
+- /sbin or /user/sbin
+   - newer linuxes uses /user/sbin or have linnk from /sbin to /usr/sbin
+   - system and filesystem commands - mkfs, fdisk, lvextend, etc
+- /opt
+   - optional filesystem
+   - 3rd party installed software, which is not part of the OS 
+      - each has its own subfolder
+- /proc
+   - processes which exist only in memory
+   - current state of kernel, cpu, memory, disk partitioning, networking
+   - creates at boot time
+   - automatically managed by OS at runtim
+   - when shutting down, all content of /proc is erased   
+- /lib or /user/lib
+   - newer linuxes uses /user/lib or have linnk from /lib to /usr/lib
+   - stores programming library files used by commands and apps
+- /tmp
+   - temporary files location used by other apps
+   - deletes content on system reboot
+- /home
+   - holds user home directories
+   - each user has own directory
+- /var
+   - stores system logs, statuses and other dynamic data
+   - /var/log - system, user, boot, installation, cron log files 
+   - /var/opt - logs for additional software hold in /opt
+   - /var/spool - print jobs, cron jobs, mail messages, etc
+   - /var/tmp - 'temporary' files which should be kept longer and can survive the reboot, unlike /tmp content       
+- /run
+   - temporary filesystem tmpfs
+   - mounted during early boot process 
+   - for deamons which starts in early boot process like systemd or udev
+      - PIDs (process ID files)
+- /mnt
+   - mounts external or temporary filesystem  
+- /media
+   - mounts removable media 
+   - floppy/CD/DVD/USB/ZIP drives
+- /srv
+   - hold data related to linux server
+   - specific data for protocols such as ftp, rsync, www (webserver data)
+- /usr/local
+   - non standard directory (some distro does not have)
+   - contains installed files not belonging to OS
+   - like /opt
+--------------------------------------------------------------------------------            
+Commands
+- case sensitive! 
+- the most are lower case
+
+cd
+- change directory
+- example 
+- cd {path_to_directory}
+   - moves you to the {path_to_directory} 
+
+ls
+-lists content of the directory
+- example:          
+    ls
+     - prints content of directory (directories and files) in terminal
+    ls -l
+     - prints content with detail info  
+     - permissions | # links | owner | group owner | size | date | name
+    ls -a
+     - prints all files - including hidden files
+    ls -h
+     - prints size in human readable format - 1024B -> 1K
+    ls -t 
+     - prints content sorted by date and time from the newest   
+    ls -tr
+     - prints content sorted by date and time from the oldest  
+    ls -F 
+     - prints file types (/ - dir, @ - link, * - executable, nothing - file)
+        - dir1/ file file_link@, script.sh*              
+- combining options
+    ls -l -a
+    ls -la
+       - print detail info with hidden files
+        
+cat
+- concatenates - displays content of the file
+- example:
+    cat {filename}
+     - prints content of the file in terminal
+   
+    cat -n file1
+     - prints content of the file in terminal with line numbers
+     
+
+pwd
+- print working directory (shows path to current directory)
+- example:
+    pwd
+     - prints your current location (absolute path) in terminal
+     
+whoami
+- prints username of current user
+- example:
+    whoami     
+     
+man
+- manual pages
+- scrolling in manual bagest with spacebar
+- example:
+    man ls
+      - prints manual page of command ls in terminal
+
+touch 
+- creates new empty file
+- example: 
+   touch newfile
+
+file
+- prints info about the file/directory
+- example:
+    file script.sh
+      - print info about file type and script type
+  
+mkdir
+- creates a new directory
+- example:
+    mkdir dir1  
+ 
+which 
+- prints path to the selected command
+- example:
+    which pwd
+      - prints /bin/pwd or /usr/bin/pwd
+      - it actually gives full path for command which we can use
+         - meaning: pwd     
+                    /bin/pwd
+                    - both will execute pwd command, but /bin/pwd is full path to the command 
+clear
+- clears screen (in terminal)
+- example:
+    clear
+      - clear the terminal (but will not delete the history!)
+
+echo
+- prints text or string variable passed as argument
+- mostly used in shell scripts or bash files
+- used for logging/showing state
+- example
+    echo "Show this"
+      - prints Show this
+    echo $SHELL
+      - prints current shell store in variable SHELL
+    
+exit
+- exits the shell or current session
+- example:
+    exit
+     - will close the terminal (similar to ctrl + d)  
+ 
+useradd
+- creates a new user
+- example:
+    useradd user1
+      - creates a new user with username 'user1'  
+     
+Changing user password
+- root can change password of any user
+- user can change only its own password
+- how often the password can be changed is defined by system security
+
+  passwd
+   - for user to change password
+     1) insert current password to verify
+     2) insert a new password
+   - might be restriced, depends on system security setting
+
+  passwd username
+   - for root to change password of user username  
+   - only root can reset passwords!
+   - to reset root password jsut type passwd - no need ti insert old one
+   
+Finding files
+- command find
+
+find
+- need to define start location from it start searching
+- search files by some attributes (-name, -size, -mtime)
+- define action what to do with round file(s) - print, delete,... 
+
+- example:
+  find / -name fi* -print
+      - search from root      
+      - by name starting with fi
+      - print results (print is default option, no need to type)
+  find . -size -1M 
+      - search in current directory
+      - by size less than 1MB (- means less, + means bigger than 1 MB)
+  find . -mtime 4
+      - search by modified data - exactly 4 days ago (in days)
+                                - more than 4 days ago: -mtime +4
+                                  less than 4 days ago" -mtime -4
+
+Copy files and directories
+- command cp
+
+- copy a file
+  - cp sourceFile destinationFile
+  - if the destination file exists - overriden by default 
+                                   - can enforce confirmation with -i option
+                                      cp -i file1 file2
+                                    
+- copy a directory
+  - cp -r dir1 dir2
+  - copy recursively -r = include all subdirectories and their contetns 
+  - copies content of the dir1                                    
+
+Remove files and directories
+- command rm
+
+- remove a file
+  rm filename
+    - removes the file (might ask for confirmation, not ensured)
+  rm -i filename
+    - asks for confirmation before delete
+  rm -f filename
+    - remove 'forcefully' - no confirmation needed  
+    
+- remove a directory
+  rmdir directoryName
+    - removes empty directory
+  rm -r
+    - removes non-empty directory
+    - '-r' recursively -> with all subdirectories, similar to cp   
+    - asks confirmation for every file or directory, can be enforced by -f
+  rm -rf
+    - removes all content without need of confirmation of each file nor directory     
+
+Moving and renaming files and directories
+- command mv
+
+- renaming file
+  mv file1 file2
+    - if existing file1 and non-existing file2 
+    - if file2 exists, it gets overwritten
+    - option -i to confirm
+  mv -i file1 file2
+    - if need to overwrite it triggers confirmation
+
+renaming directories
+- same as files
+  mv dir1 dir2       
+  
+Paths  
+- Absolute path
+  - starts from the root directory
+  - example: /home/username1/somefile    
+- Relative path
+  - starts from the current directory '.' or parent directory '..'
+  - example: ./subdir/filename
+
+- get to current user home directory '~'
+    cd ~ 
+- get to the last previous directory '-'    
+    cd -
+    
+Creating files
+- files can be created in many ways
+- directories only with mkdir command
+
+- creating files
+   touch
+     - creates empty files
+     - can create multiple files
+     - if file already exists, it just update timestamp
+     - example:
+         touch file1
+         touch file2 file3 file4
+   
+   create with editor such as vi      
+     - vi file1 + :wq!                                                     
+ 
+- create directory
+   mkdir
+     - creates empty directory
+     - can create multiple directories
+     - example:
+        mkdir dir1
+        mkdir dir2 dir3 dir4
+     - can create also hierarchy of empty directories
+        mkdir -p dir1/dir2/dir3    
+      
+VI editor
+- vim - VI iMproved
+- can edit/create or just read files
+- used in most distros, very efficient (does not demand many resources)
+
+- 3 modes: command - ESC                                  
+           Insert  - i
+           Line    - : 
+
+- example:
+    vi filename
+      - creates a new file with name filename or open existing if exists
+    press 'i' to get edit mode
+    press 'esc' to get to command mode
+    press ':' to get to line mode
+    
+    command mode: new line + insert mode: 'o'  
+                  copy whole line: 'yy'
+                  copy current word itll end line: 'yw'
+                  
+                  paste after the cursor: 'p'
+                  paste before the cursor: 'P'
+                  
+                  remove content of the line + switch to insert: 'cc'
+                  overwrite current character: 'r'
+                  overwrite multiple characters: 'R'
+                  replace current character + switch to Insert mode: 's'
+                  replace whole line + switch to Insert mode: 'S'
+                  
+                  delete line: 'dd'
+                  delete character on the cursor: 'x'
+                  delete character beforethe cursor: 'X'
+                  delete from current cursor to next word: 'dw'
+                  delete from current cursor to end line: 'd$'' 
+                  
+                  undo one step: 'u' - undo last action
+                  undo more steps: ctrl+R - undo previous actions (one by one per each click)
+                                          - some distros works as re-do?        
+                  
+                  go to the 1st line: 'gg'
+                  go to the last line: shift + G
+                  move cursor: line up: 'k'
+                               line down: 'j'
+                               left: 'h'
+                               right: 'l'
+                  
+   line mode: show current line nubers: :nu
+              search: /
+                      /what do I search
+                      - find next occurence: n         
+              replace string: :%s/oldString/newString/g 
+                - %s - string
+                - oldString - what to replace
+                - newString - what will be inserted 
+                - g - globally ~ whole document
+              save: :w
+              quit: :q
+              save + quit + override :wq!    
+              
+Permissions
+- r - read
+- w - write
+- x - execute
+
+- permissions assigned to
+   u - user owner
+   g - group owner
+   o - others than user and group members
+   a - all above
+   
+- example
+    -rwx    rw-    r--    {#links} {user} {group} {datetime} filename 
+     user   group  others
+     
+- file - read - read the content of the file
+       - write - change the content of the file
+       - execute - run/execute the file
+       
+- directory - read - see files in directory
+            - write- edit entries in the directory (copy/move/create)
+            - execute - see metadata of the entries (group/user info, modified date, etc)
+            
+Change permissions                                           
+- chmod (~ meaning change mode)
+    - symbolic notation 
+        - userTYpe: u - user
+                    g - group
+                    o - other
+                    a - all  
+        - action: + add 
+                  - remove
+                  = set   
+        - permission: r - read
+                      w - write
+                      x - execute
+        - example: 
+            chmod g+r file1 
+              - adds read permission to group on file1               
+            chmod g+rw,o-e file2
+              - adds read and write permission to group on file1
+              - removes execute permision for others 
+              - all at one go
+   - octal notation
+       - each action assigned vlaue
+       - read    = 4           
+         write   = 2
+         execute = 1
+       - combinations sums the numbers: read + write = 4 + 2 = 6
+       - set per each usertype
+       - example
+           chmod 740 
+             - user can read/write/execute
+             - group can read
+             - othes cannot do shit    
+
+Change ownership
+- user ownership
+   - chown user_name file_name
+      - example:
+           chown user1 file1
+             - sets user1 as owner of file1
+             - user permissions of file1 are set for user1
+- group ownership
+   - chgrp group_name file_name 
+- user and group ownership
+   - chwon user_name:group_name file_name
+- change ownership for all entities in directory - recursive flag -R (capital!)
+   - chown -R user_name:group_name directory_name
+   
+Read file content - more
+- more
+  - show content per page/line if does not fit to screen
+  - shows 'progress bar' - how much % till end 
+  - example:
+       more filelog
+         - scroll with enter/spacebar, exit with esc button
+       more filelog +17
+         - can start from line 17 till end of the file
+       
+- less
+  - faster than 'more' -> less does not load whole file at once                 
+  - scroll enter line, spacebar page
+  - can search: /something 
+          - finds occurences of 'something'
+  - scroll to the end end of file: shift + G
+  - exit less: q                
+  - beneficial for piping (result does not fit on screen, then use | less)
+    - example:
+        grep bin /etc/passwd | less
+          - takes all bin occurrences in /etc/passwd and open the result in less - easy scrolling 
+          
+- head
+  - reads first few lines of the file, default is 10 lines
+  - example 
+     head log_file.txt
+       - shows first 10 lines of file
+     head -4 log_file.txt
+       - can set to see different amount of lines, here first 4 lines
+
+- tail
+  - shows last a few lines of the file, 10 by default
+  - can be changed as with head
+  - example 
+      tail file 
+      tail -12 file 
+      
+      tail -f file
+        - does not print and close, but updates in realtime if any changes added to the end of the file
+        - good for showing logs of running apps
+        - exit with ctrl + C                   
+
+Wildcards
+- metacharacters used for pattern matching
+- used with ls, mv, cp, ...
+
+ *  file substitution - matches zero or more characters
+   example: 
+     ls *.txt
+        - lists all txt files
+        
+ ?  file substitution - matches one or more characters
+   example
+     ls ??.txt
+        - lists all txt files with two characters name
+         
+ [] file substitution - matches any characters between brackets
+   example
+     ls [a-f]*
+        - lists all files starting with letters a,b,c,d...f
+     ls [et]*    
+        - lists all files starting with 'e', or starting with 't'
+ >> output redirection
+ <  input redirection
+ << input redirection
+ |  the pipe
+ ;  command sequence
+ || OR conditional execution
+ && AND conditional execution
+ () group commands, sequences of commands
+ &  runs command in background
+ #  comment
+ $  expand value of variable
+ \  escape interpretation of next character
+ 
+
+Command line
+- tab completion/command line completion
+-'tab' key 
+   - one press - can autocomplete command/path on first letters typed
+   - two press - shows/prints all possibilities for autocomplete
+
+- command history
+- every executed command is stored in command history log file
+- example:
+    echo $HISTFILE
+      - prints location of the history file
+    history
+      - prints the content of the history file
+- re-execute command from the history file
+    !{number_of_line_from_command_history}
+    - example:
+       content of history file:
+       ...
+       59 ls -l
+       60 clear
+       ...       
+            
+       !60
+         - executes clear
+- re-execute last executed command
+       !!
+        - execute last executed command
+- arrow up
+   - scrolls up in history of last executed commands from the most recent to the oldest
+ 
+Files
+- files created with metadata - i.e. permissions, ownership, edit info
+- also gets unique identified to be recognizable by kernel - inode (128-byte ID)
+- files ~ inodes  
+- link ~ shortcut
+       - pointer to another file
+
+Soft links/ Symbolic link / Symlink
+- like shortcut in windows - point to another file
+- when original file deleted, symlink is useless
+- symlink has generated a new inode for itself
+- create symlink
+     ln -s original_file link_file 
+- metadata on ls -l:
+     lrwxrw-rw-. 1 user group May 10 00:00 link_file -> original_file 
+- find inode of file
+     ll -i file
+- soft links can reference to anything (other device, file on the remote server), slower than hard links
+
+Hard links
+- links one or more files with single inode number, unlike soft link
+- changes in original file are applied in hard linked file too
+- if one file deleted, second file is still usable    
+- create hard link
+   ln original.txt hard_link.txt
+- see meta data: ls -li
+    123456 -rwxrw-rw-. 2 user group May 10 00:00 original.txt
+    123456 -rwxrw-rw-. 2 user group May 10 00:00 hard_link.txt
+      - both files have the same inode number, none is marked as link
+- hard links are faster, works in the scope of the PC (can not point to other computer)       
+      
+Input/Output redirection
+- to redirect the from non-default source and to non default output/error destination      
+- Input
+    - read input from file rather than keyboard
+    - example:
+       cat < input.txt    
+- Output
+    - redirect the console output into file 
+    - example: 
+       ls > ls_result.txt               
+         - each execution overwrite the content
+       ls >> ls_results.txt
+         - append new result to already existing content   
+- Error
+    - redirect only error messages from command line
+       ls /nonexisting 2> errror.log
+         - 2 sets error
+- Output + Error
+    - redirects both to the same place
+        ls /nonexisting &> errror.log       
+        
+Grep
+= Globally search for Regualr Expression and Print out           
+- searching for plain text data matching regular expression pattern and displays result      
+- usage:
+    grep [options] pattern [files]
+
+    grep hello file1 
+      - finds line with hello word in file1
+    grep -v hello file1
+      - finds all rows in file which DOES NOT contain hello
+    grep -i a file1
+      - finds all lines which contains a/A 
+      - -i case insensitive
+    grep -n a file1
+      - finds all lines with line numbers
+    grep -ni
+      - linenumber + case insensitive
+    grep ^user file
+      - every line which starts with 'user'
+    grep -v ^user file1
+      - every line which DOES NOT start with 'user'                
+    options: -v exclude from search
+             -n show line numbers
+             -i case insensitive
+             -c prints ONLY count of lines
+             -l display filenames only
+             -h display lines without filenames
+             -w match whole word
+             -e specifies expression - can be used multiple times
+             -E extended regular expression
+             -f pattern from file - one per line
+             -o print only matched parts, each on new line
+
+PIPE
+- sending data from one program to another - piping
+- with '|' 
+- send output from one command to be an input of next one     
+- example:
+   ps aux | grep my_app
+     - lists all running processes, pipe them to grep which filters my_app only   
+      
+Shell aliases
+- shortcut for frequently used commands
+- example
+    alias
+      - print all aliases in terminal
+    alias shortcut="original_command_with_attributes"
+    alias p = "pwd"
+    alias ll = "ls -lh --color=auto"  
+
+- alias stays only through the life of the session
+- permanent alias must be inserted into users bashrc file
+   - ~/.bashrc
+   - add alias here if it should be preserved
+
+- to remove existing alias: unalias alias_name
+    unalias p
+      - removes alias from aliases list
+      
+Enviroment variables
+- variable temporary storage of data
+    
+
+
+
+
+
+           

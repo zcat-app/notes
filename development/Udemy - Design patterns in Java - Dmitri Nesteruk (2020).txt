@@ -1,0 +1,428 @@
+Design patterns In Java
+- video: https://www.udemy.com/course/design-patterns-java/
+
+- other sources: https://howtodoinjava.com/gang-of-four-java-design-patterns/
+
+Design Solid Principles
+  - single responsibility principle 
+     - one goal, one responsibility - separation of concerns
+     - not creating god objects (i.e. logic[service] + persistence[dao])  
+   
+  - open closed principle
+     - open for extension, closed for modification
+     - already tested class should not be modified, but can be extended by 
+       other functionality
+     (- should prevent copy pasting by for new functionality bu interfaces and generics, i.e. specification design)
+   
+  - Liskov substitution principle
+     - using sub class as parent class without troubles (no magical behavior, like WFM :D)
+     - meaning not changing inherited logic -> and cry when using polymorfism (extending) 
+     - i.e. factories - preserve correct behavior in inheritance
+   
+  - interface segregation principle
+     - split interfaces into smaller interfaces, implement only what i need
+     (- combine via inheritance of interfaces to keep readable)
+     - i.e avoiding empty implementation of methods
+   
+  - dependency inversion principle
+     - high level module (logic) should not depend on low level (db load) 
+     - (both should depend on abstraction)
+     - abstraction should not depend on detail, detail should depend on abstraction
+     in other words
+     - not getting direct implementation in service, but rather interface (dao, daoImpl)
+     - low level perform preparation (i.e. filter, and return result for business logic)
+     - low level change will not influence high level (different data structures etc.)
+     
+patterns types: Creation, Structure, Behavioral
+  
+Creational  
+  - Builder
+     - incremental steps, lot of parameters to set - avoiding having bunch of constructors
+     - piece by piece, i/g/ StringBuilder - memory efficiency
+  - Fluent Builder 
+     - returns reference itself from methods to chain adding params
+  - Fluent Builder Inheritance with Recursive Generics
+     - when parent builder class cannot access child clas method (i.e. wrong order of method calls)
+          childclass.methodReturningParentReference
+                    .methodFromChildReturningChildReference() <- fuck up
+     - recursive generic: Parent<SELF> extends Parent<SELF> {
+                              SELF method() {
+                                  return self();
+                              }
+                              
+                              SELF self() {
+                                 return (SELF) this
+                              }
+                          }              
+                          Child extends Parent<Child> {
+                              
+                              Child method() {
+                                  return self();
+                              }
+                          
+                              Override
+                              Child self () {
+                                return this;
+                              }
+                          }
+                          
+   - Faceted Builder
+      - fluent api, more readability - grouping params by something in common 
+      (e.g. personBuilder streetBuilder jobBuilder etc)
+      - builders extending origin alone inside of original builder
+      - ClassABuilder {
+           ClassA objA;
+           ClassAABuilder aaBuilder;
+        
+           public ClassAABuilder accessAA() {
+              return new ClassAABuilder(objA);
+           }
+        
+        }             
+        ClassAABuilder extends ClassABuilder{
+            ClassAABuilder(ClassA objA) {
+                this.objA = objA;
+            }
+            
+            ClassAABuilder methodAA(){...}
+        }  
+        ...
+        ClassABuilder.method()
+                     .accessAA()
+                     .methodAA()
+                     .method()...       
+   - Factory
+      - object created at once, not incrementally like Builder  
+      - readability - constructor name might not explain itself
+      - no option to overloading constructors with same type but different names 
+           -> multiple constructors (constructor hell)  
+           
+   - Factory method
+      - public static method which returns new object
+      - constructor might be private and general
+      - e.g. cartesian point x,y vs polar point rho, theta
+              -> different logic how to create 
+      
+   - Factory class
+      - grouped static factory methods (i.e. UtilClass)
+      - to ban using constructor, make it private and create factory class 
+        inside of original class (nested) as static class
+      (probably make factory class constructor private)   
+   
+   - Abstract Factory 
+      - factories with common interface used to create object from another factory
+      - kinda hierarchy of factories
+      - if same method, but different logic with different factories 
+              -> polymorfism with factories interface hotdrinkF - prepare, 
+                                            classes: teaF - sack, coffeeF - beans 
+      - hierarchy of obj -> hierarchy of factories    
+      - use case? decide about factory in runtime?
+      
+   - Prototype 
+      - taking existing object to create new one   
+      - deep copy to customize it
+      - if creation is expensive (load data from DB) it is easier to clone/copy
+      
+      - Cloneable - not recommended
+          - empty interface to mark as cloneable
+          - override clone method of object (returns Object, need to cast result)
+          - every object used as property has to be cloned or created by clone  
+          
+      - Copy constructor
+          - accept object is input arg in constructor
+          - objects as properties must be created with new (maybe copy constructor 
+            too, for deep copy), still need to be focused to make deep copies
+      
+      - Copy with serialization
+          - implements serializable interface, or not needed with reflection using libs
+          - not needed to be that careful with deeps
+          - SerializationUtils.roundtrip(origObject) 
+               - serialization + deserialization              
+               
+   - Singleton
+      - only once instance in system (constructors are expensive), e.g. Factory, DB repo
+      - private constructor + public static getInstance method 
+                            + private static variable with instance
+      - better uses abstraction of singleton, than direct impl (i.e. DAO - dep. inversion)                         
+      - drawback
+          - reflection can break private modifier of constructor
+          - https://codepumpkin.com/breaking-singleton-using-reflection-and-enum-singleton/
+          - serialization and deserialization skips rule of private constructor,
+            it can create another instance  
+               -> override method Object readResolve {return instance;} - maps the same classes
+      - attention to thread safety  
+      - Lazy init
+          - create when needed, not on initialization (direct in var declaration) 
+          - getInstance - if instance == null -> create, else -> return existing
+          - you must be careful with threads             
+          
+      - Thread safety    
+          a) synchronized get instance method 
+              - performance issue  
+          b) double check locked - outdated
+              - check if instance null then lock block and check again with synchronized
+                    if (null) { synchronized(Singleton.class) {if null -> create} }
+          c) inner static singleton - thread safe ?because of static?
+              - inner private static class with property of singleton class
+                Singleton {   
+                  
+                  private Singleton(){}
+                
+                  private static InnerClass {
+                      private static Singleton INSTANCE;
+                  
+                      INSTANCE = new Singleton()
+                  }  
+                  
+                  getInstance() { return INNER.INSTANCE}
+                }
+                  
+   - Static Block Singleton 
+      - i.e. if constructor can throws exception    
+      - use static block with try catch to create instance to handle it
+   
+   - Enum Based Singleton
+      - enum is singleton by itself, private constructor by default
+      - serializable by default, but serialization does not preserve state (fields are not serialized)  
+      - cannot inherit from enum - final class 
+   
+   - Monostate
+      - multiple instances share the same storage element
+      - i.e. class with all static properties
+      - can create multiple objects, but all share the same data (static fields)  
+      
+   - Multiton
+      - final/limited set of instances which can be created only once
+         - Position 
+            - manager
+            - developer
+            - tester
+      - using like dictionary of objects
+      - kinda enum of objects
+
+Structural      
+   - Adapter
+      - interface which transform data from another interfaces into one usable class
+      - i.e. Android adapters, taking data - fill UI components
+             or loading DB data -> returning DTOs
+      - optimizing with caching - not recreating many temporary objects if 
+        not necessary
+      - i.e. viewHolder creates only visible items +-1 or +-2, refill data 
+             inside them 
+             or pagination from DB and hash of loaded object        
+   
+   - Bridge
+      - connecting components via abstraction (or decoupling abstraction from implementation)
+      - prevents cartesian multiplication of classes, basic of polymorf/inheritance
+      - decouples interface from implementation 
+      - i.e. binding DI in Guice - DAOinterface - more DAOImplementation (hibernate parent - load, save)
+      - easier modification of underlying implementations
+      
+   - Composite
+      - putting objects together like grouping
+      - treating groups or individuals in uniform manner 
+      - i.e. Instance and Group of them with common API 
+      - single instances as Collection with Iterable, then common interface for 
+        same functionality
+      - sample GroupOfObjects 
+          - grouped objects or another group 
+          - individual Square and Circle
+          
+   - Decorator
+      - extend exiting class with new features without modifying old class
+      - reference to decorated object, not inheriting from them (composition)
+      - final class can not be inherited
+      - if needed - delegate methods - get methods from "Bridged API"       
+    
+   - Dynamic Decorator Composition     
+      - common interface and hierarchy of classes
+      - passing object into constructor to enhance it
+      - build new decorator on runtime
+      
+   - Static Decorator Composition
+      - build in compile time, not runtime
+      - using generics - constructor of decorator accepts Constructor of 
+        wanted class via lambda 
+            -> Decorator(Supplier<? extends T> ctor) {
+                   field = ctor.get();    
+               }
+            -> usage new Decorator<>( ()-> new Original() )   
+     
+   - Adapter-Decorator         
+      - decorating original object + adding functionality 
+      - usually combine with some other pattern, not only decorating
+      
+   - Facade
+      - to expose several components with single interface
+      - hidden complexity behind API, all necessary actions performed there
+      - i.e. calling REST API to get data without doing low level shits
+      
+   - Flyweight
+      - space optimization, avoid redundancy, use less memory
+      - index for external data or ranges for collections
+      - i.e. dictionary and index for names, surnames
+             or the same in DB, id for name and id surname    
+      - String.intern() - ?caches string?
+      
+   - Proxy
+      - class acting as interface to access resource (remote, expensive to 
+        create, special logic)
+      - provides the same interface with enhanced logic (functionality), not like
+        Decorator, which may change - enhance interface
+      - Proxy does not need to have reference to "decorated object", like virtual 
+        proxy, ?or maybe be brand new object? 
+        
+      - Protection Proxy
+         - extending original object to override some logic which is used 
+           in polymorfism, like validation
+      
+      - Property Proxy                  
+         - enrich of class property to perform some extra logic as logging changes
+         - generic class with getters and setters - adds logic
+                           
+      - Dynamic Proxy
+         - dynamic - created in run time
+         - depends on usage - i.e. logging
+         
+   - Filter
+      - chaining criterias to filter through logical operations, i.e. criteria 
+        in hibernate
+      - seems like kinda implementation of interpreter 
+ 
+   - MVC
+      - Model - Java POJO, getting data from DB
+      - View - visualization of prepared data from model (maybe adapted by controller)
+      - Controller - middle man between them, does all logic 
+          - to prepare data for view
+          - to update model from view
+                
+Behavioral pattern      
+   - Chain of Responsibility
+      - chain of components which can do something with command/event and can
+        terminate the processing
+      - sender - receiver, if receiver can not handle, it will pass it over to 
+        another chained receiver                                      
+      - typically overriden abstract method  (might call super.method() for chaining)
+      
+      - Command might be used to get more complex logic 
+          - Command-Query-Separation - diff command - edit   
+                                            query - get value
+                                                           
+  - Command
+      - request wrapped as object and passed to invoker which decide how to handle
+        it and executes command's logic    
+      - can composite more commands together  
+      - i.e. Undo/Redo in GUI, Macros, handling request             
+      
+  - Interpreter
+      - evaluate language grammar or expression (i.e. input text)
+      - implement interface which interpret context like HtML, SQL, 
+         RegEx, any programming language 
+           -> lexing + parsing
+      - i.e. realm or hibernate creating queries - find(), and(), or()      
+   
+   - Iterator
+      - to access element from collection in sequential manner without knowing
+        underlying implementation    
+      - helper object with reference to current and next object 
+      - interface Iterator (next, hasNext), Iterable (to iterate -> for loops)
+      - cannot be recursive
+      
+   - Mediator
+      - ensure communication between two components and reduces its complexity  
+      - components do not need to know about each other - loose coupling
+      - components have connection into mediator, mediator calls their methods
+           -> ensures bidirectional communication 
+      - i.e. chatroom and user (user leave, other users are not influenced,
+        chat room works as mediator)       
+      (- can be done wit RX with observer and subscription to it)
+      
+   - Memento
+      - preserve previous state (token class/snapshot) of object/component to 
+        restore/rollback to previous version, it if necessary
+      - can have multiple mementos in collection as history  
+      - memento should be final - immutable 
+      - i.e. Undo/Redo edits             
+      
+   - Null Object
+      - behavior without behavior, replace check on null instance
+      - not checking, instead performing nothing, or some default behavior, if
+        implemented, for no data available
+      - good to make null object class final
+      - uses abstract class/interface with abstract methods - null Object class 
+        implements nothing or some default logic   
+      - dynamic null object via dynamic proxy -> one function for multiple objects
+        instead of multiple nullObjectClasses for each class
+            -> expensive for resources (OK for unit tests)
+      - problem if abstract methods return values, need to set default values
+        carefully      
+        
+   - Observer
+      - to be aware of some change or action in the system
+      - used in one to many relationship, change in one will notify others
+      - observer - observe changes, abstract method to handle notification
+      - observable - notify observers related to the object with some "event"
+                   - may contain connected observers to notify them 
+      - event based implementation
+           - instead of observer and observable - inheritance (
+             observable in extended, with event approach - no need for this)
+           - event is container of subscriptions - observers  
+      - dependent property (without setter, dependent on value of another property)
+           - need special way how to handle, maybe place of change of dependent 
+             property, it depends on case
+      - can be tricky with threads (i.e. subscription)        
+             
+   - State
+      - based on state machine with finite states
+      - behavior of object depends on it state, transitions between states 
+        are triggered (i.e. directly, with observers)  
+      - classic - impl has own class for each state (enum is better)         
+                - state is passed, to the new state and adapted accordingly 
+                  (passedStateAsArgument.setState(this) 
+      - done i.e. in Spring framework with nice API
+      
+   - Strategy (Policy in C++)
+      - context class act based on selected strategy (strategy objects with 
+        overridden methods)
+      - kinda decouple high level with level - common approach (high) 
+                                             - strategy specific (low)
+      - dynamic (runtime) - change on runtime or static (compile)
+      - interface with abstraction (declaration of methods) implemented in different
+        strategy classes
+      - static - with generics, kinda messy with supplier in constructor to 
+        determine class for strategy                                                                                            
+    
+    - Template                                               
+      - abstract class which invoke some template - order methods call (how to 
+        execute them), while children override these methods if needed
+      - kinda similar to strategy - uses inheritance instead of invoking objects 
+        
+    - Visitor
+      - component which traverse inheritance hierarchy to apply some behavior
+      - visitor should implement visit() method with argument of visited Object                                                     
+      - every element in hierarchy should be visitable - accept visitor
+      - classes accept visitors - traversing through the hierarchy
+      
+      - Intrusive Visitor 
+          - modify all methods in hierarchy by overriding interface                                             
+          - breaks open close principle and might single responsibility principle
+          
+      - Reflective Visitor
+          - uses external class which accepts root
+          - using reflection to get info about classes which should be used
+          - external class implement the functionality
+          - slow because of reflection
+          
+      - Double Dispatch (Classic)
+          - classes of hierarchy -> implements abstractions - accept(Visitor visitor)
+          - visitor abstraction -> interface - visit(Root), visit(Child), ...   
+          
+      - Acyclic Visitor 
+          - if not every element should be skipped in hierarchy
+          - marker interface - empty, to mark it is visitable
+          - multiple interfaces for each class in hierarchy with visit method, 
+            extending marker interface (visit method are independent on each other)
+          - class in hierarchy test visitor in its accept method  for his type of visitor 
+            (visitor instance of myVisitor -> visit)
+          -no dependency between visitor and class 
+                                                                 
