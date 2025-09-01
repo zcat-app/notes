@@ -1,5 +1,5 @@
 # Notes
-Set of notes collected across different books, courses, talks or blogs. My backkup full of typos and grammar porn. I make it public in case some one would find it useful. Maybe it can help you to decide if the given source will give you what you expect.
+Set of notes collected across different books, courses, talks or blogs. My backup full of typos and grammar porn. I make it public in case some one would find it useful. Maybe it can help you to decide if the given source will give you what you expect.
 
 ## Content
 
