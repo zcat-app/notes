@@ -1,0 +1,103 @@
+ZGC - Paving the GC On-Ramp
+- video: https://www.youtube.com/watch?v=dSLe6G3_JmE 
+
+zgc - concurrent low latency garbage collector                  
+    - not stopping the app when GC is running 
+    - tries to detect some flags for JVM from the env it runs on (e.g. CPU topology)
+    
+    - 'trilemma': Latency
+                  CPU (resource)
+                  Memory (resource)
+                  
+    - goals: low latency (< ms) 
+               - concurrent tasks like: marking,
+                                        root/stack scanning,
+                                        unloading classes,
+                                        relocations,
+                                        reference processing
+                                        etc.
+               - JVM does not know latency goals - zgc allow to configure if needed but ensures good enough latency as default
+               
+             scalability (heap up to TBs)
+                - latency does not scale with heap size or root set size (even if many threads latency should not increase) - no influence
+                - generational GC - separates young and old objects
+                                  - young GC does not scale with old data
+                                  - concurrent runs of multiple young GC and old GC               
+             auto-tuning (easy to use)
+                - trying to avoid multiple JVM developer options: -XX:params
+                   
+                - 'it should not be my problem, but JVM's problem' :)   
+                - generational GC should decide: how big young generation objects should be  
+                                                   - e.g.: -XX:NewSize, -XX:NewSizeMax
+                                                 how long before becoming old generation
+                                                   - e.g.: -XX:MaxTenturingThreshold
+                                                 when old generation should be collected
+                                                   - e.g.: -XX:InitatingHeapOccupancyPercent
+                                                 ration of threads between young/old generation 
+                                                   - e.g.:-XX:ConcGCThreads, -XX:ParallelGCThreads
+                                                 => decided by ZGC based on cost balancing function solves memory automatically, 
+                                                    adapts amount of threads if needed on fly                                      
+                - still might need to decide by dev how much heap the app might need, if not uses default size 25% of memory, but not more than 32GB
+                    - e.g.:-XX:InitialHeapSize, -XX:MinHeapSize, etc.
+                    - when out of heap - increase heap
+                      - allocations can stall - GC can not stand with allocation rate
+                      - increase again - application is slower maybe due to CPU utilization for GC
+                      - increase again - out of machine memory -> need to find balance
+                          -> can unpredictably stall on allocation with allocation burst
+                          -> might use SoftMax Heap Size - less than MaxHeapSize
+                                                         - tries to use max of SoftMax Heap size
+                                                         - Max Heap Size as buffer - hard to find balance with 'try - fail manual approach'
+                    => automatic heap sizing!
+                        - evaluation CPU and Memory utilization by: System
+                                                                    Process
+                                                                    GC 
+                        - automating balancing based on evaluations - dynamic adaptations
+                           - Weak GC Force - grow heap to reduce CPU usage
+                                           - reduces allocation stalls
+                                           - grows fast if very low, should converge slowly to optimal
+                           - String GC force - shrinks heap to fit to memory  
+                           
+                        - automatically adapts: to native memory increases (e.g. new classes added)  
+                                                to other processes coming to eat memory (e.g. another JVM)
+                                                -> finding balance with dynamic adaptations of heap sizes
+                                                
+               - large pages - mapping from virtual memory into physical memory by OS
+                             - cached by hardware - can effect performance by 15% - more than changing GC algos
+                             - not easy to have turned on always
+                                 - usually needs to touch Linux conf
+                                 - trade-offs - latency problems and memory overheads
+                             - -XX:UseTransparentHugePages - can help when OS configured well (mostly not)    
+                             - Explicit Large pages - need to define pool even before JVM starts - hard to decide before app how many pages will be needed
+                                                    - incompatible with dynamic heap sizing, not only for Java heap
+                                                    - needs OS config - complex 
+               - priming heap (preparing upfront)
+                   - sacrifice start-up or warm-up
+                   - -Xms == -Xmx 
+                          - meaning minHeapSize == maxHeapSize
+                          - prepares heap so memory is ready
+                          - good for warm-up, bad start-up
+                   - -XX:AlwaysPreTouch 
+                          - pages in initial heap
+                          - good for warm-up, bad start-up
+                          
+                   => concurrent priming 
+                          - trying to remove trade-offs between start-up and warm-up
+                          - concurrently page in heap regions - ensures memory is paged before app try to use
+                                                              - not when start up, but before usage thanks to concurrency 
+                          - concurrently installs large pages - no dependency on OS config
+                                                              - using madvise - OS command to give advice about use of memory, with MADV_COLLAPSE 
+                                                              - solves large pages too (we know where and when)
+              - limited number of mappings by OS
+                  - non-generational ZCG - colored references - virtual mapping to the same physical memory 3 times in higher bits
+                                         - + object addresses
+                                         - for concurrency support
+                  - generational ZGC - increased to 12 color bits, more mapping overhead                        
+                  -> colorless mapping - colorless roots - color info in lower bits
+                                       - when loaded to register color info is cut off
+                                       - no need for multimap, reduces mapping overhead
+                  - region mapping and caching - caching garbage collected regions - fragmentation
+                     => mapped cache - instead of mapping regions lets map ranges of mapped virtual addresses
+                        - reduces number of holes + together with defragmentation within ZGC - less mapping needed
+                     - idea is to remove OS config and kept only one XX flag to set everything
+                     
+- the goal is to reduce all flags down to: -XX:UseZGC                                                              

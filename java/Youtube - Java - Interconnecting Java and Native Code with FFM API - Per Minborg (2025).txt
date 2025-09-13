@@ -1,0 +1,156 @@
+Interconnecting Java and Native Code with the Foreign Function and Memory API
+- video: https://www.youtube.com/watch?v=Bhh07Rz5enw
+
+Foreign Function and Memory API
+- shipped in Java 22
+- JEP 454
+- Effective Java (Java 9 edition) warns against using native Java :)
+- native only libs like: CUDA
+                         OpenGL
+                         TensorFlow
+    - till Java 22 it could be used through JNI - Java Native Interface
+        - kinda abstract methods with no body
+        - implementation in C/C++/assembly
+        - brittle combination of Java and C (mostly)
+        - some part of JDK - expensive to maintain and deploy
+        - passing data to/from JNI inefficient and cumbersome
+            - JNI supports only primitive data types
+            - can use buffers to allocate and access off-heap memory
+               - can be passed to native methods
+               - can be accessed directly from C/C++ code
+               - but buffers: have no way to deterministically free/unmap
+                              have limited addressing space ~ 2GB
+                              inflexible addressing (via cursor)    
+                              are mutable
+   - flow: Java client -> JNI -> Native lib
+                           - native method -> C header <- C implementation -> compiled in DLL
+   - example: 
+   class GetPid {
+      
+      // loading DLL lib
+       static {
+          System.loadLibrary(getPid);
+       }
+       
+       //native method
+       native static long getpid();
+   }
+   
+   - execute: java -h 
+        - generates C-header file GetPid.h
+        - we need to provide C impl for GetPid.c that includes the GetPid.h file
+        
+   - other frameworks JNA,JNR, JavaCPP
+   
+Foreign Memory API
+- accessing flat memory through MemorySegments - access to regions of 64-bit memory addresses (only absolute addressing allowed)
+    - has: size (cannot out of bound access)
+           lifetime
+           [optional] thread confinement (no race)
+    - two types:       
+       - Heap Segment - can move due to garbage collection
+                      - inside Java Heap, e.g. java array
+       - Native segment - static
+                        - outside of Java Heap (malloc/mmap)
+                        
+    - example having: struct Point { double x, double y;}
+       then:
+       MemorySegment pointSegment = Arena.ofAuto().allocate(8*2); // 8 bytes for double, 2 double fields
+       pointSegment.set(ValueLayout.JAVA_DOUBLE, 0, 3d); // set double data type with offset 0B with value 3
+       pointSegment.set(ValueLayout.JAVA_DOUBLE, 8, 4d); // set double data type with offset 8B with value 4              
+    - it gives out of bound security, but demands manual offset management with automatic deallocation - that is not deterministic
+        - could free reference too early -> use-after-free (object/memory gets freed before C pointer)
+        - or never freed -> memory leak (C pointer/reference will get freed before the object - never freed)
+     - Arena - one or more segments in the same lifecycle -> provides safety guarantees (no use-after-free)
+             - closing arena atomically closes all segments in that Arena
+             - different types of Arenas:
+                 Global - unbound lifetime (as long as JVM runs), multi-threaded access
+                 Auto - automatic lifetime (GC - not deterministic), multi-threaded access
+                 Confined - explicitly bounded (i have to close by myself), single-threaded access
+                 Shared - explicitly bounded, multi-threaded access
+                        - closing triggers thread-local handshake ~ no thread in critical section before closing check
+                 Custom
+                 
+     - example having: struct Point { double x, double y;}
+       then:   
+      try(Arena arena = Arena.ofConfined()) { 
+       MemorySegment pointSegment = arena.allocate(8*2)// 8 bytes for double, 2 double fields in confined arena
+       pointSegment.set(ValueLayout.JAVA_DOUBLE, 0, 3d); // set double data type with offset 0B with value 3
+       pointSegment.set(ValueLayout.JAVA_DOUBLE, 8, 4d); // set double data type with offset 8B with value 4   
+      }
+      //free memory
+      
+- memory layout
+    - example having: struct Point { double x, double y;}
+    - MemoryLayout pointLayout = MemoryLayout.structLayout(
+          ValueLayout.JAVA_DOUBLE.withName("x");
+          ValueLayout.JAVA_DOUBLE.withName("y");
+      );
+    - ValueLayout contains - carrier Java data type (e.g. double)
+                           - endiannes to know if Big/Little endian is used (a should be converted if necessary)
+                           - alignment (on address when dereferenced) \
+                 - can get VarHandle - can access MemorySegment with address and offset - offsets for nested values, groups
+                 
+    - example:
+      VarHandle xh = pointLayout.varHandle(PathElement.groupLayout("x"));
+      VarHandle yh = pointLayout.varHandle(PathElement.groupLayout("y")); 
+    
+    - VarHandle keeps offset, then can be used in Arenas:
+      try(Arena arena = Arena.ofConfined()) { 
+         MemorySegment pointSegment = arena.allocate(8*2)// 8 bytes for double, 2 double fields in confined arena
+         xh.set(ValueLayout.JAVA_DOUBLE, 0, 3d); // no need to set offset - managed by varHandle  
+         yh.set(ValueLayout.JAVA_DOUBLE, 0, 4d); // no need to set offset - managed by varHandle   
+      }
+      
+                 
+Foreign Function API
+- can call foreign functions in combination of using foreign memory 
+
+- lookup the method (lib already loaded)
+MemorySegment methodAddress = SymbolLookup.loaderLookup()
+                                          .findOrThrow("methodNameThatWeSearch");
+                                          
+- get method handler and pass result value type and input param 
+MethodHandle methodHandle = Linker.nativeLinker()
+                                  .downcallHandle(methodAddress, FunctionDescription.of(JAVA_DOUBLE, pointSegment)); //downcallHandle() from java to native, upcallHandle() from native to Java
+                                  
+- prepare input and try to call native method from java through methodHandler
+try(Arena arena = Arena.ofConfined()) { 
+    MemorySegment pointSegment = arena.allocate(8*2)// 8 bytes for double, 2 double fields in confined arena
+    xh.set(ValueLayout.JAVA_DOUBLE, 0, 3d); // no need to set offset - managed by varHandle  
+    yh.set(ValueLayout.JAVA_DOUBLE, 0, 4d); // no need to set offset - managed by varHandle
+    double result = (double) methodHandle.invokeExact(pointSegment);
+}
+
+	
+jextract
+- external tool that allows to automatically create bindings for the h file created with java -h
+- all in java, no setup needed
+- to make an impl for h file - just import the h file
+- use Arenas and can make upcalls to Java (e.g. to get some Java std lib functions) while 'programming C in Java on "native level"'
+   - example shows using lambda as callback that is used to perform Java upcall
+- upcalls from FFM much faster than JNI
+
+- can use functional interface (only one abstract method) as a proxy for binding and use:
+    MethodHandleProxies.asInterfaceInstance(myInterface, methodHandle)
+    //=> reusability for if expecting different inputs/outputs  
+
+Evolution of FFM
+- goal to improve: startup - time between start and first 'useful' work the app will do
+                   warmup - time between start and the peak performance of app (stable)
+                   throughput
+- some already in Java 24
+- new Arena types in development
+- plan to use records for native calls
+- improving with jextract with StableValues (preview in Java 25)
+
+Summary
+- FFM API provides safe (almost Rust :P) and effective (almost C :D) way to access native memory
+   - brings deterministic deallocation,
+            layout API for structured access
+- FMM API allows efficient access to native functions that might be 100% in Java (no need to maintain other language fun)  
+   - supports not only primitive types but also structs
+- jextract - external tool for automatic binding with native code
+           - generates layouts and var/method handles
+         
+

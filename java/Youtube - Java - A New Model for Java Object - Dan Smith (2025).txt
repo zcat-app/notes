@@ -1,0 +1,74 @@
+A New Model for Java Object Initialization
+- video: https://www.youtube.com/watch?v=XtvR4kqK8lo
+
+Creating objects
+- phases - created
+         - initialized with some initial state
+         - 'larval state' - state between creation and initialization
+                          - does not satisfy their expected invariants
+                          
+Initialization - variables, fields, collections, classes, class instances, frameworks,...     
+- variables - method params, exception params, pattern variables - initialized automatically
+            - local variables - checked at compile time
+            - fields, array components - default value at creation -> can be read before initialization
+
+- final field - has to be initialized in constructor, cannot be mutated after construction
+              - but can be read before initialized!
+              
+- class - assigning all static field initializers and running any static initializer blocks (usually set up static fields or manipulate some global state) 
+        - states of class:
+          - created/uninitialized - initialization have not started yet, class cannot be used
+          - larval - running initialization code (in specific thread - lock applied to not mess with threads)
+          - initialized - initialization code completed, class can be accessed
+          - erroneous - initialization threw exception, class should not be never used
+          
+        - larval class interaction can: read field early to reveal default value
+                                        final field not set - we can observe change on final field o_O
+                                        object store in fields maybe not be updated yet - can break configuration
+                                        
+                                        - options to detect - compiler warning - runtime diagnostic for larval states ~ quite cheap - only in larval state
+                                                            - compile time checks with exception - long term goal
+                                                            
+- instances - initializing = execute hierarchy of constructors - super(); 
+            - together with class instance field initializers and instance initializer blocks (usually set up static fields or manipulate some global state)
+            - in other words: first super, then static initializers, then constructor run
+            - some code runs 'early' (super, static inits)
+                 - cannot call this, 
+                 - cannot invoke instance methods (static class methods should be fine)
+              some 'late' (own constructor, calls from that constructor)
+                 - this can be shared in code
+                 - read field early to reveal default value
+                 - final field not set - we can observe change on final field
+                 - object store in fields maybe not be updated yet - can break configuration
+                   
+            - JEP 492: Flexible Constructor Bodies - allow define parts of code to be executed in 'early phase'
+                                                   - preview in Java 24
+                                                   - run code before super()/this()
+                                                   - run field assignments before super()
+            - states of class:
+              - created/uninitialized - initialization have not started yet, class cannot be used
+              - early larval - running initialization code recurring up in hierarchy
+              - late larval - running initialization code unrolling down in hierarchy
+              - initialized - initialization code completed, class can be accessed
+              - erroneous - initialization threw exception, class should not be never used
+              
+            - improving initialization: what can be initialized early - should be initialized early
+                                          - use convention to show late initialization that it should be explicit 
+                                             - code after super(); is 'late'
+                                             - everything before is 'early'
+                                        warning if field initializer or implicit-super() depends on 'this'
+                                          - implicit super considered to be executed as last in constructor (but in 'early' phase)
+                                        add field reads to approved 'early' operations
+            - long-term goal to apply compile time error (not there yet)                    
+            
+- arrays - creation produces initialized array - either with default values
+                                                 or enumerated array with predefined values
+                                               => larval state not reachable for dev  
+         - future idea to set 1 default value per each element, or precomputed values (~ lambda like producer) 
+         
+Why bother with initialization improvement?
+- initialization bugs are hard to see/catch - like using this when not fully initialized
+- value classes need to have set fields before share its larval object with other classes in order to work
+   - value class does not have location in memory, can be copied freely by JVM
+- null checks problems - variable should not be null and has no default value - checking static field, explicitly initialized field, instance fields in early phase
+- value classes with null checks can gives optimal memory layouts - minimal footprint  

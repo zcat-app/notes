@@ -1,0 +1,272 @@
+groups
+- identity element - adding does not change the element, like 0 in adding
+- inverse - when combining with other element the result is identity element
+- associativity - order of operations (adding) does not matter (1 + 2) + 3 = 1 + (2 + 3) 
+- closure - if combining any two elements from the group the result is also element from the group
+
+-multiplication - adding x times, multiplier can be number outside of the group but result will be group element
+
+elliptic curve
+- in space Zp, Z - whole numbers, p - prime number used for modulo -> prime number fields
+- collinear points - sum to identity ~ 0
+                   - 3 pints on elliptic curve that can be connected by line
+- point of infinity ~ 'line within the point', construct to make the shit work                   
+
+note padding for encryption:
+- fake prefix (random)
+- delimiter
+- message
+- delimiter
+- fake suffix (random)
+
+zk
+- NP hard
+- 3 color coloring of map/graph
+- soundness
+
+Discrete Logarithm Problem DLP
+- hard to find
+
+Diffie-Hellman Key Exchange 
+- alice g^a 
+- bob g^b
+- g^a * g^b = g^ab is public
+- alice knows a can create g^-a -> gets g^b - secret exchanged
+
+Elgamal Public Key Cryptosystem.
+- possibility for bob to encrypt every message with different key while alice is able to decrypt
+- based on DLP and Diffie-Hellman
+
+
+nullifier
+- another hash of secret proving that my secret was claimed - defense against replay attack (and double spend) + race condition (sniffed and executed with higher fee)
+
+circom2
+- every signal private by default - need to define as public if needed
+- constrains - quadratic equations such as ax + b = c
+             - only multiplication and addition on constraints
+             - enforced with ==
+- witness calculation - not limited
+                      - assigned such as a <-- a +1 
+- combining witness and constraint with <==
+  - considered safe but might not be always possible - e.g. division
+
+groth16
+- every circuit needs new trusted setup?
+
+design patterns for ZK
+1 batch processing
+  - process chunks and use it as next input to work on it together with ordering index - to ensure correct order of processing
+  - pros: release resource - cpu, still as safe as done at once
+    cons: longer, costly on contract
+  
+2 quinary poseidon merkle trees
+  - replace MiMC with Poseidon
+  - increase arity from 2->5 not binary, but 5 children (up to 5 supported by evm)
+  -> increase capacity per gas cost by 3x (2^10 = 1024 at 600k gas compared to 5^5 = 3214 at 610k gas)
+  - sha256 way cheaper in gas cost 10x but increased amount of circut constraints like 1000x
+  
+3 EdDSA vs ECDSA
+  - EdDSA - safe, faster, zk more friendly, but fucked up for storing (used to be when only ECDSA supported)
+  - use ECDSA and random string to create signature - then signature used as a key path for EdDSA
+  - ecdsa key might be protected in keystore/hardware wallet, but derived key is in memory - ups - security not so good
+  
+4 Batch deposits for merkle tree
+  - insert into smaller subtrees, coordinator later merges subtrees together - cheaper for everyone
+  - but coordinator can disappear and halt system
+  
+5 SHA256/Keccak256 your public input
+  - every public input into circuit costs 20k in verification of Groth16 (pairing operation)
+  - hashing group of input and pass as public hash but with hashed inputs as private inputs
+  - ten verify hash in circuit against the private inputs hash - reduces cost
+  - can make the circuit large and hard to generate proof in the browser
+  - more for roll-ups where operator generates proofs rather then user generating proof in browser
+  
+other improvements 
+- new protocols like PLONK  
+- recursive proofs for reducing size  
+
+Polynomial
+- equation of multiple Xs and power of X: x + x^2 + 3x^4 - 4 = 0
+- we have secret x 
+- given p(x) provides also proof for p(y) - some other point/value (thanks to Schwartz–Zippel lemma)
+
+note: prime field: everything module prime number, e.g. 7
+      elliptic curve on that prime field
+      g1, g2 generators on elliptic curve - can generate all points on elliptic curve
+      elliptic curve is pairing friendly e(P, Q+R) = e(P,Q) * e(P, R)
+                                         e(P+S, Q) = e(P,Q) * e(S, Q)
+      -> kinda helps to transform something from different groups in a such a way that we can compare/interact with it 
+         - like transforming different units into some common basis unit: (time, length) -> base unit
+      if x = g1 * secret, it is hard/impossible to get secret from g1 and x   
+      
+Trusted setup
+- polynomial : e.g. x^3 + 2x^2 + 5
+- proving key: g1*secret, g*2secret^2, .. .,  g1*secret^n
+- verification key: g2 * secret
+* encryption, g1 generator from group1, g2 generator from group2
+=> secret = 2 => 2g1, 4g1, 16g1 proving key
+                 2g2 verifying key
+- we need to find: x,x^2,x^3, ..., x^n - proving key    
+
+Polynomial commitment 
+- commit to some polynomial that prover (someone else) can verify evaluation of the polynomial
+
+Use Pairing to evaluate 
+- take random point -> we can provide solution for random point if we know the secret (Schwartz–Zippel lemma) - hard to fake one point not fitting in polynomial
+- to prove without knowing secret - verification key g2 * secret - need to transfer g1 and g2 into the same common space gt 
+-> bilinear mapping ~ pairing: P(secret) - a = q * (x-6); 6 - random, a - we want to prove that x-6 evaluates
+                               e(P(x)-a, g1) = e(q, x-6) 
+                               
+Opening polynomial = setup, commitment + pairing    
+- to build constraints 
+- to check public inputs
+
+Plonk - creating selector 'column' - switch to turn off/on elements in polynomial
+
+- representing polynomial: coefficient form - easy addition - ax+ 2bx + c
+                           evaluation form - easy multiplication [1,2,3]
+                           convert coef to eval - FFT
+                                   eval to coef - IFFT
+                                   
+- lookup - tables with range checks? or multidimensional indexes
+         - allows recursion (zk in zk), keccak, ecdsa
+         - consensus proof
+          
+polynomial commitment      
+- data that depends on the polynomial sent by prover to verifier to verify on input x to the polynomial P it gets y: P(x) = y  
+- commitment can be smaller than polynomial
+- commitment scheme phases:
+  1. setup (trusted) - generates public set of data PK (and toxic waste)
+  2. commit - creates c to P commit(PK,c)
+  3. verify polynomial - verifyPoly(PK, c, P) if valid commitment
+  4. open polynomial - generate witness w for P(x)=y, such as Open(pk, P, x) at random point x
+  5. verify opening - verifies if P(x) = y with usage of w, such as VerifyOpen(PK, c, P, x, y, w)
+  
+- generating of polynomial - Lagrange interpolation, such as root of unity w powered to K generates K-th element of the group (y_1, ... , y_k): w^K = y_k
+- prover can verify x, y on verifying polynomial - vector commitment (x, y)
+- thanks to evaluating to zeros, only one opening is enough to prove
+
+Kate commitment
+- for SNARKS
+- pairing on 2 elliptic curves - g(aG1, bG2) -> e(G1,G2)^(ab)
+- G generator of G1 and H generator of G2
+- generate secret s (toxic waste) via MPC - multi party computation
+- make trusted setup - generate PK{s1, s2} such as s1 = s^i * G and s2=s^i * H
+- groups should be hard, relying on DLP (discrete log problem being hard)
+- commitment such as c = Commit(PK, P) = [P(s)]_1 = a0*[s^0]_1 + ... + an*[s^n]_1 from G1
+  -> only PK is required to compute commitment c, we do not need actually s
+  -> we check if commitment is linear combination of trusted setup elements (sum ai*[s^i]) ~ i do not know results of each ai*s^i, while getting relying on getting s^i is hard thanks to DLP (remember we are in prime filed groups not just numbers)
+- verifying polynomial then rely on fact that it is hard to fake polynimial to fit for the commitment done with secret s. such has having c = [P(s)] and introducing another polynomial Q with [Q(s)] then there if we find [P(s1)] = [Q(s)], thus [P(s1)] - [Q(s1)] = 0 with probablity n/p where n<=2^28 and p ~ 2^256
+- problem when secret s is leaked! then we can construct such a polynomial Q that can fake data and lead to prove shit that should not be proven - easy to construct with known secret
+- opening at point x0 creates a polynomial Q(x) = (P(x) -y0) /(x-x0)
+  -> from algebra P(x0) = y0 then (P(x) - y0)/(x - x0) is polynomial
+  -> x represents our secret s, 
+  -> Open(PK, P, x0) = [Q(s)] = [(P(s)-y0)/(s-x0)]
+  -> we do not want to leak s, we use result of trusted setup evaluation for Q(s)
+- verify opening - through pairing 
+  - to open at x0 we define PI = [(P(s)-y0)/s-x0] in group G1
+  - then we should check if: 
+       e(PI, [s-x0]_2) = e(c-[y0]_1, H), 
+        - we know s*H from trusted setup and x0_2 
+        - we know commitment of c of [P(s)]
+        - we know H of second elliptic curve (G2)
+        
+       => Left side:  e([(P(s)-y0)/(s-x0)]_1, [s-x0]_2) => e(G,H)^(P(s)-y0)
+       
+       => Right side: e([P(s)-y0]_1, H)                 => e(G,H)^(P(s)-y0)
+       so they should be equal, faking proof PI with different y0 should be hard (like DLP) 
+
+- Kate commitment allows opening for many points at once
+  - similar approach, opening on product s - xi and evaluation of interpolated polynomial of points 
+    PI = [(P(s)-I(s))/MULT(s-x_i)]_1, for i from 0 to k-1, I(x) = SUM(yi+MULT((x-xj)/(xi-xj))) where i from 0 to k-1 and j != i
+    Thus we want to achieve R(x) = P(x) - I(x), such as R(x) = 0
+  - same shit, but with multiplication + interpolated polynomial
+  
+FRI-based commitment
+- for STARKS, no trusted setup but bigger proofs in size and proving time log^2d (depth of tree)
+- fast Reed-Solomon interactive oracle proofs of proximity
+- on subset L from finite prime filed applying encoding with set of functions to create low degree polynomials... heh?
+- L from Fp, then encoding RS[L,r] = {f: L -> Fp | deg(F) < r|L|} ... uff... better?
+- then proof of proximity tries to prove that function f is from RS[L,r] ~ meaning low degree poly
+   -> it accepts proof with probability epsilon(delta) if function f is delta-far from RS[L,r] in Hamming space
+- interactive proof with randomness and oracle access to the proof ~ random challenges verify to proof interactively
+- kinda checks if the function on some set of data has low degree polynomial
+- commitment:
+   Polynomial P on subset L with degree almost N, where L is {0,1, ..8n} (not sure if always or example?)
+   evaluate polynomial P on subset of L as merkle root p 
+   then evaluate Q and R such as P(x) = Q(x^2) + xR(x^2) as merkle root q and r
+   then create hash of transcript (~ steps done till now) h such as and create polynomial S(x) = Q(x) + h(R)x
+   it should provide enough merkle branches for proving on randomized points
+     ~ meaning: randomly evaluate bunch of points at p, q, r, s to get enough probability it is good enough
+    
+   run recursively to for S(x) with degree < n/2, trying to provide that P at every round is low rank (at most n)
+- opening on L means providing Merkle path to Merkle root of evaluations P
+   use Q(x) = (P(x) - y0)/(x-x0) -> trying yo prove proximity to degree < n-1 polynomial with the same process as commitment proving
+   
+Circom ZK primitives
+- circom can have only 5 inputs?
+
+1 Hash functions
+- MiMC - original ZK friendly hash, kinda default back then - like tornado cash
+- Posseidon - later started replacing MiMC - like Loopring (L2 project on ETH) 
+            - slightly more efficient than MiMC on amount of constraints (ZK circuit) and also gas fees on EVM
+            - can be used as encryption function (symmetric encryption), also part of circomlib
+- Rescue - ZK friendly, created by fuildex, at the time now EVM impl
+- Blake2S - initially used in Semafor project (Kobi implementation), not SNARK friendly, slow
+- SHA256 - super slow, too many constraints
+- Pedersen - built on babyjub EC, slightly more expensive than Poseidon
+           - homomorphic, can be not safe if implemented bad - length extension attack
+                                                             - use pedersen on messages with the same length
+                                                             - every different length should have own generator
+
+2 Signatures
+- BabyJub EdDSA (Edward-Curve Signature Algorithm) - cheap in constraints but no way to verify in EVM - no existing contract at the time
+- ECDSA - expensive in circuit constraints, but cheap to verify in EVM
+- RSA - at timebeing was worked on
+
+3 Key Exchange
+- ECDH - elliptic curve Diffie-Hellman
+       - not part of circomlib, but in maci repo
+
+4 Merkle Trees
+- Leaf inclusion proof - part of maci project
+- Root calculation from all leaves - part of maci project
+                                   - very expensive - exponentially grow with adding leaves
+                                   - might work up to 5 levels
+
+5 Non-cryptographic
+- Splicer - maci repo, having array of values - insert new element at index i and move remaining part, such as [0,1,2], insert 5 on index 1 -> [0,5,1,2]
+- Selector - QUinSelector - extract an element at certain index ~ basically read element on index i
+           - index usually as input signal - then cannot read as regular index on array - thus selector
+- Unpack element - converts 253bit element to n 50-bit output for 1 < n <= 5
+                 - kinda packing 5 elements into one signal input, using 50bits per each
+                 - good for contracts where every public input costs gas
+
+6 EdDSA buffer pruning
+- snarkjs prunes private key before sending to the circuit, check buffer pruning
+
+Extra plausible deniability of verified proof - i want to show person1 i know but not reveal person2
+- ask random number from person1 and show I know either secret OR random number (alternative ask private key of person1)
+- time delay attacks - if i can provide proof too fast
+
+ZK Puzzles
+- random oracle functions - good randomness - i cannot guess what will be the result, e.g. Pedersen is homomorphic - not good
+- always perform prime order subgroup membership checks - if not, there is possibility to reveal some amount of bits of your secret (or whole, paring can reveal more when performed on two groups)
+- do not reuse nonce - can lead to extraction of the secret
+                     - do not use related nonce  - even relatable nonce is bad, like double of previous - there is observable relationship
+                     - for example we can use hash of signature
+- choose blinding polynomial degree by the amount of queries you make
+    
+    
+  
+
+
+
+
+
+
+
+
+
+

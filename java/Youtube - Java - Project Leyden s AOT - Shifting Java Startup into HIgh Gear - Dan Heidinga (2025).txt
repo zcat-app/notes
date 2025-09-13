@@ -1,0 +1,106 @@
+Project Leyden's AOT - Shifting Java Startup into High Gear
+- video: https://www.youtube.com/watch?v=Oo96adJirPw
+
+Focused on app startup and warmup
+- startup - time until the app will start performing first useful task
+- warmup - time until the app reaches peak performance
+- both have load done by app (e.g. parsing config) and on behalf the app (e.g. loading & compiling classes)
+- startup & warmup becomes issue since java is dynamic
+  - combination of static and dynamic typed languages (something dealt wit during compilation - Generics, method overloads, but something in run time - ArrayStoreException)
+  
+Startup
+- app is: reading config files
+          scanning annotations
+          opening sockets
+          register listeners
+          creating loggers and loggers and loggers
+ jvm is: class loading, linking, initializing          
+           - reads classes from disk
+           - validating and creating metadata to be used in app
+           - initializing classes (static initializers)
+         interpreting
+         linking callsites (resolving lambdas and references between classes - addresses and offsets for JVM calls) and const pool resolution
+         profiling
+         
+Warmup
+- performing task of the app - e.g. calculation and building caches
+- JVM activities on behalf of the app - JIT compilation of hot code (optimizing)
+
+- both done every time again
+  - flexibility, good for finding better optimizations - good trade-off for most apps
+  
+JVM observes app runtime - applies speculative optimizations for future based on past 
+                           - dynamic path recovery allow execution to continue when optimizing speculations no longer holds 
+JIT - just in time - done when needed
+AOT - ahead of time - done early
+    - can we do AOT for app runs? -> Training runs - runs at build time - like integration tests
+                                                   - requires smaller driver program - like integration test
+                                                   - to observe real behavior
+                                                   - like dynamic compilations allows to see what is really happening 
+                                                   - JVM already uses training runs for Class Data Sharing (CDS) archives
+                                                      - sharing read-only JVM metadata for classes among multiple JVM processes
+                                                      - loaded per request (when needed, one by one - independent, no info on other linked classes)
+                                                      - dynamic AppCDS from Java 13 - simplifies the process by allowing the JVM to generate a shared archive automatically when the application exits - no need for test run!                           
+
+CDS allows minor speculation on which classes were used and cache them but cannot speculate on relationships (linkage)
+- premain phase - before main method is executed: starting VM
+                                                  allocates memory (heap)
+                                                  starting threads for jcompiler
+                                                  loading all classes (Object, String, ClassLoader, etc) before it loads our code
+                - AOT cache - instead of loading CDS classes from previous run - load in bulk into cache   
+                            - loading all CDS can map linkage between classes (not with symbols ~ lookup by name, but with addresses in memory - cache)
+AOT class loading and linking
+- uses the AOT cache resolves all linkage (super classes, interface impl, field memory layout, resolves const pool entries, precomputed vtables for linked classes)
+- all has to be loaded at once to be able to resolve linkage (via addresses) in premain phase
+- note: loading based on 'symbols' like in other jar with package name and class name - cannot have 'burned in' address in case of changes in that jar/class, thus search by metadata based on package, name etc. -> ensures we can dynamically load
+        when we load all wanted classes based on previous profiling/training we can store them in the cache and address them via addresses in that cache and resolve links between classes in AOT phase
+                                                      
+
+in Java 24 already: 3 phase workflow:
+  - training run:
+      - records the observations of training run into app.conf file
+      - java -XX:AOTMode=record
+             -XX:AOTConfiguration=app.conf
+             -cp app.jar org.package.AppClass,...
+             
+  - assembly phase
+      - does not run the app itself, only start JVM to be able to construct the AOT cache (load and resolve classes to set them in expected state)
+      - java -XX:AOTMode=create
+             -XX:AOTConfiguration=app.conf
+             -XX:AOTCache=app.aot
+             -cp app.jar
+             
+  - deployment phase
+      - built AOT cache then can be used on multiple instances of our app
+      - java -XX:AOTCache=app.aot
+             -cp app.jar org.package.AppClass,...
+
+- separation of training run and assembly to not interfere and influence state of cache - extra behavior with assembly that is not connected to run of the app
+- JEP 483: Ahead-of-Time class loading and linking
+- usage AOT cache can provide 50-70% improvements on various framework startup
+
+Leyden
+- startup
+  - adding profiling on the JVM
+  - to add speculative optimization on it
+  - on the 'hard methods' - profiling everything is expensive, should be focused on what matters (via stats like invocation times, classes encountered, etc)
+  - training run can speculate together with previous run profiling data
+  - AOT + JIT profile can adapt if previous run and training is not matching
+              combination allow to pass earlier to higher tier compilation adaption (C1, C2)  
+  - JEP draft: Ahead-of-Time method profiling
+  
+-warmup
+  - JIT compilation - all speculative - can fallback to lower tier ~ rollback previous optimizations
+                                         - e.g: if environment changed, debugger influence, performance on current data is not optimal, cache run out of space, etc. 
+  - AOT speculation - with profile data we can pre-schedule JIT, or even try to pre-compile from archive
+                    - can used complied code after when all classes that the code depends on are loaded - fast but highly non-optimized
+                       - can track two tiers - one fast and pre-compiled and one optimized based on run time observations (that leads to not have usual flow of c0 - interpreted, c1 - profiled, c2- optimized, but adding another branch with precompiled)
+                       - if needed JIT can optimize and adapt, if not optimal anymore, JIT will deoptimize, reprofile and reoptimize
+                       - JEP draft: Ahead-of-Time code compilation
+  
+-note: joatc - JEP 295: Ahead-of-Time Compilation
+             - previous experiment to try to precompile the whole app - too much code, code did not match the behavior of app - bad optimizations
+             -> that's why training runs in Leyden - JIT advantage to be focused on the specific code and path, not bothered by other code - better optimization 
+             - interesting: https://stackoverflow.com/questions/45298045/how-do-i-run-a-class-compiled-with-jaotc
+
+

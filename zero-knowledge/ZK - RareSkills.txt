@@ -1,0 +1,27 @@
+P, NP
+- if P = NP -> if I can verify something fast, can I also find fast solution to be verified - most probably not, thus P != NP
+- alg runs: 'fast' in polynomial time O(n^c) - time is not extended significantly based on size of input
+            'slow' in exponential time O(c^n) - becomes exponentially slow if input size increases 
+             c > 1 
+             
+- P - problem can be verified and calculated in 'fast' polynomial time - e.g. sorting - quicksort O(n log n), nlogn < n * n, verify in O(n)
+                                                                              find index of element with certain value in array O(n), verify even in O(1)
+                                                                              
+- witness - proof that calculation was done correctly
+          - solution that can be verified
+          
+- PSPACE - problems that need: exponential resources to solve, but poly to verify
+                               but not necessarily need exponential memory 
+         - no efficient algorithm found yet - if so, current encryption in danger                       
+         -> not all problems can be efficiently verified - ideal chess move   
+                                                         - compare if two regexes provides the same result
+         - harder problems than PSPACE - checkers - if not limited space, we need to check were we can place check, or possibly grow in space for the 'board'     
+ 
+ - NP - "non-deterministic polynomial" - problems that can be quickly verified, but not computed
+      - computation might need exponential resources
+      - thus all P are subset of NP, but unlikely that NP = P (all NP problems can have solution in poly resources)
+      - e.g. sudoku filling, 3-coloring map 
+ 
+- all P and NP problems might be verified by transforming into boolean formulas and verifying the solution of the formulas         
+         
+          

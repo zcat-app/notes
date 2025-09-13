@@ -1,0 +1,53 @@
+Java Security Evolution - Out with the Old, In with the New (2025)
+- video: https://www.youtube.com/watch?v=hLJQC7LKCp8
+
+- new landscape of threats -> post quantum encryption in java
+- two new API blocks: KEM - key encapsulation mechanism 
+                      KDF - key derivation function
+
+A) Leighton-Micali Signatures (HSS/LMS)
+ - java 21: keyfactory only on public keys
+            signatures - only verification of signature
+            generating pairs only through 3rd party JCE provider
+   java 22: jarsigner - signing jars
+            keytool to generate HSS/LMS keypairs with 3rd party JCE provider
+            
+B) Module Lattice based Key Encapsulation Mechanism - ML-KEM   
+  - JEP 496, delivered in Java 24
+  - based on KEM API from Java 21
+  - new KeyPairGenerator, KeyFactory and KEM implementations - back-ported to Java17
+  - 3 parameter sets: ML-KEM-512, 768, 1024 bits
+  - for sharing secret securely (if Diffie-Hellman not secure), not signature algorithm
+  - supported in keytool for ML-KEM pairs and certificates (for certs needs to be signed with different alg, such as ML-DSA, RSA)
+  
+C) Module Lattice based Digital Signature Algorithm - ML-DSA   
+  - JEP 497, delivered in Java 24 
+  - new KeyPairGenerator, KeyFactory and Signature implementations 
+  - 3 parameter sets: ML-DSA-44, 65, 87 
+  - supported in keytool for ML-DSA key pairs and certificates
+  
+- some threats not threats anymore 
+  - applets - deprecated in Java 9, 
+            - plugin removed in Java 11
+  - deprecated security manager - solution for problems that 'does not exist anymore'
+                                - pain in the ass to maintain (for sandboxing) -> containers & hypervisors came to ensure sandboxing
+                                - since Java 1.0, rarely used on server side, primary for client
+                                - deprecated in Java 17 - prints warning at startup (can enforce fail with -D jvm param -Djava.security.manager=disallow)
+                                - disabled in Java 24 - exception/error at startup
+                                                      - API still present but nonfunctional - planned to be removed
+                                                                                            - benefit - libs that use it can still work (if well handled nulls)
+  - JAAS - Java Authentication and Authorization Service
+         - service to authenticate and later allow authorization
+         - replacement API added in Java 18
+
+Recent enhancements:         
+- Java 22 adds -XshowSettings:security option
+                 - shows properties, providers and TLS sub-options   
+- Java 23 adds new keystore for macOS root certificates KeychainStore-Root
+                 - sets javax.net.ssl.trustStoreType property to use the keystore for TLS connections
+                 - meaning 2 keystores - one for keystore key-pairs
+                                                 keystore-root for certificates
+- Java 24 adds Key Derivation Function API
+                 - JEP 478, preview, new API for deriving keys from key material and other data
+                 - should be handful for PQC (post quantum cryptography)
+
