@@ -1,0 +1,116 @@
+How To Not Strangle Your Coworkers: Resolving Conflict with Collaboration - Arthur Doler
+- video: https://www.youtube.com/watch?v=Te7kE8WfGzc
+
+- conflict vs disagreement
+
+- disagreement - 2 or more people differing/opposing opinions/belief about something at work
+- conflict: if disagreement is important
+            if we are interdependent ~ if we win/fail together 
+            if both believe evidences are on their side
+
+-usual cope: pretending it does not exist - does not help
+
+- conflict types:
+a) Task Conflict
+- about what we are doing, tools we use, approaches, tickets, team goals
+- different opinions and point of views * can help find overlooked problem
+- good 
+
+b) Process Conflict
+- conflict about process - how we do the work, who is in charge, who and why does decisions, how do we achieve goals
+- helps explores new ways of working, helps find if the right people are in the team
+- good at beginning, later becomes toxic - unfairness, not enough resources
+- can be between teams (who is responsible for module) and individuals
+
+c) Relationship Conflict
+- about power moves, about with we work
+- the worst
+
+- effort to maximize good conflicts, lower bad conflicts
+
+Psychological safety
+- people feel safe enough to speak up to what they actually believe
+- note: showed social graph with relations to keep relations to survive
+          - dev - QA, dev - manager, dev - family          
+- not only being nice - toxic positivity == toxic negativity
+- context changes - in my team, in different team
+- can prevent catastrophic events, holding back is bad
+- brings higher performance & engagement + allows to find hidden conflicts
+- has to be built in team, only can be achieved if environment is prepared
+    - book The fearless organization 
+      -1) Set the stage
+          - frame the work
+          - emphasize purpose
+       2) Invite Participation
+           - demonstrate situational humility!
+               - no one know everything
+               - say I DONT KNOW instead of uneducated opinion
+               - not everything others say is wrong
+                   - the world is not how we perceive it, every one does see differently, different values
+           - practice inquiry! (~ exploring, learning)
+               - asking question is not weak
+               - ask: about you do not know the answer
+                      dont limit to YES/NO questions 
+                      in way it helps others share thinking in focused manner
+                      elaboration questions - understand why
+       3) Respond productively
+           - express appreciation!
+               - good feedback on question/response
+           - destigmatize failure
+           - sanction violations
+           
+Emotions
+- controlling emotions, not suppressing them
+- book Theory in Practice - Increasing Professional Effectiveness
+       - conflict types: Model 1 - win in zero-sum game
+                                 - aim to control (minimize) emotions of other participants
+                                 - using concrete strategies to get the outcome
+                                 - creates: a) self-fulfilling prophecies 
+                                              - loop of self-confirming events
+                                              - push one person - that person starts pushing you
+                                            b) self-sealing processes
+                                              - not being honest (e.g. about performance) and trying to push in different direction (position) - solve quietly, while the the manipulated person gets angry about deception and resist - no way out without direct confrontation
+                                 
+                         Model 2 - tries to achieve win-win 
+                                 - accept emotions of participants
+                                 - avoid self-sealing processes
+                                 
+- people afraid of conflict leans to Model 1
+    - moral language (you are bad person), anger incorrect opinions
+    -> prepare Psychological safety for uncomfortable situations
+        - talk about emotions
+           - retrospective
+           - post mortem incidents
+
+- even 'good' conflict can transform to bad conflict - e.g. fight of two senior devs moved to personal conflict
+- try to keep conflict localized, e.g. focused on the task
+   - conversational receptiveness
+     - H.E.A.R
+        Hedging - soften your opinion - maybe, perhaps, sometimes
+        Emphasizing agreement - highlight what you agree on/like
+        Acknowledgement - active listening - don't think what you say next but process the input
+                                           - rephrase what was said to confirm you understand it
+        Reframing to Positive  - "i hate when people interrupt me" x "i love when people let me finish my thoughts"    
+        
+Confrontation styles
+- Yielding
+   - passive + pro social - you care about others, solving by giving others' demands
+- Avoiding
+   - passive, hope it will get solved by itself, rather than discuss change the topic
+- Cooperating
+   - active + pro-self & pro-social, identify issues and solutions for both, tires to achieve feel of personal outcome to both sides
+- Fighting
+   - active + pro-self, tactics to intimidate, mandates, challenges, insults, accusing 
+- Conciliating
+   - mixed approach, win over others by let them win some... :thinking:
+   
+- single contributor should engage, even not manager or having power, might help to reshape
+   - be aware of power dynamics
+   - pick you conflicts carefully
+   
+- position vs goal
+   - goal - what we want to achieve
+   - position - how we want to achieve 
+              - we cannot shift other goals, but rather positions (to met even our goals)
+
+- "seek first to understand, then to be understood" ~ from 7 habits of highly effective people (allegedly bad book)

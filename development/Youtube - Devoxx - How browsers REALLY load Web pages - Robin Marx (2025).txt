@@ -1,0 +1,71 @@
+How browsers REALLY load Web pages by Robin Marx
+video: https://www.youtube.com/watch?v=n34UjuPKIYI
+
+- loading javascript
+  - synchronous - blocking needs to load the whole file
+      <script src="script1.js"></script>
+  - deferred - execute after page is rendered
+      <script src="script1.js" defer></script>
+      
+- loading css
+  -render blocking needs to load before render
+      <link rel=stylesheet href=style1.css />
+      
+- loading font type, picture not used in main html, but maybe in css files
+      <link rel=preload href=font1.woff2 />
+      <link rel=preload href=logo.png />
+      
+- example:
+      <!-- 4th -->
+      <link rel=preload href=font1.woff2 />
+      <link rel=preload href=logo.png />
+      
+      <!-- 1st -->
+      <link rel=stylesheet href=style1.css />
+      
+      <!-- 3rd -->
+      <script src="script1.js" defer></script>
+      
+      <!-- 2nd -->
+      <script src="script1.js"></script>
+      
+- loading order in HTTP1 - load 1 resource at time, max 6 connections
+- HTTP2/3 - can load in single connection in parallel 
+          - browser uses priorities
+          - HTTP3 with header priority for every resource
+          - HTTP2 priority might not get reflected by server - apache okish, nodejs - disaster
+          
+- loading depends on server response, browser cannot rely on it
+   - 2 phase loading 
+      - ask the highest priority first ~ Tight mode
+         - delays lower priority for 2nd phase if cannot fit in first phase
+      - ask for low priorities with delay  
+      - chrome - html, css in head - highest
+                 js in head - high
+                 js in body medium
+                 other - low (perf adaptation chrome loads first 5 pics on page as medium, even before deferred js)
+                 tweak - as far as one of high priority finishes the connection can be used for loading lower one by one
+      - not standardized - different approach from each browser
+      
+- chrome dont use 2 phase when no blocking js (in header), safari is consistent 
+- safari loads even deferred js before images
+- js in middle of html - resolved by some heuristic - not known?
+
+- firefox don to tight mode in HTTP2/3, loads all in parallel
+
+- possible to manipulate and enforce own priority - 'fetchpriority=high'
+   - settable only: 'high' (include to tight mode) 
+                    'low' (exclude from tight mode)
+   - cannot set 'highest' or 'lowest'
+   
+   example: 
+   <img src="pic.png" fetchpriority="high" />
+   
+   - chrome - async js, defer js, images
+   - safari - high - images only
+            - low does not work
+   - firefox - ok except corner cases, e.g images after defer js - need to shuffle order in HTML  
+   
+- basically mess since every browser does its own stuff and ignoring priorities for some types   
+   
+   

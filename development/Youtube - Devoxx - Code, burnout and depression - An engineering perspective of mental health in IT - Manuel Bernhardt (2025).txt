@@ -1,0 +1,59 @@
+Code, burnout and depression: an engineering perspective of mental health in IT by Manuel Bernhardt
+video: https://www.youtube.com/watch?v=pYuzgGzslHY
+
+- challenges: mental - focus on problems - focus on negative
+                                         - focus on solving
+                                         - 'perfection'
+              physical - lack of movement
+              emotional - playing catch up - fast moving industry
+              
+- burnout - mental, physical, emotional exhaustion by prolonged repeated stress, type of depression    
+          - causes: perfection
+                    lack of agency
+                    lack of recognition/fairness
+                    bad management
+                    'it won't work without me'
+                    value mismatch
+                    workload
+          - symptoms: bad sleep
+                      stop enjoying activities
+                      anxiety 
+                      hopelessness, pessimism, irritability
+                      lack of energy, sleep problem
+                      difficult to concentrate/remember
+                      physical pain without clear cause
+          - 'limp mode' - protection mechanism from more harm by shutting down body       
+          
+- gp usually send to psychiatrist - juice you and make you antidepressant junkie          
+- antidepressants - 51% success?!
+                  - 82% placebo effect
+                  - 1960 theory - serotonin insufficiency - depression - not proven o_O
+                  - side effects - many - heartburn, vomiting, tiredness, sweating, thirst, sexual problems, coma, ...
+                 
+                 
+- using antidepressants for burnout == commenting out failing tests after change
+
+- tools to recover - psychotherapy - different types
+                                   - trust needed in therapist 
+                   - mindfulness-based stress reduction - meditation 
+                                                        - reduces stress
+                   - transcranial direct current stimulation - neuron stimulation
+                                                             - focused on are less used by depressed people (planning and action area)
+                                                             - flow neuroscience helmet to use at home, no side effects
+                   - exercise - even walking and jogging             
+                   - alcohol - yay! I am home
+                             - more alcohol = more depression
+                   - St John's Wort - natural antidepressant
+                                    - almost no side effect
+                                    - pill Laif Balance 900 :think:
+                   - journaling
+                   - 'medical' ayahuasca - of course... IT bros :cricket:
+                   - healthy diet, no sugar
+                   - neurofeedback
+                   - supplements for microbiome (expert needed)
+                   - neurogenic tremors 
+                   - Body keeps the score
+
+          
+              
+              

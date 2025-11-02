@@ -1,0 +1,137 @@
+LATERAL might be your new favourite JOIN !
+video: https://www.youtube.com/watch?v=55pX1Na1QCo
+
+- more like summary of multiple topics
+- sql developer plugin for vs code
+
+1) Reserved words
+- case with function with reserved function 
+   - possible to create
+   - not possible to call/execute?
+   
+   - example with created 'count' function
+     create or replace function count return int is
+     begin
+       return 1;
+     end;
+     
+     exec dbms_output.put_line(count);   -- error: 'count' may be used only inside SQL statement   
+     exec dbms_output.put_line("count"); -- executes the function! needs ""
+     
+  - select * from v$reserved_words where keyword = 'count' -- info about count, shows count is not set as reserved :D 
+                                   where reserved = 'y'    -- info about strictly reserved keywords - not possible to create like 'view', 'varchar', etc
+                                   where res_type = 'Y'    -- info about types, allows to create function but not custom type, e.g. column_value
+    
+  - if called in select: a) select count(1) from table;   -- count all 1s, e.g. 14
+                         b) select "count(1)" from table; -- print 1 for every occurrence, e.g. 14 times 1
+
+
+2) Benefits of 'lateral'
+- simplify writing queries
+- allows to use columns from 'select'/from part in the joining subquery
+
+- example:
+  select a, b, c
+    from T1
+      lateral (
+          select d 
+            from T2
+           where T1.a = T2.a
+           order by d desc
+           fetch firs 1 row only
+      )
+  order by a, b, c    
+
+- dmbs_utility.expand_sql_text ('{query with lateral}'); --shows the same :/
+  alter session set events = '1005 trace name context forever, level 1') -- to allow print optimized query 
+  explain plain for
+  {query with lateral}   -- print to the trace file
+  
+  host (gawk "/Final query after/, /kkoqbc/" &&tracefile | grep SELECT )
+  -- prints optimized query with regular join - magic
+  -- but support native lateral too -> not rewriting to usual join o_O
+  
+- note: column string with comas to rows:
+  select * 
+    from dual
+    connect by level <= (select max(regexp_count(c, ',')+1) from t)
+
+
+3) primary key as local index
+- issue big table and PK is global index + partition table
+   - index cannot be build as local if does not include partitioned columns
+   - it would enforce the partition column to be part of the key
+        alter table TABLE_NAME add constraint TABLE_NAME_PK primary key (pk_column, partition_column) -- drop of partition keeps index valid
+                              -- can use 'lookup' table for unique key to avoid defining the 'composite key with partition' (if for example date) => try to simplify 
+- existing table with partitions
+- create PK on table existing table
+    - create index: 
+        create unique index INDEX_NAME on TABLE_NAME (pk_column) parallel 8;
+    - create PK on index: 
+        alter table TABLE_NAME add constraint TABLE_NAME_PK primary key (pk_column) using index;
+    - note: creating together ignores parallel:
+        alter table TABLE_NAME add constraint TABLE_NAME_PK primary key (pk_column) using index (create unique index INDEX_NAME on TABLE_NAME (pk_column) parallel 8)
+- drop of unused partition set existing index into unusable state
+    - cannot insert, edit
+    a) needs to recreate index 
+    b) update index on partition drop:
+         alter table TABLE_NAME drop partition PARTITION_NAME update indexes;
+         -- keeps index in valid state, can take more time, don't resize index size in MB, only removes entries from index
+         -- since 12c not deleting index entries but referencing to 'orphan entries' (~ deleted) - orphans might have perf impact on optimizer (in case of min/max value search, due to 'garbage references' it has to do index full scan)
+         -- db runs job at night to clear orphans, could be triggered by:
+            execute dbms_scheduler.run_job('SYS.PMO_DEFERRED_GIDX_MAINT_JOB', true); -- cleanup all indexes, does not resize space (that would need rebuild the index)
+            
+         
+- hint: how big is index in MB? select bytes/1024/1024 mb from dba_segments where segment_name = 'INDEX_NAME';    
+    
+                                
+4) password security when upgrading
+- locking db user, possible security issue
+    alter user NAME account lock; --can reveal existing user to hacker 
+
+- getting user password (oracle11)
+    select password from dba_users where username = 'NAME' -- does not show password
+    select password from sys.user$ where username = 'NAME' -- shows hash of the password
+- setting password to non hash, like:
+    alter user NAME identified by values 'impossiblehash'; -- shows failed log, not possible from oracle 12+
+- oracle 12 changed hashing password, uses SPARE4 column instead of PASSWORD
+- still possible to call:
+    alter user NAME identified by values 'valid_hash_value'; -- people set all 0, changed in oracle 19
+- oracle 19
+    create user NAME no authentication; --fails on login always
+    alter user NAME no authentication; -- for existing user
+
+- note: if user has granted session - you can do proxy connection through different user!    
+
+    
+5) recursive WITH
+- note: check 'connect by'
+- e.g. building hierarchy manager, lower managers, workers
+  - mental model: 1st query for managers
+                  2nd query for lower managers with join on managers
+                  3rd query for workers with join on lower managers
+                  
+  with levels(id, name, mgr, rlevel) as (
+     --1st                            ~ start with
+     select id, name, mgr, 1 rlevel 
+       from t1
+      where mgr is null
+     -- 2nd inner1 = t1 join inner1   ~ connect by
+     union all
+     select *, rlevel +1 --increments depth of hierarchy
+      from t1, levels 
+     where t1.mgr == level.id;
+ )
+ select * from level;
+ 
+- hint: detecting cycles in connect by/recursive with techniques 
+          - exceptions
+          - connect by NOCYCLE
+            with () ... CYCLE column SET is_cycle to 'Y' default 'n'
+            select * from 
+        advantage of recursive with - searches - breadth-first, depth-first         
+
+not discussed:
+- new APEX export options
+- too much parallel
+- SQL plus arguments

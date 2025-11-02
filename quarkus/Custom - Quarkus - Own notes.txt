@@ -1,0 +1,131 @@
+REST Client
+- guide: https://quarkus.io/guides/rest-client
+- quarkus extension add rest-client-jackson
+
+- create model class - DTO
+- create service interface
+	  @Path("/path")
+	  @RegisterRestClient
+	  public interface ExtensionsService {
+
+	      @GET
+	      Set<Object> getById(@QueryParam("id") String id);
+	  }
+
+query string parameters
+- expected query string param to
+  @GET
+  //@Produces(MediaType.APPLICATION_JSON)
+  Object foo(@QueryParam("id") String id);
+  - @Produces(MediaType.APPLICATION_JSON) - optional for method that expects to get JSON
+                                          - default
+
+- nullable, can be with map
+	@GET
+	Object foo(@RestQuery Map<String, String> filter);
+
+- configurable value by config file or method (~ supplier)
+	@ClientQueryParam(name = "some-param", value = "value")
+	- on class (used on every request) or method (added only to that request)
+	- value can either be a constant, a configuration property or it can be determined by invoking a method
+
+- @QueryParam has higher priority over @ClientQueryParam if mixed
+
+
+
+form parameters
+- expected form param to
+	@POST
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	Set<Extension> postId(@FormParam("id") String id);
+
+- nullable, can be with map
+	@POST
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	Set<Extension> postFilter(@RestForm Map<String, String> filter);
+
+- configurable value by config file or method (~ supplier)
+	@ClientFormParam(name = "some-param", value = "value")
+	- on class (used on every request) or method (added only to that request)
+	- value can either be a constant, a configuration property or it can be determined by invoking a method
+
+URL path
+- const or with placeholder with @PathParam
+	@Path("/stream/{stream}")
+	Set<Extension> getByStream(@PathParam("stream") String stream,
+	                           @QueryParam("id") String id);
+
+dynamic base URL
+- if base URL is changing, can be set with parameter annotated with @Url
+	@GET
+	@Path("/stream/{stream}")
+	Set<Extension> getByStream(@Url String url, @PathParam("stream") String stream, @QueryParam("id") String id);
+
+reading full HTTP response
+- RestResponse to get access to headers, status code etc
+	@GET
+	@Path("/properties")
+	public RestResponse<Set<Extension>> responseProperties(@RestQuery String id) {
+		RestResponse<Set<Extension>> clientResponse = extensionsService.getByIdResponseProperties(id);
+		String contentType = clientResponse.getHeaderString("Content-Type");
+		int status = clientResponse.getStatus();
+		String setCookie = clientResponse.getHeaderString("Set-Cookie");
+		Date lastModified = clientResponse.getLastModified();
+
+		Log.infof("content-Type: %s status: %s Last-Modified: %s Set-Cookie: %s", contentType, status, lastModified,
+			setCookie);
+
+		return RestResponse.fromResponse(clientResponse);
+	}
+
+
+Custom HTTP options
+- through configuration and Provider
+	@Provider
+	public class CustomHttpClientOptions implements ContextResolver<HttpClientOptions> {}
+
+- or via QuarkusRestClientBuilder
+	    private final ExtensionsService extensionsService;
+
+	    public ExtensionsResource() {
+		HttpClientOptions options = new HttpClientOptions();
+		// ...
+
+		extensionsService = QuarkusRestClientBuilder.newBuilder()
+		    .baseUri(URI.create("https://stage.code.quarkus.io/api"))
+		    .httpClientOptions(options)
+		    .build(ExtensionsService.class);
+	    }
+
+Configuration
+- can configure base URL, TLS (~ turned off), HTTP2/1.1 preferences
+
+RestBuilder
+- OKHttp like builder via QuarkusRestClientBuilder - base URL, proxy, etc
+
+
+Panache Mongo
+- guide: https://quarkus.io/guides/mongodb-panache
+- supports reactive and imperative
+- since 4.0 supports ACID via @Transactional
+- offers PanacheQL to simplify queries (https://quarkus.io/guides/mongodb-panache#simplified-queries)
+
+- two styles with: Active Entity - queries called on entity directly
+                   Repository (~ DAO)
+
+- connection via: annotations, name injection, configuration file
+                  programmatically (builder like)
+
+- can have custom ID via bson annotation and base-entity extension
+	@MongoEntity(collection="my_collection")
+	class MyEntity extends ReactivePanacheMongoEntityBase {
+		@BsonId
+		public String id; //i am responsible to provide, if default ObjectId - assigned automatically
+	}
+
+- restricting what fields should be visible with Query projection - class that lists only allowed fields for entity
+	@ProjectionFor(Person.class)
+	public class PersonName {
+	    public String name;
+	    //hides others like age, address, etc.
+	}

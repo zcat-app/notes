@@ -1,0 +1,168 @@
+Optimizing functions in the WHERE clause
+video: https://www.youtube.com/watch?v=czgyG-Zc2YY
+
+calling sql function in where clause like:
+select * 
+  from ...
+ where fn (indexed_column) = :val
+ 
+- calling unction on indexed column does not use index!
+- limits optimizer to use indexes - it performs full table scan! as fallback
+- also expected result (~ cardinality) is off -> bad optimizations
+
+example inc function: 
+create or replace function inc(p int)
+   return as int
+begin
+   return p + 1
+end;
+
+select * from table1
+ where inc (id) = 2;
+ 
+-- can be reworked and transfer calculation from column:
+select * from table1
+ where id = 2 -1 -- uses index on 'id' column (pk)
+ 
+when creating index on column: create unique index on table1 (id);
+- creates lookup for each value stored in pk column - e.g. map(id, row_id)
+- in case of increment 
+    - needs to iterate through all existing indexes and find value
+    - apply the function = full scan through index, 
+    - in worst case even full scan through the table to get the data
+    - optimizer does not know the output until it executes the function
+
+- solutions:
+ 1) re-arrange the query (- put formula on non-column side)
+    where column + 1 = 2 transform to column = 2 - 1 --column on one side, calculation/function on the other, optimizizer dont do that due to complexity
+ 
+ 2) if i cannot change the code
+    - not safe like multiplication and division by 0
+    - one way function like modulo - no opposite
+    => function based index (the same expression in: a) index creation 
+                                                     b) in WHERE clause)  
+    create index .. on table1 (id + 1); --stores result of the expression in index
+    
+     calculate the result, but moved in subquery
+    -- real life example: calling trunc() on indexed date column 
+                           - bad if accessing more columns in select (~ like select *), full scan
+                           - if accessing only the index column in select - fast full scan, better but still fullscan
+                           
+    - Q/A: why not use subquery -> reaction using subquery will not change that we need to calculate the result for each row   
+    - DISADVANTAGE - change in function - function based index will not work => full scan
+                   - example: use of trunc( my_date, 'hh24' ) = trunc (sysdate)
+                   - solution: re-arrange to get the same result and use existing index:
+                        
+                        where trans_date >= trunc(sysdate)
+                          and trans_date < trunc(sysdate) + 1  -- within same day
+                          
+                        where trans_date >= trunc(sysdate, 'hh24')
+                          and trans_date < trunc(sysdate, 'hh24') + 1/24 --within same hour  
+
+- note: for ranges better to go with >=, < rather than between
+- note: create index that is maintained but not usable by optimizer
+     create index trunc_date_i
+       on table1 ( trunc (my_date) )
+       invisible
+    -- turn on for optimizer
+    alter index trunc_date_i visible;
+       
+ 3) Format input/update
+    - like format date for index 
+        - might lose precision if doing trunc on date - might not be desirable
+        - not always possible
+        
+ 4) Duplicate column formatted for the index
+   - it would work but introduces 'redundancy'
+   - usual for data warehouses 
+       - mostly static data
+       - on date - multiple columns on date part (day, month, quarter)
+       - more data we store - usually more work to read
+                            - cheap to store, more resources to process (memory, network)
+                            
+                            
+Problem: one task - different solutions
+                      - to get date without time: trunc
+                                                  to_char( my_date, 'yyyymmdd') --different approach, cannot use existing function index
+                                        
+ 5) Virtual columns
+    - push for reusability, not invent new stuff when some already exist
+    - computed on runtime (when called, stores only metadata), but we can create index on it
+    - not possible to create function based index on expression used in virtual column - have to use the column
+                                                                                       - reason function based index is hidden virtual column + index => already exists
+    - to prevent introducing of another approaches
+    - virtual column should be more visible -> should have reasonable name
+   
+    
+    alter table table1
+      add virtual_column as ( <expression> ) 
+      
+    -- then create index on virtual column
+    create index virtual_column_i
+        on table1 ( virtual_column ) 
+        
+        
+    -- accessible as regular column
+    select * from table1
+     where virtual_column = ...
+     
+- note: 'collate' keyword, since oracle 12.2
+         - hides call for nls sort
+         
+         select * from table1
+          where name collate binary_ci = 'Chris' -- search for all case insensitive combinations (and accents) of string (binary_ci - case insensitive search)
+                                                 -- goes full scan, can be re-arranged
+         -- re-arranged with virtual column transformed to upper case                                       
+         select * from table1
+          where name_upper = upper('Chris') -- uses index on virtual column, function on non-column side
+                                            -- might have issues, e.g. McDonald - function based index
+   
+PL/SQL
+- SQL and PL/SQL - everyone has different context
+- custom function for function based index - error for non-deterministic function, ORA-30553
+- same as SQL, if parameter of function changes from caller, index is not used
+    - eg we use some scalar - expect to have the same all the time
+    
+1) deterministic function
+   - function has to be declared as DETERMINISTIC
+   - necessary for function based indexes
+
+  create my_function ()
+    return ... deterministic
+  as
+    ...
+    
+- nondeterministic function cannot have index - like if using sysdate - output changes even if the same input    
+
+2) user defined function - udf
+   - used only in SQL 
+  
+   create my_function ()
+     return ... deterministic
+   as
+     pragma udf;
+     
+3) Scalar macros (since oracle  21c)
+   - parsed at runtime, returns text
+   - better optimization than udf
+   - cannot create function based index on macro - it is text to be evaluated, not value
+   create my_function ()
+     return clob
+     sql_macro ( scalar )
+   as
+     ...;
+     
+TL;DR:
+Avoid functions in WHERE
+1) avoid
+- re-arrange to not have function on indexed column
+- or precalculate
+
+2) function based indexes
+- virtual columns   
+
+3) Usage in PL/SQL
+- use deterministic functions
+- consider user defined functions (UDF) and Macros (since oracle 21c)
+
+- Blog post: https://danischnider.wordpress.com/2022/02/28/performance-tips-function-calls-in-where-conditions/

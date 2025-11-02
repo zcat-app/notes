@@ -1,0 +1,114 @@
+Better Code Reviews FTW! - Tess Ferrandez-Norlander
+video: https://www.youtube.com/watch?v=2vacqx2ISms
+
+code with engineering
+- https://github.com/microsoft/code-with-engineering-playbook
+
+- if we do not argue we do not invest in finding defects 
+   - might not be truth, computers might do better job in that than human
+
+code reviews should 
+- find defects
+- share patterns
+- share knowledge
+- increase a sense of ownership - not my code, but our code
+- find better solution
+
+~ tl;dr provide feedback = communication
+- communication in PR:
+   - usually short text
+   - mostly negative (we don't often mention good steps)
+   - Michael Lynch - How to do core reviews like a human - blog
+                   - A developer's Guide to Happy Romance - book
+                   
+Points:
+1) (Implementor) Be open for feedback
+- ask for targeted feedback 
+  - "is this the best approach, I would love some feedback"
+  - people can be more focused/creative for more narrow scope
+  - "isnt better to use X?": dont - "Fixed"
+                             do - "Nice, did not know X" ~ keep conversation
+    "what does this do?": dont - "It does bla bla bla"
+                          do -"Let me change to understand better"
+- award all ties to reviewer - reviewer 'always' wins 
+   - reviewer comes with fresh context, like everyone else who did not implement
+   
+2) (Implementor) Write PRs you would like to review   
+- make your code readable/understandable
+- keep PRs small - narrower scope
+- describe PR
+   - what does it solve
+   - what is not covered
+   - how is it tested
+   - highlight special features/parts
+- review your PR first!
+
+3) (Team) Settle style arguments with style guides
+- consistent, clear and easy to implement
+- "avoids please do this" - "but I like this more"
+
+4) (Team) Automate the boring bits
+- typos, styling (header level), null check
+- checkstyle, check for secrets, run tests  
+-> then developer can focus on solving task and if solved in the best way
+
+5) (Reviewer) Start reviewing immediately
+- waiting is bad - can lead to branching issues
+- treat PR with the highest priority (old task usually higher priority than old tasks, until something critical pops up)
+   -> finish PR before starting something new
+      notify people about new PR
+      
+6) (Reviewer) Don't overhelm the author 
+- developer patience is finite
+- create hierarchy of problems and solve the biggest/highest  first 
+- dont repeat on the same issue - 'trust' colleague
+                                -> "check/apply other places too"
+- respect the scope - dont extend over topic 
+   - dont do: "when you edit this, can you do even that?" 
+   - do: make a new PR, maybe by yourself? (hmmmm)
+   
+
+7) (Reviewer) We dont always have to go for perfect
+- level of code quality: obviously wrong - does not solve the problem
+                         seems to work - hard to understand /refactor
+                         works - could be more readable, could have more tests
+                         pretty good - smaller naming
+                         perfect
+- from 'works' level can be merged if necessary, hard to achieve perfect, can help with pair programming with newbies from 'works' to get at least to 'pretty good' - investment for next time, maybe next time we go from 'pretty good' to 'perfect'
+- approve if remaining tasks are trivial
+- tell people if you like what they did - reinforce good habits
+                                        - positive feedback - easier to change ourselves for good words than bad words
+                                        
+8) (Reviewer) Be generous with examples 
+- simpler to understand, sometimes just comment might not be clear, reviewed person might not know the buzzword, etc
+
+9) (Reviewer) Frame feedback as question
+- avoid ordering to people, transfer it to conversation
+
+10) (Reviewer)  Dont make it personal, dont take it personally
+- using 'we' instead of 'you', 'you' is 'pointing' and 'accusatory'
+- focus on code, not the author
+- comment principles, not opinions -> add why something should be changed
+- avoid 'buddy reviews' like 'i trust you bro, approved'
+
+11) (Reviewer) Resolve stalemates proactively
+- argument when reviewer wants change, implementor not
+   - raising number of comments
+   - most comments rejected
+   - hostile tone
+   
+   => call and discuss, try to resolve
+      bring another person for another opinion
+      give up - also solution, letting life progress
+              - add a new task to 'fix' implementation later
+              - do design review with larger group
+              
+- Q/A - if pushed for bigger change by reviewer - try to discuss if new PR might be better solution
+      - commit level reviews - gerrit must approve every commit? <`(((-< fishy :)
+      - git hooks - good to use
+      - PR comments as learning
+
+
+
+
+

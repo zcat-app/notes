@@ -1,0 +1,210 @@
+Quarkus
+- Qark-us - quark - smallest element particle
+            us - devs, coders, engineers
+- tries to address modern pain points of Java - long startup - costly for cloud, moving some responsibility to packaging
+- addressing dev experience - tries to be lightweight but supports all favorite libs (called extensions - Hibernate, Jackson, LangChain4j)
+- provides dev mode - code/config changes (edit code, adding classes etc.) with live reloads in milliseconds
+- 'kubernetes native' - tries to provide easy integration for kubernetes
+                      - not limited to usage only in kubernetes
+                      - quarkus allows to build & deploy container in single step  
+                         - no need to write custom manifests for kubernetes
+    - note: kubernetes - container management platform ~ cloud solutions     
+                       - kubernetes manages containers lifecycle and resourcing without knowing its internals
+                       - containers (e.g. Docker) used to encapsulate services with OS, dependencies etc. 
+                          - containers can have different internals (OS, apps)
+                             - in case of java it has its own JVM, 
+                             - JVM dependencies such as glibc
+                             - env variables
+                                -  allows different configs even for 'the same app' replicated in different instances (e.g. having different ID)
+                             - the app it should run
+                       - manages containers in pods - group of single or more containers (sidecars - e.g. for logging)
+                       - next to pods there is kubernetes management resources - configuration, network access, etc
+    - note: HotSpot - most common JDK for Java apps 
+                    - fits more for app optimizing throughput (like microservices)
+            GraalVM - improved performance, support multiple languages (even non JVM, like javascript, python), native image (binary) compilation
+                    - native image compilation allows to build standalone binary that can run without JVM - no need to wait for JVM startup time! but still writing code in Java
+                                                                                                          - might be pain in the ass to config and tune -> quarkus helps (mostly)
+                    - might be good for serverless
+                    
+- quarkus supports both - easy to switch between producing jar or native just with setting flag
+- quarkus also supports native compilation for most of the known Java libraries
+
+- quarkus follows 'convention over configuration'
+
+Full stack framework, for Monolithic, micro services, serverless
+Kubernetes native - build with containers and Kubernetes focus
+Support for native binaries thanks to GraalVM
+Dev mode - hot reload like babel + node.js
+
+
+Execution:
+Hot Spot for JIT Java
+GraalVM for native
+
+Core:
+Jandex - class loader and metadata
+Gizmo - bytecode manipulation that allows AoT byte code generating
+Graal SDK - integration on native image builds
+ArC - dependency injection CDI
+Configuration - config for various stuff
+
+Extension:
+Hibernate ORM
+Keycloak
+REST
+Messaging
+Spring compatibility
+LangChain4j
+...
+
+Spring Boot, Micronaut, Helidon (inversion of control)
+
+mvn io.quarkus.platform:quarkus-maven-plugin:3.15.1:create
+system properties:
+-DprojectGroupId=, -DprojectArtifactId=, -Dextensions=""
+Or defined interactively from command line
+
+mvn io.quarkus.platform:quarkus-maven-plugin:3.15.1:help -Ddetail=true -Dgoal=create
+prints man like description of options
+
+Create project:
+- via maven plugin
+- quarkus-cli
+- web interface: code.quarkus.io
+- REST API - http request to download zip
+
+BOM - bill of materials - ensures quarkus core versions -> compatibility
+
+dependency - extensions + implicit core
+plugins - implicit - build goals (native, code, binaries)
+        - compiler
+        - for tests - failsafe, surefire
+
+profiles - native - graalVM executable
+                  - quarkus.native.enabled = true
+
+config - configuration, but also possible with -D system params, env vars or other config files
+
+docker - building container for different configs (native, jar,...)
+
+tests - @QuarkusTest - junit tests
+      - @QuarkusIntegrationTest - test against build package on different JVM (only way to test native package)
+
+dev mode: mvnw quarkus:dev //maven
+          quarkus dev //cli
+
+build: mvnw clean package
+       quarkus build --clean
+
+/target - jar with source code
+/quarkus-app - runnable jar without dependencies (defined in manifest+lib dir)
+
+native-image - AoT compilation of Java code, no Bytecode, directly to machine code - no JVM needed (no interpret), but not portable
+             - mvnw package -P native
+             - quarks build --native
+             -Dquarkus.native.container.build=true
+             -Dquarkus.native.container-runtime=docker|podman
+
+configuration - some resolved AoT (optional features), some runtime (listening port)
+
+GraalVM, Mandrel (GraalVM fork for Quarkus native build)
+
+native - good for serverless, static analysis
+jar - with JIT optimization, optimizes for most used paths, with time probably outperforms native
+
+docker/.jvm - fast JVM mode
+       .jvm-legacy - legacy JVM
+       .native - native mode
+       .native-micro - optimized quarkus with min size
+
+Extensions
+quarkus extension list //prints all extensions in project
+quarkus extension --installable //all to install
+quarkus extension categories //shows categories
+quarkus extension list --installable --category "messaging" //list in category
+
+Edits POM on background:
+quarkus extension add "extension-artifact"
+quarkus extension remove "extension-artifact"
+
+quarkiverse - community repo of extensions,full integration support, also some libs from core but mainly custom-made, need manual check for updates
+
+dev services - 'fake service' like fast disposable DB for fast testing, mostly uses Testcontainers
+
+dev mode - redeploy changes immediately
+         - executes unit tests on background
+         - quarkus dev
+         - recompile and reset happens on request or press 's' in terminal
+         - reflect changes in Java, config file, pom (even dependency), or html pages
+         - reload runs new version of app in JVM (isolated, previous state is lost)
+         - quarkus.live-reload.instrumentation can mitigate state loss - only for method body changes (otherwise full reload - tech limitiation)
+         - /guides/class-loading-reference
+
+Configuration - application.properties
+              - can be overriden by env variables or system properties
+              - built-in props have quarkus prefix (thread pool,data sources,...)
+              - uses MicroProfile Config API
+              - access via @ConfigProperty
+
+application.properties
+hello.message=Hello!
+java class
+@ConfigProperty(name="hello.message")
+String message;
+
+
+Config profiles - dev, prod, test
+                - can add custom with quarkus.profile
+                - set for profile with prefix %profile-name.config-name, e.g. %dev.quarkus.http.port=8090 - dev profile different port than default in others
+                - or create separate file application-dev.properties with usual name without prefix, quarkus.http.port=8090
+                - coming can be override if need to change on start (after compiled, property file is packaged within jar - only override can chage)
+                - override priority: system property, env variable, config file (first for profile, then general, if nothing then default)
+                - env variables must be uppercased and dots . replaced by underscores _
+                - overriding might not work for fixed properties used in build time (some quarks built-in properties)
+
+Dev UI - press 'd' in terminal or localhost:8080/q/dev-ui
+       - lists all config keys and values
+       - all CDI beans with interceptors and priorities
+       - unused CDI beans
+       - mapped JPA entities
+       - reset dev DB
+       - trigger task planed by Scheduler out of scheduled interval
+       - rerun unit tests
+       - see test run reports
+       - depends on used extensions
+
+- changing conf in DevUI is written to application.config, but not ensured to be applied if overriden by env or system property
+- CDI beans show dependency graph, link to class in IDE, scope and annotations
+
+Dev Services - simulation of remote services
+             - testcontainers - needs docker/podman (configured, Mac/Win with podman machine)
+             - only in dev/test scope, not prod
+             - no config - quarks tries to resolve automatically (prod needs that config)
+             - Kafka, Mongo, Redis, kubernetes
+             - quarkus.io/guide/dev-services
+
+check containers running:
+- docker ps
+- podman ps
+- press 'c' in terminal when in dev mode
+
+Keycloak - quarks extension add oidc
+         ~ Open ID Connect = oidc
+         - adding extension will always instantiate container for tests - can be disabled via %test.quarkus.oidc.enabled=false
+         - dev UI can create access token for testing user alice:alice
+         - admin console with admin:admin login, can extend lifetime of token (default 10min)
+
+Continuous tests
+note: RestAssure lib to test REST
+- test triggered with every reload/restart
+- using different class loader - even though on the same JVM, it is isolated, thus the app can still run
+- IT tests considered more for naive images
+- trigger with 'r' in terminal, or set configuration: quarkus.test.continuous-testing=enabled
+- if turned on, tests are triggered on save (not on request)
+- press 'o' in terminal - show all test output with logs, not only fails
+- test reports in devUI - Continuous testing
+- for usual XML from surefire/failsafe run mvn when building
+
+
+
+                  

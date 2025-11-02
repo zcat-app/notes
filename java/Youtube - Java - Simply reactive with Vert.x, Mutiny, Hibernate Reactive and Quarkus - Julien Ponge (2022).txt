@@ -1,0 +1,94 @@
+Julien Ponge — "Simply reactive" with Vert.x, Mutiny, Hibernate Reactive and Quarkus
+video: https://www.youtube.com/watch?v=-OO2fQZ-Anw
+
+- Julien Ponge - author of vert.x in Action
+- reactive 
+   - scaling (elasticity - more instances on traffic spike), 
+   - less resources, 
+   - resilient apps (latency under control) = responsive app 
+   - event driven programming
+   - for db clients, messaging, web API/clients, authentication, clustering, micro-services & cloud native
+   - techniques:
+      - callbacks
+      - future/promises
+      - reactive extensions (Mutiny)
+      - coroutines
+   
+- vert.x
+  - reactive toolkit
+  - to run in JVM
+  - uses non-blocking threads
+  - every verticle (~ vertx instance has one thread ~ thread safe fields)
+  - extends AbstractVertice
+  - override start(), stop() methods
+  - Vertx vertx = Vertx.vertx(); // new instance ~ verticle
+  
+- mutiny
+  - api to handle reactive 
+  - two data types
+     - Uni - for 'single-shot' result (Object, Collection, ...)
+     - Multi - for streams
+  - transform on fetched item
+      .onItem().transform()
+  - subscribe to register callback
+      .subscribe().with(result -> doSomething(result))
+  - adapters for javaRx, Reactor, etc (alternatives to Mutiny) 
+  
+- vert.x with sql:
+   - in java create vertx
+   - set connection
+      var connectionOptions = new PgConnectionOptions()
+         .setPort()
+         .setHost()
+         .setDatabase()
+         .setUser()
+         .setPassword();
+      var poolOptions = new PoolOptions().setMaxSize();
+      postgresPool = PgPool.pool(vertx, connectionOptions, poolOptions);
+      //start the vertx server
+      
+   - query to get JSON array:
+      Uni<RowSet<Row>> execute = postgresPool.query("SELECT * FROM table1").execute(); //or prepared query if has parameters as $param1
+      return execute.onItem().transform(rows -> toJsonArray(rows))
+                    .onFailure().recoverWithItem(new JsonArray());
+- hibernate
+  - ORM - maps entities to objects (keeps hierarchy of relations)
+  - has reactive - uses vert.x sql drivers, not jdbc 
+  - xml config:
+    <persistence-unit name="my-app">
+       <provider> with HibernateReactivePersistenceProvider
+       - for backward compatibility might need jdbc definition, but in fact uses vert.x sql reactive driver
+   - in java:  
+     Mutiny.SessionFactory emf; //~EntityManagerFactory
+   
+     Uni<Void> startHibernate = Uni.createFrom().deferred(() -> {
+        var props = Map.of("javax.persistence.jdbc.url", "jdbc:postgresql://localhost:5432/postgres");
+        //set connection
+        emf = Persistence.createEntityManagerFactory("my-app", props)
+                         .unwrap(Mutiny.SessionFactory.class)
+        return Uni.createFrom.voidItem();
+      }); 
+      startHibernate = vertx.executeBlocking(startHibernate);
+      
+   - to load:
+        emf.withSession(session -> session.createQuery("from MyEntity", MyEntity.class).getResultList());
+   
+   - to save:
+        emf.withSession(session -> session.persist(myEntityObject)
+                                          .chain(session::flush)  
+                                          .replaceWith(myEntityObject)); //replaces the result of flush operation with persisted product to access it 
+                                          
+   - to load from request (get id from path of the request):
+       return Uni.createFrom().item(() -> {
+          return Long.parse(routingContext.pathParam("id"))
+       }).chain(id -> emf.withSession(s -> s.find(MyEntity.class; id)));
+       
+- quarkus 
+  - framework, uses vert.x under the hood
+  - mapping via Panache - supports active record pattern (queries in entity)
+                        - extends PanacheEntity (video from 2022, not PanacheReactiveEntity yet) - extends methods like findAll, ...
+                        
+                        
+                        
+  
+  

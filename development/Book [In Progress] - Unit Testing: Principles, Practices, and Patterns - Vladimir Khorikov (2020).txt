@@ -243,7 +243,7 @@ Mocks
                     - emulate and examine calls ~  outcome interaction on SUT
                     - e.g. call to send result to email service
                     
-               stub a) dummy - just hardocoded value, as input into SUT  
+               stub a) dummy - just hardcoded value, as input into SUT
                     b) stub - 'full' dependency configured to return different values for different scenarios 
                     c) fake - like stub, to replace dependency which does not exist yet/not implemented           
                     - emulate income interaction to SUT

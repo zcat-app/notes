@@ -7,6 +7,8 @@ Set of notes collected across different books, courses, talks or blogs. My backu
 Database, queries , performance
 
 - [Udemy \[Unfinished\] - Oracle SQL Performance Tuning Masterclass (2020)](./database/Udemy%20%5Bunfinished%5D%20-%20Oracle%20SQL%20Performance%20Tuning%20Masterclass%20-%20(2020).txt)
+- [Youtube - Oracle - LATERAL might be your new favourite JOIN - Connor McDonald (2024)](./database/Youtube%20-%20Oracle%20-%20LATERAL%20might%20be%20your%20new%20favourite%20JOIN%20-%20Connor%20McDonald%20(2024).txt)
+- [Youtube - Oracle - Optimizing functions in the WHERE clause - Chris Saxon (2022)](./database/Youtube%20-%20Oracle%20-%20Optimizing%20functions%20in%20the%20WHERE%20clause%20-%20Chris%20Saxon%20(2022).txt)
 
 ### Design
 UI design principles
@@ -21,6 +23,11 @@ Software development principles
 - [Udemy - Design patterns in Java - Dmitri Nesteruk (2020)](./development/Udemy%20-%20Design%20patterns%20in%20Java%20-%20Dmitri%20Nesteruk%20(2020).txt) 
 - [Udemy - Microservices Architecture - The Complete Guiden - Memi Lavi (2022)](./development/Udemy%20-%20Microservices%20Architecture%20-%20The%20Complete%20Guiden%20-%20Memi%20Lavi%20(2022).txt)
 - [Udemy - Writing Clean Code - Maximilian Schwarzmuller (2022)](./development/Udemy%20-%20Writing%20Clean%20Code%20-%20Maximilian%20Schwarzmuller%20(2022).txt)
+- [Youtube - Devoxx - Code, burnout and depression: an engineering perspective of mental health in IT - Manuel Bernhardt (2025)](./development/Youtube%20-%20Devoxx%20-%20Code%2C%20burnout%20and%20depression%20-%20An%20engineering%20perspective%20of%20mental%20health%20in%20IT%20-%20Manuel%20Bernhardt%20(2025).txt)
+- [Youtube - Devoxx - Code Review Remarks: Lessons Learned - Blagoj Jovanov (2025)](./development/Youtube%20-%20Devoxx%20-%20Code%20Review%20Remarks%20-%20Lessons%20Learned%20-%20Blagoj%20Jovanov%20(2025).txt)
+- [Youtube - Devoxx - How browsers REALLY load Web pages - Robin Marx (2025)](./development/Youtube%20-%20Devoxx%20-%20How%20browsers%20REALLY%20load%20Web%20pages%20-%20Robin%20Marx%20(2025).txt)
+- [Youtube - NDC - Better Code Reviews FTW! - Tess Ferrandez-Norlander (2025)](./development/Youtube%20-%20NDC%20-%20Better%20Code%20Reviews%20FTW!%20-%20Tess%20Ferrandez-Norlander%20(2025).txt)
+- [Youtube - NDC - How To Not Strangle Your Coworkers: Resolving Conflict with Collaboration - Arthur Doler (2025)](./development/Youtube%20-%20NDC%20-%20How%20To%20Not%20Strangle%20Your%20Coworkers%20-%20Resolving%20Conflict%20with%20Collaboration%20-%20Arthur%20Doler%20(2025).txt)
 - [Youtube - SCIFI design - Jakob Jenkov (2025)](./development/Youtube%20-%20SCIFI%20design%20-%20Jakob%20Jenkov%20(2025).txt)
 
 ### Java
@@ -31,11 +38,13 @@ Java related topics
 - [Udemy - Hibernate - Advanced Development Techniques - Chad Darby (2024)](./java/Udemy%20-%20Hibernate%20-%20Advanced%20Development%20Techniques%20-%20Chad%20Darby%20(2024).txt)
 - [Udemy - Java - Application Performance Tuning and Memory Management - Matt Greencroft (2022)](./java/Udemy%20-%20Java%20Application%20Performance%20Tuning%20and%20Memory%20Management%20-%20Matt%20Greencroft%20(2022).txt)
 - [Udemy - Java - Multithreading and concurency -  Michael Pogrebinsky (2025)](./java/Udemy%20-%20Java%20-%20Multithreading%20and%20concurency%20-%20%20Michael%20Pogrebinsky%20(2025).txt)
+- [Youtube - Devoxx - The New Java Best Practices - Stephen Colebourne (2025)](./java/Youtube%20-%20Devoxx%20-%20The%20New%20Java%20Best%20Practices%20-%20Stephen%20Colebourne%20(2025).txt)
 - [Youtube - Java - A New Model for Java Object - Dan Smith (2025)](./java/Youtube%20-%20Java%20-%20A%20New%20Model%20for%20Java%20Object%20-%20Dan%20Smith%20(2025).txt)
 - [Youtube - Java - From final to immutable (Stable values) - Maurizio Cimadamore (2025)](./java/Youtube%20-%20Java%20-%20from%20final%20to%20immutable%20(Stable%20values)%20-%20Maurizio%20Cimadamore%20(2025).txt)
 - [Youtube - Java - Interconnecting Java and Native Code with FFM API - Per Minborg (2025)](./java/Youtube%20-%20Java%20-%20Interconnecting%20Java%20and%20Native%20Code%20with%20FFM%20API%20-%20Per%20Minborg%20(2025).txt)
 - [Youtube - Java - Java Security Evolution - Out with the Old, In with the New - Sean J Mullan (2025)](./java/Youtube%20-%20Java%20-%20Java%20Security%20Evolution%20-%20Out%20with%20the%20Old,%20In%20with%20the%20New%20-%20Sean%20J%20Mullan%20(2025).txt)
 - [Youtube - Java - Project Leyden s AOT - Shifting Java Startup into HIgh Gear - Dan Heidinga (2025)](./java/Youtube%20-%20Java%20-%20Project%20Leyden%20s%20AOT%20-%20Shifting%20Java%20Startup%20into%20HIgh%20Gear%20-%20Dan%20Heidinga%20(2025).txt)
+- [Youtube - Java - Simply reactive with Vert.x, Mutiny, Hibernate Reactive and Quarkus - Julien Ponge (2022)](./java/Youtube%20-%20Java%20-%20Simply%20reactive%20with%20Vert.x%2C%20Mutiny%2C%20Hibernate%20Reactive%20and%20Quarkus%20-%20Julien%20Ponge%20(2022).txt)
 - [Youtube - Java - Top Security Flaws Hiding in Your Code Right Now – and How to Fix Them - Jonathan Vila Lopez (2025)](./java/Youtube%20-%20Java%20-%20Top%20Security%20Flaws%20Hiding%20in%20Your%20Code%20Right%20Now%20–%20and%20How%20to%20Fix%20Them%20-%20Jonathan%20Vila%20Lopez%20(2025).txt)
 - [Youtube - Java - ZGC Paving the GC On Ramp  - Erik Osterlund (2025)](./java/Youtube%20-%20Java%20-%20ZGC%20Paving%20the%20GC%20On%20Ramp%20%20-%20Erik%20Osterlund%20(2025).txt)
 
@@ -53,6 +62,14 @@ Brief overview of other programming languages
 - [Udemy \[unfinished\] - Scala & Functional Programming - Daniel Ciocirlan (2022)](./languages/Udemy%20%5Bunfinished%5D-%20Scala%20%26%20Functional%20Programming%20-%20Daniel%20Ciocirlan%20(2022).txt)
 - [Udemy \[unfinished\] - The Complete Python Bootcamp From Zero to Hero in Python - Jose Portilla (2022)](./languages/Udemy%20%5Bunfinished%5D%20-%20The%20Complete%20Python%20Bootcamp%20From%20Zero%20to%20Hero%20in%20Python%20-%20Jose%20Portilla%20(2022).txt)
 
+### Quarkus
+Java framework for (not only) cloud native apps
+
+- [Book \[In Progress\] - Quarkus in Action - Martin Stefanko and Jan Martiska (2025)](./quarkus/Book%20-%20Quarkus%20in%20Action%20%20-%20Martin%20Stefanko%20and%20Jan%20Martiska%20(2025).txt)
+- [Custom \[In Progress\] - Quarkus - Own notes (2025)](./quarkus/Custom%20-%20Quarkus%20-%20Own%20notes.txt)
+- [Youtube - Devoxx - Six and a half ridiculous things to do with Quarkus - Holly Cummins (2025)](./quarkus/Youtube%20-%20Devoxx%20-%20Six%20and%20a%20half%20ridiculous%20things%20to%20do%20with%20Quarkus%20-%20Holly%20Cummins%20(2025).txt)
+
+ 
 ### Security
 Privacy, security, OPSEC, etc.
 

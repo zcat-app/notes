@@ -1,0 +1,117 @@
+Six and a half ridiculous things to do with Quarkus by Holly Cummins
+- video: https://www.youtube.com/watch?v=s9d6JPjegRU
+
+(fuck up on demo) detect app occupying the port 8080:
+netstat -anv | grep 8080 | grep listen
+
+
+1) @ServerResponseFilter
+- easy way to manipulate response
+- example:
+  class Filter {
+     @ServerResponseFilter
+     public void getFilter(ContainerResponseContext response) {
+         Object entity = response.getEntity();
+         if (entity instanceof String) {
+            response.setEntity(transform(entity)); //call some custom transformation that changes response returned to user
+         }
+     }
+  }
+
+2) dev UI
+- shows extensions list
+   - supports multiple languages
+      - Kotlin, Scala, Groovy, Bon Jova - support for Rockstar language 8-)
+   - easy to add extension, hard to write compiler (like with Rockstar)  
+   
+- namespaces 
+   - shows source code - supports code edits
+                       - debugging for breakpoints
+   - open to AI assistants - checking rules, bugs, etc
+   
+3) llm hallucination
+- e.g. o4-mini ~ 46%
+- using guardrails to lower hallucinations
+   - use another model to evaluate response from model used to generate answer
+   - use scoring, evaluate the score of the generated response
+   - if lower, regenerate the answer or return failed attempt
+   - LLM verifying LLm does not work always - not great
+- example (using langchain4j):
+
+    FactService.java:
+    @SessionScoped
+    @RegisterAiService
+    interface FactService 
+    
+       //kinda system prompt?
+       @SystemMessage("""
+         You are friendly and polite.
+         
+         Today is {currentDate}
+       """)  
+       @OutputGuardrails(HallucinationDetectionService.class) //see below
+       String chat(String userMessage);
+    }
+    
+    HallucinationDetectionService.java:
+    @RegisterAiService(modelName="validator") //see application.property file
+    @ApplicationScoped
+    interface HallucinationDetectionService {
+       @SystemMessage("""
+         You fact checking system. 
+       """) 
+       @UserMessage("""
+         Score factual correctness of statements between 0 - 1. 1 truth, 0 fake. Return only decimal number nothing else.
+         
+         Example 1:
+         Strawberries are vegetable.
+         0.2
+         
+         Example 2:
+         ....
+       """)
+       getLikelihood(String);
+    }
+    
+    application.properties:
+    #langchain general
+    quarkus.langchain4j.ollama.chat-model.model-id=llama3.2:3b
+    quarkus.langchain4j.ollama.chat-model.temperature=2
+    quarkus.langchain4j.ollama.chat-model.log-responses=true
+    quarkus.langchain4j.ollama.timeout=60s
+    quarkus.langchain4j.ollama.chat-model.base-url=http://localhost:{port}/...
+    #validator module
+    quarkus.langchain4j.ollama.validator.chat-model.model-id=gemma3:4b
+    quarkus.langchain4j.ollama.validator.chat-model.temperature=0
+    quarkus.langchain4j.ollama.validator.chat-model.log-responses=true
+
+    HallucinationGuard.java
+    @ApplicationScoped
+    class HallucinationGuard implements OutputGuardRail {
+       private final HallucinationDetectionService service;
+       
+       //ctor
+       
+       @Override
+       public OutputGuardrailResult validate(AiMessage responseFromLLM) {
+          //empty check
+          ...
+          //score check
+          var score = service.getLikelihood(responseFromLLM.text); 
+          if (score < THRESHOLD) {
+             return retry("Hallucination detected...")
+          }
+          return success();
+       }
+    }
+    
+4) easy to plugin observability stack (like graphana)
+   - crazy demo with chicken in minecraft... why?
+   - dev mode - as part of app through test container ~ dev services
+
+- other examples skipped due to time pressure
+
+- examples:
+  https://hollycummins.com/quarkus-ridiculous-things-devoxx-be/
+   
+   

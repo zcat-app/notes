@@ -1,0 +1,279 @@
+The New Java Best Practices by Stephen Colebourne
+video: https://www.youtube.com/watch?v=4sjJmKXLnuY
+
+- Colebourne works on Joda libs (joda-time, jodai-money, etc.)
+
+- best practices: generally accepted techniques superior to alternatives to produce superior results
+- in software development more or less opinions (can have different ways)
+
+1) Use appropriate version of java
+- Java 8 will stay forever xD
+- use the latest Java or Java 8
+- dont stuck on intermediate version
+- past Java 9 the moving is quite easy
+
+2) Modules
+- biggest change since Java 8
+   - grouping of one or more packages
+   - declare dependencies, services
+   - example:
+   module org.joda.beans {
+     requires transitive org.joda.convert;
+     requires java.xml;
+     requires static com.google.common;
+   }
+- ignore modules! - not widely adopted, was important for JDK evolution not for apps
+                  - complicated module setup in maven 
+                     - classpath vs module path
+                       - restricted if on module path
+                       - free and open to everyone if on classpath
+                       -> incomplete enforcement
+
+3) Main method simplification
+- no need for 'public static'
+public class Main {
+    void main() {
+        // this is enough now
+    }
+}
+
+4) Text block
+- """ text """
+- careful with injection attacks
+  - like using String.replace("{placeholder}", value);
+  - use setParameter or any other sanitizing method
+  
+5) Unnamed variables
+- sometimes variable not used
+- can enforce compiler to be checked if not used with _
+- better to provide comments why not used!
+
+- example:
+  String result = someTextLines.reduce((a, _) -> a). orElse("");
+  try {} catch (exception _ ) { }
+  
+6) Module import
+- import all classes from the module
+- example: import module java.base; //kinda wildcard on the whole module like * but for all packages
+- probably should avoid
+
+7) Markdown docs
+- HTML Javadoc is fine
+- Markdown probably more readable - if easy to switch, then switch
+
+- in case of smaller changes between Java versions - decide if it fits to your project, do not rush into it
+
+8) Immutability
+- favor immutability - final classes and final fields
+- keep mutability in within source file
+   - naming of parameters/variables with mutableXXX or similar 
+- simpler to comprehend
+- safe usage in multi-threading
+
+9) Immutability for collections: 
+     - Guava immutable collections
+     - List.of, Set.of, Map.of
+     - Collections.unmodifiableXXX
+- mutable collection in immutable object is 'back door'  
+- careful with Maps & Sets - not ensured order (changes randomness on every JVM start)
+                           - SequencedMap or SequencedSet preserves order
+
+
+10) Composition
+- prefer Composition over Inheritance
+- prefer Interface over Abstract Classes
+- because Immutable classes should not have subclasses
+- Inheritance can bring complexity to understand code (abstraction hell)
+
+11) Optional
+- added in 2014, but still controversial
+- null wants you to be cautions otherwise can get null pointer
+- Optional forces you to take care of null case ( with .orElse() )
+
+- use optional when variable MUST NOT be null
+   - avoid isPresent() or isEmpty()
+   - just use orElse() to get fallback
+   
+   loop over optional instead if calling .isPresent() and .get()
+   for (var foo: inOptional(fooOptional)) {
+       if (foo.isBad()) return;
+   } 
+   
+- use optional on public return types - widely accepted
+- avoid optional: parameter - hassle to use
+                  field  - overhead
+                  .isPresent()/.isEmpty()
+                  
+- Optional might be obsolete in the future with ?,!
+  Integer? var = null; //Nullable
+  Integer! val = 1;    //Non-Nullable
+  
+- Optional offers nice API like streams - makes code more readable  
+
+12) var and type inference
+- affects only local variables (not params, instance variables, constatnts, ...)
+- use var! (types are not needed for lambdas, why for variables)
+- but use proper names!
+  - why and what data does, not type
+  - good with Optional with suffix in name
+- best when all-in - avoid reflection
+                   - simplifies PR, reduces imports
+                   
+13) Switch
+- statement vs expression
+- label vs arrow
+  - label - fall-through
+  - arrow - no fall-through (no need for break; or yield (~return value on case); -> does not go to other blocks) 
+- exhaustive vs not exhaustive
+  - when cover all cases + we have null and pattern (~ default) then exhaustive
+      - case null -> ...
+        //other cases
+        default -> ...
+- best practice - use exhaustive arrow switch (either statement or expression) everywhere
+     switch (variable) {
+        case null -> ...; //only if necessary to have null
+        case 1 -> ...;
+        case 2 -> ...;
+        default -> ...;
+     }
+- arrow statement if you must, but always exhaustive
+   
+14) Instanceof
+- single step to check type and declare variable
+  if (root instanceof JsonObject jsonObject) { //test and declare if pass
+      return jsonObject.getInt("Age");
+  } 
+   
+15) Equals
+- can be simplified with the instanceof technique
+
+public boolean equals(Object obj) {
+    return obj instance of MyClass other
+        && name.equals(other.name)
+        && age == other.age;
+}
+
+- safe and straightforward refactoring, code is easier to read
+
+16) Records
+- properties:
+    - immutable
+    - generates equals, hash, toString
+    - generates getters and setters
+    - getters not prefixed with get -> different naming convention
+    - aggregates fields with class name
+    - compact constructor
+    
+- having mutable fields in record - bad idea 
+    - array - override getter, equals, hashCode, toString
+    - mutable field - override getter
+- all fields should be immutable (Lists, Maps)
+- prefer primitive types and other records
+- avoid overriding generated methods
+  - maybe toString and exclude secret data
+- can have limitations in frameworks (different naming, e.g. getter)  
+  
+note: Beans not Java Beans (odl spec form 1997, now more like Beans)
+        - final class, fields, constructors, getters & setters, equals, hash, toString
+        - supports lazy/cached fields, hiding secret data
+        
+      Class - encapsulate the state
+      Bean - expose the state 
+              - some part of the state
+      Record - transparent state
+      
+17) Beans vs Record
+- records are good - but be aware of their limitations
+- decide on context
+
+18) Generated Beans
+- better to generate - reduces mistakes
+                     - simpler PR (not human written)
+- prefer immutable beans
+- Lombok, Immutables, Joda-Beans
+
+19) Pattern matching
+- using patterns
+    a) Type pattern:
+      - evaluate if Object is desiredType - if true, then cast and assign ~ 3 steps
+      - instanceof 
+      - 'case' in 'switch'  has the same approach
+    b) Record pattern
+      - evaluate if Object is Record - if true, then cast and assign ~ 3 steps
+      - can have access to record fields - Pattern nest - inner part is Type Pattern or another Record Patter 
+      switch (target) {
+         case Person(String name, Number age) -> /*use name/age*/
+      }
+    c) Match All patter
+      - matches anything, binds nothing
+      - when we do not care about field
+      switch (target) {
+         case Person(_, Number age) -> /*use name*/
+      }
+
+- type patterns inside records can match null! 
+     switch (target) {
+         case Person(String name, Integer age) -> /*name might be null, age must not be null because Integer -  tested on runtime if Integer */
+         case Person(String name, Number age) -> /* age might be null - no need to investigate Number type */
+      } 
+- to highlight allowed nulls - use var
+     switch (target) {
+         case Person(var name, Integer age) -> /*var to show maybe nulls*/
+     } 
+      
+- use var inside Record Patterns
+- less coupling between record declaration and usage
+
+20) Sealed
+- Records are sets of fields with AND relation: has name AND age
+- Sealed are sets of fields with OR relation: has male OR female
+
+   interface Gender permits Male, Female {
+      record Male(int X) implements Gender {}
+      record Female(String Y) implements Gender {}
+   }
+
+   switch (target) {
+       case Person(var name, Male(int X)) -> /* use name, x*/
+       case Person(var name, Female(var Y)) -> /*use name, y*/
+   }  
+
+- use when data has constrained choices 
+  - provides more info for compiler
+- but prefer for simple hierarchies
+- prefer interface as root, not class
+
+21) Data-oriented programming
+- shift from Object-oriented -> Functional -> Data oriented
+- focus on data, use records, pattern matching, enums and sealed classes
+   - simple data models in case like REST-DB, configs etc.
+- keep data separate and immutable
+
+note:
+- Object oriented 
+  - mutable
+  - inheritance
+  - data + logic
+  - classes & encapsulation, 
+  - polymorphism, methods
+  
+- Data Oriented
+  - immutable
+  - composition
+  - separate data & logic
+  - enum, record
+  - pattern matching, functions
+  
+- Beans (takes from both)
+  - mutable
+  - composition
+  - separate
+  - classes, transparent
+  - manual extract data, method & functions 
+
+note: 
+Record - AND between fields
+Sealed - OR between fields
+Pattern - extract value from Record/Sealed
+Enum - valid values for one field
+

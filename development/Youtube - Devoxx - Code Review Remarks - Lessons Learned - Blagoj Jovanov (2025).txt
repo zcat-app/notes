@@ -1,0 +1,61 @@
+Code Review Remarks: Lessons Learned
+video: https://www.youtube.com/watch?v=1SdrnPtzBh4
+
+- have business context about the PR
+   - clear description of tasks (hahahaha, welcome to the real world)            
+   - focus on business logic  
+      - he suggests to go from biggest abstraction down until model layer
+      - not sure if he means to verify business logic
+   
+- code style   
+   - code reusability - DRY principle
+      - don't overdo it, too many abstractions sucks (yes, it does)
+   
+   - readability
+      - "cognitive load" like talk
+      - bad practices:
+          - overuse ternary operator - multiple lines branching
+          - stream that are immediately collected
+          - naming (as always) 
+             - short or descriptive?-> find balance! (*golf clap*)
+               
+      
+   - simplification of complex tasks
+      - kinda shitting on juniors here
+  
+- optimization
+   - after the resolving code style xD
+   - using cache instead of going to DB again
+   - using proper data structure - list x map
+   
+- write meaningful tests   
+   - cover the business logic
+   - verify we did not break anything (whoa!)
+   - mocks are shit??
+   
+- javadocs
+   - over-usage on self-documenting code
+   - document only important logic 
+
+- suspicious code - not sure what and why - ask question to implementer
+
+- avoid long discussions in PR
+   - do not make it like threads, discuss offline and write summary
+    
+- consult before implementation (not really CR side)
+   - "ask the big boss if he likes your solution" 
+
+- avoid adding too many reviewers
+   - waiting for other reviews - latency
+   - 1-2 are ideal - one familiar with business logic
+                   - one to clean up mess if first is bottleneck
+
+- delegate you can not handle all CR
+
+- share responsibility - no finger point on failure
+
+- there is no perfect code, we try to achieve to get close
+
+own remarks:
+I would add you are not your code, do not take it personal
+A bit disappointing, but I misunderstood the goal probably
