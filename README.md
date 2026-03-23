@@ -5,7 +5,7 @@ Set of notes collected across different books, courses, talks or blogs. My backu
 
 ### AI hype
 
-Stefano Martinelli [Blog](https://martinelli.ch/):
+Simon Martinelli [Blog](https://martinelli.ch/):
 - [Blog - Martinelli - A View Is Not a Table: It Is a Controlled Integration Contract (2026)](./ai/martinelli/Blog%20-%20A%20View%20Is%20Not%20a%20Table%20-%20It%20Is%20a%20Controlled%20Integration%20Contract%20-%20Martinelli%20(2026).txt)
 - [Blog - Martinelli - Spec-driven Development is not Task-driven AI -  Martinelli (2026)](./ai/martinelli/Blog%20-%20Spec-driven%20Development%20is%20not%20Task-driven%20AI%20-%20%20Martinelli%20(2026).txt)
 - [Blog - Martinelli - Why I Don’t Use Mocking Frameworks and Why You Might Not Need Them Either - Martinelli (2026)](./ai/martinelli/Blog%20-%20Why%20I%20Don%E2%80%99t%20Use%20Mocking%20Frameworks%20and%20Why%20You%20Might%20Not%20Need%20Them%20Either%20-%20Martinelli%20(2026).txt)
@@ -91,12 +91,6 @@ Java framework for (not only) cloud native apps
 - [Book \[In Progress\] - Quarkus in Action - Martin Stefanko and Jan Martiska (2025)](./quarkus/Book%20-%20Quarkus%20in%20Action%20%20-%20Martin%20Stefanko%20and%20Jan%20Martiska%20(2025).txt)
 - [Custom \[In Progress\] - Quarkus - Own notes (2025)](./quarkus/Custom%20-%20Quarkus%20-%20Own%20notes.txt)
 - [Youtube - Devoxx - Six and a half ridiculous things to do with Quarkus - Holly Cummins (2025)](./quarkus/Youtube%20-%20Devoxx%20-%20Six%20and%20a%20half%20ridiculous%20things%20to%20do%20with%20Quarkus%20-%20Holly%20Cummins%20(2025).txt)
-
-### AI
-AI talks, mainly focused on Java development
- 
-- [Youtube - Devoxx - Level Up Your LangChain4j Apps for Production - Lize Raes (2025)](./ai/Youtube%20-%20Devoxx%20-%20Level%20Up%20Your%20LangChain4j%20Apps%20for%20Production%20-%20Lize%20Raes%20(2025).txt)
-
 
 ### Security
 Privacy, security, OPSEC, etc.
