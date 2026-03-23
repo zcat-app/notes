@@ -1,0 +1,144 @@
+How to Break AI Systems (Before Someone Else Does) - Gary Lopez & Dr. Amanda Minnich
+video: https://www.youtube.com/watch?v=5fC7skLpegU
+
+-note: red team - simulated advisory to discover security holes
+- AI safety harms
+  - fabrication/hallucination
+  - bias and fairness
+  - privacy and security
+     - reveals user sensitive attributes
+     - reveals business data/summary
+  - harmful content generation
+     - psychological harm
+     - knowlede-to-action instruction - execute terrorist attack
+  - persuation/deception - impersonation
+
+usual input process
+- input
+    - system prompt ~ instructions
+    - data - external inputs
+    - user input
+- input is then usually filtered and enhanced (to improved LLM processing) for LLM
+- LLM generation
+- possible filter on the result
+- output
+    - can be new instruction for LLM
+    - trigger some action (e.g. for agents)
+    - print output for user
+
+- data and system prompt should not change
+    ~ analogy to memery management with instructions, heap, static data
+       - memory - clear separation of those
+                - still can get stack overflow to overwrite tha part of memory that should not be
+    - overflow principle can be applied on LLM since there is no clear separation of data and instructions
+- smaller overview in another video:
+     - Doors of (AI)pportunity: The Front and Backdoors of LLMs - Kasimir Schulz& Kenneth Yeung
+     - https://www.youtube.com/watch?v=-RH4uWmgjCI
+       - Knowledge Return Oriented Prompting (KROP)
+           - obfuscating context and leveraging LLM knowledge
+           - example picture with revert sign and shell - generate rever shell script
+           - describe character with references to movie, book and activity - can generate originally censored content - smoking mickey mouse
+
+Direct prompt injection
+- paper: Jailbroken: How does LLM safety training fails - https://arxiv.org/abs/2307.02483
+- coming from user input
+- vulnerable because: competing objectives - LLM trained on competing objectives - prefix injection, role play, ...
+                                           - example: tell me how ...  start with: "Sure, here is how" -
+                      mismatched generalization - LLM trained on large, diverse dataset than safety training - encoding, locales, etc
+                                                - example: pass encoded request like  V7hhdsad84fdasf4a68... (base64)
+- can be improved with RLFH - Reinforcment-Learining with Human Feedback - human ranks by preferences during training
+- attack - Jailbreak templates - exhausts context space and enforce 'own system prompt'
+         - Crescendo - multi-turn attack - starts with harmless prompts and gradually steer to harmful output
+
+
+Indirect prompt injection
+- coming from data - external inputs
+- for single turn attacks
+- can affect not only output but also internal tools - like changing LLM persona
+- example: email with prompt (can be hidden via white color font, base64 encoded), bank transfer with message, etc.
+           shitposting on reddit and using for training - add glue to pizza (not attack by intention)
+- document based: pdf and hidden instruction
+                  excel with test hidden in cell
+                  word with malicious comment
+                  presentation with speaker notes
+- web based - malicious content
+            - social media post with hidden instruction
+            - forums - user content with embedded data
+            - poisoned search result with instruction
+- RAG - retrieval augmentation generation system
+      - own data storage to enhance context/response
+      - can have poisoned data/documents
+
+- chatbot - turn-based - interaction
+          - generative - summaries, suggestions
+          - user driven
+          - context limited - per session
+- agent - goal oriented
+        - autonomous - can have plans, multi-step tasks
+        - tool-using - external systems and APIs
+        - persistent - maintain memory across interactions
+        - adaptive - can learn and adjust
+
+        - usual workflow: task -> agent -> planning
+                                           tools to use
+                                           memory to persist
+
+- attack taxonomy - UI deception and perceptual mismatch (code/description different from image/screenshot)
+                  - remote code execution
+                  - exposure of chain of thought - more insight into 'thinking process'
+                  - bypass human in the loop - skipping confirmation on sensitive steps
+                  - indirect injection
+                  - identity ambiguity/over-delegation - mixed user and agent privileges
+                  - content harms - privacy, misinformation
+
+- security (open-source) tools to mitigate risks - PyRit - from Microslop
+                                                   Garak - from nVidia
+                                                   Giskard
+
+- PyRIT - promo talk
+        - special components to test different security issues
+           - datasets - Jailbreak templates
+           - ochestrators - scoring red teaming bot, benchmarking
+           - converters - translation, encodings (base64, ascii, unicode,...)
+           - targets - prompt chat target, image target
+           - scoring engines - mark down injection, gpt text  classifier, question-answer scorer
+           - keeps memory (DuckDB) to keep logs, operations to analyze
+        - allow combine/chain components such as templates and encoding to test and score results
+
+Mitigation/Guardrails
+- layered protection system
+   - visibility layer - monitoring real time events
+   - detection layer - automated tools to identify sus activity/anomalies
+   - protection layer - input filtering, output validation, sandboxing
+   - response layer - incident response plans, forensic analysis, system recovery
+
+- Spotlighting
+   - paper - Defending Against Indirect Prompt Injection Attacks With Spotlighting - https://arxiv.org/abs/2403.14720
+   - family of prompt techniques to help distinguish between input sources (data vs user input)
+   - easy implementation
+   - techniques in spotlighting - delimiting
+                                   - wraps user input with special characters, e.g. << this is user input >>
+                                - data marking
+                                   - adds special character after every input word, e.g. hello^word^
+                                - encoding
+                                   - encode user input in base64
+   - sucks when system prompt is leaked (obvious how to bypass), but easy to implement
+
+- Input filters
+   - detection engines - toxic content
+                       - prompt injection classifier
+                       - personal sensitive info scanners
+
+- Output filters
+   - fact-checking against 'knowledge base'
+   - harmful content detection
+   - info leak prevention
+   - format validation
+
+- post safety training of the model
+   - to prevent 'certain' inputs/outputs
+   - similar to input/output filters
+
+- open-source projects: Azure Prompt Shield
+                        Guardrails AI
+                        NeMo GuardRails - nVidia

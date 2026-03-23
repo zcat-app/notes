@@ -1,0 +1,34 @@
+A View Is Not a Table: It Is a Controlled Integration Contract
+post: https://martinelli.ch/a-view-is-not-a-table/
+
+- defense of view article as counter-argument to Your Database Table is an awful API (https://www.innoq.com/en/blog/2026/02/your-database-table-is-an-awful-api/)
+    - note: to be fair - the author argues about tables, not views
+    - sharing table (~ view) breaks information hiding and creates 'tight coupling' (~ change in one system demands change in another unrelated system)
+    - shared DB becomes a cross-system bottleneck: contention, locks, resources (RAM, CPU) etc. - blocking other modules/projects
+    - tables expose data, not intent
+    - shared structures drive duplicated business logic and inconsistent derived values (on top of consistent data)
+    - bad history logging if accessing directly
+    -> prefer explicit APIs (e.g. REST) with clear boundaries and ownership
+
+- view - virtual table defined by SELECT query
+       - calculated on fly
+       - materialized - precalculated & stored - performance
+                      - updated in async way
+
+       - API like behavior:
+            - selects values to show - can skip values or use aliases to 'hide real structure'
+            - can contain business logic, or aggregate final results
+            - optimized by DB engine (~ materialized view)
+
+       - less features (as authentication - security solved elsewhere - network, row/column level) usual REST service,
+       - performance should not be worse (DB optimizer)
+
+       - in self-contained systems (owning data is not isolation of data):
+          - can own view that process and provides data to the system - fully owned
+          - dont need complexity for handling events (if necessary)
+          - dont need serialization/deserialization when passed between services
+
+- view as API
+   - can work as GET request - serves read model (with values we choose to show)
+   - ideal for self-contained systems as stable 'contract'/API that is owned by that system
+   - can apply performance improvements with materialized views

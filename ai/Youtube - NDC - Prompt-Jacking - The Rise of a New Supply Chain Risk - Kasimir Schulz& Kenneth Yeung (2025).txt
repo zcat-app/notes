@@ -1,0 +1,72 @@
+Prompt-Jacking: The Rise of a New Supply Chain Risk - Kasimir Schulz & Kenneth Yeung
+- video: https://www.youtube.com/watch?v=gCKO72VZqb4
+
+- more workshop, showing examples
+- example of indirect prompt injection - comment in markdown (as comment, visible only in raw file)
+                                       - white text on white background in email/website
+                                       - HTTP header, e.g. HTTP-Agent
+                                       - image hooks for loading - add anything as query string parameter (such ass ssh key)
+
+- mcp server issues - originally intended for local development - access to local services, filesystem
+                    - can be prompt injected - execute arbitrary code (RCE)
+                    - problem to distinguish source of data - can accidentally overwrite wrong data
+                    - uses JSON descriptor
+                    - now mostly remote - need to ensure secure communication - accessing DB
+                                                                                          Saas
+                                                                                          websites
+
+- agents - computer use agent - run on computer, e.g. creates powerpoint
+         - automation agent - webhook - triggered through messenger/API etc
+                            - e.g. clawbot? (or how is it called)
+
+- control tokens - labeling the system prompt
+                 - model specific
+                 - pure text, parsed on fly
+                 - using then as user input - changing system prompt
+
+- prompt templates - pre-prepared prompts with 'ensured' good output
+                   - used for agents or to enhance user input - danger that placeholders can be used to 'inject' prompt
+                   - e.g. start with closing control tokens like </userInput> [here define system config, etc..]
+
+- guardrails
+   - LLM judge - another LLM evaluating malicious action, prompt injection attempt, etc
+               - high latency
+               - high cost
+               - same understanding as downstream target (model we pass it to)
+               - prompting, fine tuning
+               - possible to prompt inject guardrail - wrapping prompt injection into prompt injection
+                                                     - e.g. manipulation threshold to let pass 'smelly' input
+                                                     - idea to rank result - if over threshold - not pass, else OK
+
+   - Classification model - model to rank prompt as safe or malicious
+                          - lower cost
+                          - low latency
+                          - different understanding as downstream target
+                          - fine tuning only
+                          - uses tokenizer - converts text to numbers to pass to model
+                                           - different types: BPE
+                                                              Wordpiece
+                                                              Unigram
+                                           - different processing of text - different evaluation result
+                                                                          - limited understanding of input against LLM judge
+
+System prompt hardening
+- can use special tools for analysis - suggesting improvements
+example to define:
+- role and boundaries
+- purpose and scope
+- personality and tone
+- refusal behavior
+- safety and compliance
+- input handling
+- output constraints
+- content filtering
+
+Tl;Dr
+- prompt injection might not be obvious (indirect)
+- most modern framewoorks not build for agentic safe systems
+- separate instructions from input
+- recursively remove defined [control] tokens
+- harden system prompts
+
+- note: shodan - list of all servers exposed to internet - list of exposed ports (? i guess) ~ apps

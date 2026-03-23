@@ -1,0 +1,103 @@
+10 tips to level up your ai-assisted coding - Aleksander Stensby
+video: https://www.youtube.com/watch?v=HHiecFMk48o
+
+- developer: conductor - focus on single task
+                       - steering agent dynamically - tweaking, interrupting, guiding
+                       - calude code, gemini cli, cursor IDE
+             orchestrator - manages multiple agents working on interdependent tasks
+                          - jules, devin, factory, codex web
+
+0. embrace pair-programming mindset
+- be collaborative, iterate on result (with AI)
+- ask for explanation of change (even steps),
+- use it for learning yourself (but verify)
+
+1. context is king
+- limited resources for context, paper: Attention Is All You Need - https://arxiv.org/abs/1706.03762
+- too much - overloaded, forgetting
+- too little - making up responses
+- guide and iterate - e.g. claude code - calude.md - rules
+                                       - /init as starting point (some claude shit for start)
+                                           - get AI summary of your repo as basic guidance
+                                           - should get big picture, not isolated code parts
+- monitor context (to be in control of context window)
+   - /context, or other tools such as ccusage - shows how much context is used
+   - /clear reset context to avoid pollution (different topic adding noise)
+- use @mentions for files, specs, APIs
+- sub-agents - every agent onw context (virtually extending context) but the main agent get only final response - can focus on overall goal
+- adding own rules - as external memory, done manually as markdown
+
+2. rules and doc make all difference
+- create claude.md/agent.md with /init
+- document database schemas and API contracts
+- download API doc to have it locally for AI -> md, txt
+- build library of reusable rules and patterns
+
+3. make a plan
+- use plan mode - gives options for use we can select the 'path'
+- use ultrathinking - 'ultrathink this through' - claude allocates more memory for task
+- use AI to generate spec
+- store plan as markdown - good to keep context
+                         - can be used later to start from the point to continue
+- maintain the plan document with new learnings, add your preferences and guidelines - can ask AI to enhance
+- note: prompt: 'make it better' - usually works, can be like: 'make it better with using xy'
+(Shift + Tab + Tab)
+
+4. break it down
+- divide into smaller manageable pieces
+- build complex issues as standalone projects first
+- one feature at a time = better results
+- use github issues when suggesting improvements out of context
+    - add enough detail ~ context into issue
+    - solve later in own context window (based on provided description)
+- keep updating the plan during the progress (github issues, markdowns, etc,...)
+
+
+5. pick the right model
+- faster model for simple tasks, advanced for complex logic
+- dont waste premium tokens on trivial tasks
+- use ultrathink
+
+6. use the tools ('slash commands', sub-agents, skills)
+- slash command - e.g.: /init
+                        /explain
+                        /optimize
+                - can create custom slash commands (awesome-slash-commands as inspiration)
+                - can run bash command inside (starts with !, e.g. "! git status" - checks local repo)
+                - can defined be in .md file for agent to execute existing slash command
+                - good for common operations
+- sub-agents - own context window (as standalone)
+             - every sub-agent can have different 'role' - dev, qa, etc
+             - can run sequentially - first this agent with task1, then another with task 2 (or even branch - based on result of task1 run agent2 or agent 3, etc)
+             - or in parallel (validating of files in folder, etc)
+             - good for specialized tasks
+- hooks - adds custom logic
+        - good for guardrails - filtering input/output
+        - can be used to learning - update pattern file based on user feedback
+- skills - markdown file
+         - claude reads only 'abstract' - only if it is relevant it loads it to the context as whole
+
+7. git everything
+- commit often
+- use checkpoints and rollbacks - claude: /rewind
+- branching for new features
+- capture learning and add to the plan (mistakes done of fix) to avoid mistakes in the future
+
+8. level up with MCP
+- claude - full mcp support
+- cursor - own built in browser, or can connect to actual locally installed browser
+- supports: text, audio, images as inputs
+- MCP tools: chat - questions answers
+      resources - link to DB
+      prompts - as slash commands
+
+9. release the agents
+- give a goal/task
+- trigger from anywhere (cursor, mobile chat,...)
+- be specific, provide guidance - how to achieve the goal with detail
+
+10. be the human in the loop
+- code review & tests
+- use slash commands: /review-pr
+                      /security-review
+- use bugbot for review: @cursor fix

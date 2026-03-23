@@ -3,6 +3,28 @@ Set of notes collected across different books, courses, talks or blogs. My backu
 
 ## Content
 
+### AI hype
+
+Stefano Martinelli [Blog](https://martinelli.ch/):
+- [Blog - Martinelli - A View Is Not a Table: It Is a Controlled Integration Contract (2026)](./ai/martinelli/Blog%20-%20A%20View%20Is%20Not%20a%20Table%20-%20It%20Is%20a%20Controlled%20Integration%20Contract%20-%20Martinelli%20(2026).txt)
+- [Blog - Martinelli - Spec-driven Development is not Task-driven AI -  Martinelli (2026)](./ai/martinelli/Blog%20-%20Spec-driven%20Development%20is%20not%20Task-driven%20AI%20-%20%20Martinelli%20(2026).txt)
+- [Blog - Martinelli - Why I Don’t Use Mocking Frameworks and Why You Might Not Need Them Either - Martinelli (2026)](./ai/martinelli/Blog%20-%20Why%20I%20Don%E2%80%99t%20Use%20Mocking%20Frameworks%20and%20Why%20You%20Might%20Not%20Need%20Them%20Either%20-%20Martinelli%20(2026).txt)
+- [Blog - Martinelli - Why Self-Contained Systems Are a Perfect Fit for AI-Driven Development -  Martinelli (2026)](./ai/martinelli/Blog%20-%20Why%20Self-Contained%20Systems%20Are%20a%20Perfect%20Fit%20for%20AI-Driven%20Development%20-%20%20Martinelli%20(2026).txt)
+
+Agents, Model Context Protocol, LLM, Security
+- [Youtube - NDC - Agents That Talk Back: MCP, ACP, A2A, Oh my! - Taswar Bhattii (2025)](./ai/Youtube%20-%20NDC%20-%20Agents%20That%20Talk%20Back%20-%20MCP%2C%20ACP%2C%20A2A%2C%20Oh%20my!%20-%20Taswar%20Bhattii%20(2025).txt)
+- [Youtube - NDC - Building Identity into LLM Workflows with Verifiable Credentials - Ben Dechrai (2025)](./ai/Youtube%20-%20NDC%20-%20Building%20Identity%20into%20LLM%20Workflows%20with%20Verifiable%20Credentials%20-%20Ben%20Dechrai%20(2025).txt)
+- [Youtube - NDC - Can you trust your (large language) model? - Jodie Burchell (2025)](./ai/Youtube%20-%20NDC%20-%20Can%20you%20trust%20your%20(large%20language)%20model%20-%20Jodie%20Burchell%20(2025).txt)
+- [Youtube - NDC - Doors of (AI)pportunity: The Front and Backdoors of LLMs - Kasimir Schulz& Kenneth Yeung (2025)](./ai/Youtube%20-%20NDC%20-%20Doors%20of%20(AI)pportunity%20-%20The%20Front%20and%20Backdoors%20of%20LLMs%20-%20Kasimir%20Schulz%26%20Kenneth%20Yeung%20(2025).txt)
+- [Youtube - NDC - How to Break AI Systems (Before Someone Else Does) - Gary Lopez & Dr. Amanda Minnich (2025)](./ai/Youtube%20-%20NDC%20-%20How%20to%20Break%20AI%20Systems%20(Before%20Someone%20Else%20Does)%20-%20Gary%20Lopez%20%26%20Dr.%20Amanda%20Minnich%20(2025).txt)
+- [Youtube - NDC - Introduction to AI Security - Jim Manico (2025)](./ai/Youtube%20-%20NDC%20-%20Introduction%20to%20AI%20Security%20-%20Jim%20Manico%20(2025).txt)
+- [Youtube - NDC - Prompt Hardening - Secure Code Generation Using AI - Sean Sinclair (2025)](./ai/Youtube%20-%20NDC%20-%20Prompt%20Hardening%20-%20Secure%20Code%20Generation%20Using%20AI%20-%20Sean%20Sinclair%20(2025).txt)
+- [Youtube - NDC - Prompt-Jacking - The Rise of a New Supply Chain Risk - Kasimir Schulz& Kenneth Yeung (2025)](./ai/Youtube%20-%20NDC%20-%20Prompt-Jacking%20-%20The%20Rise%20of%20a%20New%20Supply%20Chain%20Risk%20-%20Kasimir%20Schulz%26%20Kenneth%20Yeung%20(2025).txt)
+- [Youtube - NDC - STOIC Security: Shielding Your Generative AI App from the Five Deadly Risks - Jeff Watkins (2025)](./ai/Youtube%20-%20NDC%20-%20STOIC%20Security%20-%20Shielding%20Your%20Generative%20AI%20App%20from%20the%20Five%20Deadly%20Risks%20-%20Jeff%20Watkins%20(2025).txt)
+- [Youtube - NDC - The AI puppet dance - Einar Høst (2025).](./ai/Youtube%20-%20NDC%20-%20The%20AI%20puppet%20dance%20-%20Einar%20H%C3%B8st%20(2025).txt)
+- [Youtube - NDC - 10 tips to level up your ai-assisted coding - Aleksander Stensby (2025)](./ai/Youtube%20-%20NDC%20-%2010%20tips%20to%20level%20up%20your%20ai-assisted%20coding%20-%20Aleksander%20Stensby%20(2025).txt)
+
+
 ### Database
 Database, queries , performance
 
@@ -19,6 +41,7 @@ UI design principles
 ### Development
 Software development principles
 
+- [Blog - The Modernization Imperative: Shifting left is for suckers. Shift down instead - Richard Seroter (2023)](./development/Blog%20-%20The%20Modernization%20Imperative%20-%20Shifting%20left%20is%20for%20suckers.%20Shift%20down%20instead%20-%20Richard%20Seroter%20(2023).txt)
 - [Book \[In Progress\] - Unit Testing: Principles, Practices, and Patterns - Vladimir Khorikov (2020)](./development/Book%20%5BIn%20Progress%5D%20-%20Unit%20Testing%3A%20Principles%2C%20Practices%2C%20and%20Patterns%20-%20Vladimir%20Khorikov%20(2020).txt)
 - [Udemy - Design patterns in Java - Dmitri Nesteruk (2020)](./development/Udemy%20-%20Design%20patterns%20in%20Java%20-%20Dmitri%20Nesteruk%20(2020).txt) 
 - [Udemy - Microservices Architecture - The Complete Guiden - Memi Lavi (2022)](./development/Udemy%20-%20Microservices%20Architecture%20-%20The%20Complete%20Guiden%20-%20Memi%20Lavi%20(2022).txt)
@@ -69,7 +92,12 @@ Java framework for (not only) cloud native apps
 - [Custom \[In Progress\] - Quarkus - Own notes (2025)](./quarkus/Custom%20-%20Quarkus%20-%20Own%20notes.txt)
 - [Youtube - Devoxx - Six and a half ridiculous things to do with Quarkus - Holly Cummins (2025)](./quarkus/Youtube%20-%20Devoxx%20-%20Six%20and%20a%20half%20ridiculous%20things%20to%20do%20with%20Quarkus%20-%20Holly%20Cummins%20(2025).txt)
 
+### AI
+AI talks, mainly focused on Java development
  
+- [Youtube - Devoxx - Level Up Your LangChain4j Apps for Production - Lize Raes (2025)](./ai/Youtube%20-%20Devoxx%20-%20Level%20Up%20Your%20LangChain4j%20Apps%20for%20Production%20-%20Lize%20Raes%20(2025).txt)
+
+
 ### Security
 Privacy, security, OPSEC, etc.
 

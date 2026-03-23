@@ -1,0 +1,70 @@
+Agents That Talk Back: MCP, ACP, A2A, Oh my! - Taswar Bhatti
+video: https://www.youtube.com/watch?v=4gbUULDnPVE
+
+Agent:
+- semi-autonomously performs tasks - has 'intelligence' - decision-making, like LLM or ML
+- has agency, perform actions - using tools, data sources (e.g. MCPs) to perform actions
+- autonomy - iterating until goal is achieved
+- keeps context ~ memory, might learn/improve to get better result
+- security is pain: https://genai.owasp.org/llm-top-10/
+
+MCP - model context protocol
+- model has been trained on data, but does not know current situation
+- we can provide special functions to enhance the ability to answer (e.g. fetching current weather from API)
+- API analogy how to communicate with server
+    - DB, backend, services
+- MCP how to communicate with external tools
+    - prompts - chat summary, documentation
+    - tools - search, sending message, update DB,
+    - resources - read only? - files, DB, API response
+- has 3 parts: HOST - AI app managing MCP clients
+               CLIENT - component fetching context from SERVER for host (querying for data/answers)
+               SERVER - provides context for clients - searching in DB, fetching from API, etc
+- communication with JSON-RPC 2.0 (many features but no security)
+- transport layer should ensure security - OAuth 2.1 recommended for remote communication
+- MCP inspector to debug MCP server
+- anyway unsecure AF, follow best practices, use OAuth - like Keycloak
+
+- threats to LLMs - prompt injection, secret info disclosure, model poisoning (see: https://genai.owasp.org/llm-top-10/)
+- secure MCP server: show all text model sees
+                     use version pinning and reliable tools (avoid new hype)
+                     set least privileges to agents and tools
+                     log all prompts and manifests
+                     authentication - never share tokens across systems
+                     prompt shields - filters malicious filter before passed to model
+                                    - uses delimiters and data marking to separate external input
+                                    - gives agents better context to protect from hidden instructions
+- MCP handles Agent -> service interaction (tool, resource)
+- https://modelcontextprotocol.io/
+
+A2A - agent to agent protocol
+- open standard from google for communication between agents
+- agent should have specific goal, goal should be 'simple' to not overwhelm - poor outcome
+- multi agent architecture coordinates specialized agents to achieve complex outcome
+- agen-card.jsom (kinda manifest) - contains: id,
+                                              description,
+                                              authentication - security schema, api key,
+                                              endpoint
+                                              array of 'skills' - description of actions it can perform
+- supports: request, response, streams
+- supported message formats: JSON-RPC 2.0, gRPC, HTTP+JSON/REST
+- https://a2a-protocol.org
+
+
+
+ACP - agent communication protocol
+- agent to agent protocol started by IBM, now under Linux Foundation
+- solves interoperability problem with 'common language' for agents
+    - analogy to REST API - no one cares what language/framework used
+- enables collaboration between frameworks - LangChain, CrewAi without custom wrapping
+- client server model
+    - client ask server
+    - server runs agents
+- ACPMessage - standardized message - ID, metadata, optional streaming
+- dynamic discovery - agents advertise manifests for dynamic look-up
+- stateful sessions - support long running tasks, keeping context
+- security - capability tokens to access control, integrated into Kubernetes RBAC
+
+- good for enterprise
+   - scalable - easy to add/replace agent without rewrites
+   - flexible - supports sync, async, streams

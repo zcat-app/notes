@@ -1,0 +1,72 @@
+Prompt Hardening - Secure Code Generation Using AI - Sean Sinclair
+video: https://www.youtube.com/watch?v=bKphnQByVZI
+
+- note: DAN - do anything now / defy all norms
+- training set is important: crap in -> crap out
+- generated code problems: API keys in code
+                           no rate limiting
+                           not using security practices
+                           missing logging (failures)
+                           timing attacks (derive assumption from how long request takes, e.g. user exists on login)
+
+- big prompt
+   - takes a lot of tokens
+   - adaptive reasoning use reasoning tokens on every small step
+   - hard to maintain
+   - good for scaffolding - mvp
+   - guardrails, ,checklist, rules, examples
+
+- medium
+   - roles and focused rule sets
+
+- smaller prompts
+   - easier to maintain
+   - be explicit, for specific task
+   - say what it should do, not what is should not
+   - less chance for longer reasoning
+   - lower risk of instruction drift
+   - more resilient to partial prompt loss - like ignoring some part of prompt
+
+- promptfoo - open-source LLM testing framework
+            - dynamic security testing - red teaming
+            - ai model security assessments
+            - adaptive guardrails
+            - mcp proxy
+            - evaluations - LLM as judge
+                          - accuracy/pass-rate
+                          - cost, token usage
+                          - latency
+                          - custom scripts
+                          - regex
+                          - HTML, JSON reports and CI integration
+
+            - config - prompts (e.g. file of multiple prompts)
+                     - providers - cloud (openAI), local (Ollama)
+                     - test framework - G-eval, Pi-scorer, ++, ...
+
+- presenter experiment measured with promptfoo
+   - adding prefix "Use best practices:" + prompt itself
+   - increased score by 14-16 points (%) by promptfoo
+   - used model matters - using different amount of tokens, different success rate
+        - gpt-4.1-mini - bad, avg 1990 tokens
+                       - 35%
+                       - 49% with prefix
+        - gpt-5.1 - ok-ish, avg 2500 tokens
+                  - 71%
+                  - 93% with prefix
+        - gpt5-mini - with reasoning
+                    - best, but almost double tokens used - avg 4900 tokens
+                    - 93%
+                    - 98% (with prefix)
+
+
+Improving medium-large prompts
+- use AI to make a list - language, architecture of project, examples as code guide
+- skip generics tips
+- review and revise prompts
+
+TlDr
+- "use best practices" - not silver bullet but helps
+- choose right model - effects a lot
+- maintain system prompt (include security prompt)
+

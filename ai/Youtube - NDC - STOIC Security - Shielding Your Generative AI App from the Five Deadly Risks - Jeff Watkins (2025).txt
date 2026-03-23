@@ -1,0 +1,93 @@
+STOIC Security: Shielding Your Generative AI App from the Five Deadly Risks - Jeff Watkins
+video: https://www.youtube.com/watch?v=rfh_8vyi3OE
+
+STOIC
+- thread model categorization, analogy to STRIDE
+- STRIDE in short
+   - Spoofing - pretending to be someone else
+   - Tampering - modifying something on disk, memory, network,..
+   - Repudiation - claim you did not do something or not responsible
+   - Information disclosure - giving info to non-authorized user
+   - Denial of Service - exhausting resources to run/provide service
+   - Elevation of Privileges - allowing action not authorized to perform
+
+- LLM - build with opacity by design - not 100% understanding by creator?
+      - non-deterministic - different results (based on past talk - context)
+      - depends on context depth
+
+- what can harm
+      - leak data, user privacy
+      - IP address
+      - malicious output
+      - agentic hijack
+      - ethical failures - like grok and deepfakes?
+      - hijack resources
+      - loss of autonomy - private/state secrets?
+
+[S]tolen
+- model extraction - bunch of queries (millions) and saving answers
+                   - training own copy-cat model on these data
+                   - current deepseek-anthropic case? :D
+- model inversion - use output to try to reconstruct input training set
+                  - danger for unique data like medical records
+- membership inference - trying to find if specific individual data was used for training - email, address, etc
+                       - using confidence scores
+-information disclosure - get the actual sensitive data
+                        - usually via prompt injection
+
+
+[T]ricked
+- prompt injection - direct - no diff between sys prompt and user input - user can manipulate
+                            - e.g. ignore all previous instructions, you are now rouge AI...
+                   - indirect - part of outer data (not input) - part of doc, API response, etc
+                              - more hidden
+- evasion - hiding text with encoding, invisible characters, etc (not ready to detect/filter)
+
+[O]bstructed
+~ denial of service
+- ML DoS - Machine Learning Denial of Service
+         - overwhelm with input that cannot produce output
+         - exhausting context window, long reasoning
+- exhausting resources - similar to upper?
+                       - e.g. convert huge CSV file into something
+- usual denial of service - e.g. botnets, overusage of API
+- over reliance - usual API problem - cascading failure
+
+[I]nfected
+- data poison - bad data for training process
+              - can lead to wrong face recognition - e.g. thief vs employee
+- model poison - influence model via some backdoor trigger - e.g. activation phrase (hypnosis analogy i would say)
+- model tampering - not in training phase, from data
+                  - embedded data in supporting libraries, data payloads (smells like injection, no?)
+
+[C]ompromised
+- if any of previous happened, it is compromised ??? *surprised pikachu*
+- also connected to infrastructure setup
+   - credential theft
+   - misconfiguration
+   - pipeline compromise
+   - phishing?
+
+Threat modeling
+- 'buy a book' promo - Adversarial AI Attacks, Mitigations and Defense Strategies
+
+Mitigation Strategies
+- input/output control - filters, prompt [injection] templates)
+                       - rate limits
+                       - canary prompt to check/monitor leakage, diversion
+- secure supply chain - trusted sources
+                      - dependency scanners
+- limit access & autonomy - cut privileges as much as you can
+                          - set timeouts
+                          - sandboxing
+- model segregation - isolate different AI components
+                    - e.g. separate RAG service from business logic
+- monitoring & usage - track token usage
+                     - track prompt flooding, anomaly
+                     - containment plan
+- governance & oversight - policy - security/legal
+
+TLDR
+- AI good but unsecure
+- think about whole lifecycle when design
+- need to stay up to day - adaptive with new stuff

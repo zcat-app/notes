@@ -1,0 +1,65 @@
+Keynote: Can you trust your (large language) model? - Jodie Burchell
+video: https://www.youtube.com/watch?v=j4P8fXcKiHM
+
+- problem to trust even scientist - mistakes on their research and measurement evaluations
+- need to define how to evaluate good model
+   - RELIABILITY - consistent result - on the same input
+                                     - over time
+                                     - between assessors (e.g. ML model, human)
+                 - bias problem when data similar as training ('data leakage') - looks good on same/similar data but fails on different/new cases miserably
+
+   - VALIDITY - measures the intention - if accurately assessed - clear intend what i want
+                                       - if related measures align - scoring similar things should be related
+                                       - if applicable to real world - not only in test data sandbox
+
+- note: temperature - randomness - changes output for the same input dramatically
+
+- benchmarks as ranking of LLM? - different approaches
+                                - human exams - LLMs performing well, even 100% success! (doctor, lawyer, software developer)
+                                              - but they DO suck in real world - human - measures readiness for the job,
+                                                                                       - using general intelligence  - learning, developing reasoning in the domain and getting knowledge
+                                                                               - LLM - measures solving current puzzle in limited space
+                                                                                     - limited because of training process - input - prediction - result - evaluation - adapting weights - loop again
+                                - some benchmark were retired - they were shit (did not provide valuable output)
+                                                              - example: Question: Complexity theory (not a question?)
+                                                                         Answer: 1,2,3,4 (wtf??)
+
+- answer evaluation in benchmark
+   - multiple choice answer - options: select form: a,b,c,d
+   - generative - produces whole answer itself
+
+   - interesting - same models were answering inconsistently between options-generative - INCONSISTENT
+                 - usually better results on options
+
+   - good on tough questions, fails on simple Alice in wonderland (how many sisters Alice's three brothers have?)
+      - data leakage - benchmark data/questions in training data set - skewing results
+
+   - models trained on specific domain - benchmarks tests in different fields (image recognition, coding, etc.) bad results - is it bad model? depends
+
+ - LMArena - compare models on your prompt and evaluate - human based scoring for nay user - manipulation :( (bad faith reviews)
+ - some 'LLM' providers cheat to optimize for benchmarks (*cough* META *cough*)
+
+Prompt sensitivity
+- different syntax (while semantically equivalent) led up to 75% difference on accuracy evaluation (whitespace, colon, commas)
+
+Robust evaluation flow
+- LLM inference
+- Observe
+   - add unit tests - high validity
+                    - can be suggested by LLM
+                    - verifies e.g. only one element return (if ask for ID for example)
+   - log traces/anomaly
+- Evaluate - human in the loop or LL as judge (another LLM)
+           - ranking of result
+- Tune
+   - prompt engineering
+   - fine tuning
+- Improve model
+   - and iterate again in loop until good enough
+
+- A / B testing - to find best solution
+
+Can be LLM trusted?
+- YES, BUT: no shortcuts - will need work
+            define concrete use case - too many use cases - sucks
+            domain specific and continuous assessment - dont rely on benchmark but own monitoring

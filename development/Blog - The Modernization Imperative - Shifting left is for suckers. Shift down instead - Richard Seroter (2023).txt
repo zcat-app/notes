@@ -1,0 +1,91 @@
+
+The Modernization Imperative: Shifting left is for suckers. Shift down instead
+post: https://cloud.google.com/blog/products/application-development/richard-seroter-on-shifting-down-vs-shifting-left/
+
+- trend to optimize resources - 'reducing cost'
+- example self-check cashier in supermarket - no cashier people - customer can do by him/her-self
+- analogy to full stack engineer - push to wider overview without a focused expertize to shine
+- 'shifting left' - idea of the practice of incorporating security and QA reviews earlier in the development process
+                  - burden on devs to know multiple tools - as regular job offer - frontend, backend, DB, queues, devops, security, blah blah
+- 'shift down' - compress the tech-stack, leverage platform abstraction - delegate to platform engineering teams (cough-cough, google)
+- platform teams - allows you to use the platform as product for your module/project
+                 - reduces cognitive load (all handled by them) and support innovations in your project
+
+(found it mentioned by couple of people as 'really great article', but it is rather short promo for Google service, so
+digging deeper, followup notes from more descriptive articles)
+
+
+
+
+
+Shifting Left Vs Shifting Down - Mesoform
+post: https://www.mesoform.com/resources/blog/review/shifting-left-vs-shifting-down
+
+shift left
+- usual, sequential development
+- catch problems early
+   - unit test,
+   - CI/CD,
+   - code review,
+   - code guide
+   - perf monitoring
+   - QA iteration
+- usually dev needs bigger set of knowledge (frontend, backend, framework, DB, containers, build systems, etc.)
+- fail fast principle, minimize future problems
+- brings:
+   - cognitive load on dev - loner to integrate a new one
+   - more tools to learn - monitoring, frameworks, collaboration between departments
+   - resistance to changes
+   - need to scale and complexity
+
+shift down
+- focusing on domain experts
+- introduces platform team
+   - maintain infrastructure, tools and services
+   - platform abstraction that other teams are focused on its domain
+   - minimizes group of technology for other teams to master
+   - chooses 'opinionated' framework with default config, monitoring service, dashboard templates, etc. that other team can simply use
+   - maximizes security hidden under abstraction, introduces security policy & tools into workflow
+- reduces cognitive load on teams using platform abstraction
+- teams can focus on its domain - consistency, probably increased productivity, innovation (knowing the domain)
+- need to balance abstraction, selecting right tools for platform and customization, investment into platform team (time and money)
+
+real world
+- mostly mixed approach - finding balance -> depends on project
+
+
+
+
+
+Shift Down to the Platform, not Left to the Dev - Michel Murabito
+post: https://mia-platform.eu/blog/shift-down-to-the-platform/
+
+shift left
+- as mentioned before - finding problems in early stages (with complexity the most reason to delay release)
+- might not be enough when deployed
+   - secure only for current development, not already running app (maybe old dependency, API flaws, etc.)
+   - https://www.forbes.com/councils/forbestechcouncil/2022/08/29/the-security-holes-of-shift-left
+- more detailed steps in the article with graphic
+
+shift right
+- kinda test in prod, wanna see real user interacting with the app
+- example A/B testing
+- helps catching real usage problems (e.g. bugs, security, etc), needs proper monitoring
+
+shift down
+- platform team for platform abstraction
+- dev can focus on its domain while using platform as product - faster integration, smaller cognitive load (in theory) - less stuff to learn
+- teams loses more control for platform team - needed collaboration between teams and platform team - feedback, best practices, ...
+
+
+
+
+
+How shift-left development practices can be successfully applied to your customer services and support organization
+post: https://kepner-tregoe.com/resources/whitepapers/shift-left-no-shift-down-for-services-support-success/
+
+- research from the IBM System Science Institute found that if issues are identified early in development,
+  they cost approximately $80 to fix. But the same problems cost $8,000 to fix if detected during production — 100 times as much
+- longer article with similar message as before but for support service rather then devs :)
+   - idea of shift down is to pass customer to the more experienced tech support only if lower skill will not manage
+   - experienced staff can be focused on more important stuff

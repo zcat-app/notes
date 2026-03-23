@@ -1,0 +1,24 @@
+Why I Don’t Use Mocking Frameworks and Why You Might Not Need Them Either
+post: https://martinelli.ch/why-i-dont-use-mocking-frameworks-and-why-you-might-not-need-them-either/
+
+- mocking isolates units of code but:
+   - coupling implementation detail and test
+   - can be false positive (integration would fail)
+   - testing mock (~ testing if the mock is correctly pre-set), not the implementation
+
+- no mock approach
+   - functional design - pure functions - no side effect (changing state, IO, DB change)
+                                        - depends only on input
+                                        - same input always same result
+                       - control data - use real dependencies like Testcontainers (DB, etc)
+   - exception for HTTP to use mock external service (HTTP layer)
+   - better maintainability - edit pure function rather than changing all mock setups in test (when, then, etc)
+
+   - if needed external services:
+      - database - Testcontainers - start real isolated BD for testing
+      - http - WiredMock
+
+- mocks are still handy if:
+   - time based manipulation - Instance.now()
+   - randomness is needed
+   - communication with external service (without stable API)

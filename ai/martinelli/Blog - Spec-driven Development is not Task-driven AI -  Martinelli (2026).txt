@@ -1,0 +1,26 @@
+Spec-driven Development is not Task-driven AI
+post: https://martinelli.ch/spec-driven-development-is-not-task-driven-ai/
+
+- usual workflow: requirements -> plan -> tasks
+                  make plan based on requirement
+                  make detailed tasks, define dependencies/order (first this than that)
+                  ~ task scripting - mot sustainable
+                                   - dev oriented - other roles are excluded (QA, BA, even new DEV) on any change - need to define new tasks
+
+- specification should describe intent, not steps
+   - should define what and why, not how
+   - 'code is consequence of spec' - spec source of truth
+   - should contain - requirements and constraints
+                    - use cases
+                    - entity model - domain description
+   - user stories as part of spec, not as independent tasks (integrated as domain definition and constraints)
+
+- AI Unified Process
+   - controlling AI agents with better prompts (spec)
+   - AI helps to: validate requirements
+                  consistency in use cases and entities (domain)
+                  generate code (prod, test), doc
+                  asses impact of changes
+   - https://unifiedprocess.ai/
+
+- simpler maintenance and modernization (spec is truth) than scripting task each time

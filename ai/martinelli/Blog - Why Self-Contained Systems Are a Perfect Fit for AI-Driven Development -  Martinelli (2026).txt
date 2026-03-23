@@ -1,0 +1,19 @@
+Why Self-Contained Systems Are a Perfect Fit for AI-Driven Development
+post: https://martinelli.ch/why-self-contained-systems-are-a-perfect-fit-for-ai-driven-development/
+
+- AI (now) is good on environments that are structured, bounded, and understandable (otherwise provides more mess than help)
+    - good on small, isolated, simple tasks
+    - limited by context window (and lack of cognitive skill)
+    - Spec driven development - complex spec -> complex code -> limited context for model
+- self-contained systems
+    - single business capability
+    - independent versioning and deploying
+    - owns data, owns business (~backend) -> smaller context, owns UI -> independent (unlike microservices - usually centralized for all)
+        -> changes (mostly) should not influence other systems
+- spec driven development
+    - used in AI Unified Process - https://unifiedprocess.ai/
+    - code/tests generated on requirement/spec
+    - more focus on architecture - not only because scaling and performance - but now also structure of the generated code!
+
+- tldr - smaller independent blocks that can be processed with AI context
+       - self-contained systems and spec driven development is good fit
